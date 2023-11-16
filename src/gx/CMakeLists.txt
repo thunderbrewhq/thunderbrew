@@ -57,7 +57,7 @@ endif()
 if (WHOA_SYSTEM_WIN OR WHOA_SYSTEM_LINUX)
     target_link_libraries(gx
         PRIVATE
-            SDL3::SDL3
+            SDL3::SDL3-static
             libglew_static
         )
 endif()
