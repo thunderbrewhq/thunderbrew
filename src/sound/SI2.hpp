@@ -9,8 +9,8 @@
 #include <fmod_errors.h>
 
 
-#define SI2_ERR(errcode, format, ...) SI2::Log_Write(__LINE__, __FILE__, errcode, format, __VA_ARGS__)
-#define SI2_LOG(format, ...) SI2::Log_Write(__LINE__, __FILE__, FMOD_OK, format, __VA_ARGS__)
+#define SI2_ERR(errcode, format, ...) SI2::Log_Write(__LINE__, __FILE__, errcode, format, ##__VA_ARGS__)
+#define SI2_LOG(format, ...) SI2::Log_Write(__LINE__, __FILE__, FMOD_OK, format, ##__VA_ARGS__)
 
 class SI2 {
     public:
