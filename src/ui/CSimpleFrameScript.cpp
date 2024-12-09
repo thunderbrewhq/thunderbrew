@@ -2,6 +2,7 @@
 #include "gx/Coordinate.hpp"
 #include "ui/CSimpleFrame.hpp"
 #include "ui/FrameScript.hpp"
+#include "ui/CBackdropGenerator.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
 #include <algorithm>
@@ -460,7 +461,28 @@ int32_t CSimpleFrame_GetBackdropColor(lua_State* L) {
 }
 
 int32_t CSimpleFrame_SetBackdropColor(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (lua_type(L, 1) != LUA_TTABLE) {
+        luaL_error(L, "Attempt to find 'this' in non-table object (used '.' instead of ':' ?)");
+    }
+
+    lua_rawgeti(L, 1, 0);
+    auto object = reinterpret_cast<CSimpleFrame*>(lua_touserdata(L, -1));
+    lua_settop(L, -2);
+
+    STORM_ASSERT(object);
+
+    CImVector color;
+    auto red = lua_tonumber(L, 2);
+    auto green = lua_tonumber(L, 3);
+    auto blue = lua_tonumber(L, 4);
+    auto alpha = lua_isnumber(L, 5)  ? lua_tonumber(L, 5) : 1.0;
+    color.Set(alpha, red, green, blue);
+
+    if (object->m_backdrop) {
+        object->m_backdrop->SetVertexColor(color);
+    }
+
+    return 0;
 }
 
 int32_t CSimpleFrame_GetBackdropBorderColor(lua_State* L) {
@@ -468,7 +490,28 @@ int32_t CSimpleFrame_GetBackdropBorderColor(lua_State* L) {
 }
 
 int32_t CSimpleFrame_SetBackdropBorderColor(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (lua_type(L, 1) != LUA_TTABLE) {
+        luaL_error(L, "Attempt to find 'this' in non-table object (used '.' instead of ':' ?)");
+    }
+
+    lua_rawgeti(L, 1, 0);
+    auto object = reinterpret_cast<CSimpleFrame*>(lua_touserdata(L, -1));
+    lua_settop(L, -2);
+
+    STORM_ASSERT(object);
+
+    CImVector color;
+    auto red = lua_tonumber(L, 2);
+    auto green = lua_tonumber(L, 3);
+    auto blue = lua_tonumber(L, 4);
+    auto alpha = lua_isnumber(L, 5) ? lua_tonumber(L, 5) : 1.0;
+    color.Set(alpha, red, green, blue);
+
+    if (object->m_backdrop) {
+        object->m_backdrop->SetBorderVertexColor(color);
+    }
+
+    return 0;
 }
 
 int32_t CSimpleFrame_SetDepth(lua_State* L) {
