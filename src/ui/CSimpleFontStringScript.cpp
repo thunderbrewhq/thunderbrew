@@ -4,6 +4,8 @@
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
 #include <cstdint>
+#include <cctype>
+
 
 int32_t CSimpleFontString_IsObjectType(lua_State* L) {
     WHOA_UNIMPLEMENTED(0);
@@ -132,7 +134,24 @@ int32_t CSimpleFontString_SetText(lua_State* L) {
 }
 
 int32_t CSimpleFontString_SetFormattedText(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (lua_type(L, 1) != LUA_TTABLE) {
+        luaL_error(L, "Attempt to find 'this' in non-table object (used '.' instead of ':' ?)");
+        return 0;
+    }
+
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    if (!string->m_font) {
+        luaL_error(L, "%s:SetText(): Font not set", string->GetDisplayName());
+        return 0;
+    }
+
+    char text[2048] = {};
+    FrameScript_Sprintf(L, 2, text, sizeof(text));
+    string->SetText(text, 0);
+
+    return 0;
 }
 
 int32_t CSimpleFontString_GetTextColor(lua_State* L) {

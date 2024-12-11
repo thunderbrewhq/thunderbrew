@@ -176,11 +176,34 @@ int32_t CSimpleEditBox_GetTextInsets(lua_State* L) {
 }
 
 int32_t CSimpleEditBox_SetFocus(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (lua_type(L, 1) != LUA_TTABLE) {
+        luaL_error(L, "Attempt to find 'this' in non-table object (used '.' instead of ':' ?)");
+    }
+
+    lua_rawgeti(L, 1, 0);
+    auto object = reinterpret_cast<CSimpleEditBox*>(lua_touserdata(L, -1));
+    lua_settop(L, -2);
+
+    STORM_ASSERT(object);
+
+    CSimpleEditBox::SetKeyboardFocus(object);
+    return 0;
 }
 
 int32_t CSimpleEditBox_ClearFocus(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (lua_type(L, 1) != LUA_TTABLE) {
+        luaL_error(L, "Attempt to find 'this' in non-table object (used '.' instead of ':' ?)");
+    }
+
+    lua_rawgeti(L, 1, 0);
+    auto object = reinterpret_cast<CSimpleEditBox*>(lua_touserdata(L, -1));
+    lua_settop(L, -2);
+
+    STORM_ASSERT(object);
+
+    // TODO
+    // CSimpleEditBox::ClearKeyboardFocus(object);
+    return 0;
 }
 
 int32_t CSimpleEditBox_HasFocus(lua_State* L) {
