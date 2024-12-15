@@ -37,6 +37,7 @@ class CSimpleFrame : public CScriptRegion {
         float m_depth = 0.0;
         FRAME_STRATA m_strata = FRAME_STRATA_MEDIUM;
         int32_t m_level = 0;
+        uint8_t m_alpha = 255;
         uint32_t m_eventmask = 0;
         int32_t m_shown = 0;
         int32_t m_visible = 0;

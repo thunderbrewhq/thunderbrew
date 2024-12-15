@@ -333,7 +333,7 @@ void CGxDevice::ICursorDraw() {
     // Turn off everything
     GxRsSet(GxRs_PolygonOffset, 0);
     GxRsSet(GxRs_NormalizeNormals, 0);
-    GxRsSet(GxRs_BlendingMode, 1);
+    GxRsSet(GxRs_BlendingMode, GxBlend_AlphaKey);
     GxRsSetAlphaRef();
     GxRsSet(GxRs_Lighting, 0);
     GxRsSet(GxRs_Fog, 0);
@@ -355,6 +355,9 @@ void CGxDevice::ICursorDraw() {
     float cursorDepth = 1.0f;
 
     C44Matrix projection;
+	// Workaround for software cursor
+	// C44Matrix projection(2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0.002, 0, -1, -1, 0, 1);
+    // this->XformSetProjection(projection);
 
     if (!this->StereoEnabled() ||
         (CGxDevice::s_uiVertexShader == 0 || !s_uiVertexShader->Valid()) ||

@@ -10,6 +10,7 @@
 #include <storm/Array.hpp>
 #include <storm/String.hpp>
 #include <tempest/Vector.hpp>
+#include <cctype>
 
 const char* g_glueScriptEvents[41];
 const char* g_scriptEvents[722];
@@ -863,6 +864,216 @@ void FrameScript_UnregisterScriptEvent(FrameScript_Object* object, FrameScript_E
             }
 
             node = node->Next();
+        }
+    }
+}
+
+static void addchar(char* buffer, size_t bufferSize, char ch) {
+    auto length = SStrLen(buffer);
+    if (length + 1 < bufferSize)
+    {
+        buffer[length++] = ch;
+        buffer[length] = '\0';
+    }
+}
+
+static void addstring(char* buffer, size_t bufferSize, const char* source) {
+    uint32_t dsize = 0;
+    uint32_t size = 0;
+
+    dsize = SStrLen(buffer);
+    size = SStrLen(source);
+
+    if (dsize + size >= bufferSize) {
+        size = bufferSize - dsize;
+        // Check for space for trailing zero
+        if (size < 2) {
+            size = 0;
+        } else {
+            size--;
+        }
+    }
+
+    if (size > 0)
+        memmove(&buffer[dsize], source, size);
+
+    buffer[dsize + size] = '\0';
+}
+
+static void addstring(char* buffer, size_t bufferSize, const char* source, size_t count) {
+    uint32_t dsize = 0;
+    uint32_t size = 0;
+
+    dsize = SStrLen(buffer);
+    size = std::min(SStrLen(source), count);
+
+    if (dsize + size >= bufferSize) {
+        size = bufferSize - dsize;
+        // Check for space for trailing zero
+        if (size < 2) {
+            size = 0;
+        } else {
+            size--;
+        }
+    }
+
+    if (size > 0)
+        memmove(&buffer[dsize], source, size);
+
+    buffer[dsize + size] = '\0';
+}
+
+static void addquoted(lua_State* L, char* buffer, size_t bufferSize, int arg) {
+    size_t l;
+    const char* s = luaL_checklstring(L, arg, &l);
+    addchar(buffer, bufferSize, '"');
+    while (l--) {
+        switch (*s) {
+        case '"':
+        case '\\':
+        case '\n': {
+            addchar(buffer, bufferSize, '\\');
+            addchar(buffer, bufferSize, *s);
+            break;
+        }
+        case '\r': {
+            addstring(buffer, bufferSize, "\\r");
+            break;
+        }
+        case '\0': {
+            addstring(buffer, bufferSize, "\\000");
+            break;
+        }
+        default: {
+            addchar(buffer, bufferSize, *s);
+            break;
+        }
+        }
+        s++;
+    }
+    addchar(buffer, bufferSize, '"');
+}
+
+#define FORMAT_FLAGS "-+ #0"
+
+static const char* scanformat(lua_State* L, const char* strfrmt, char* form) {
+    const char* flags = "-+ #0";
+    const char* p = strfrmt;
+
+    while (*p != '\0' && SStrChrR(FORMAT_FLAGS, *p) != NULL) {
+        p++; /* skip flags */
+    }
+
+    if ((size_t)(p - strfrmt) >= sizeof(FORMAT_FLAGS)) {
+        luaL_error(L, "invalid format (repeated flags)");
+    }
+
+    if (isdigit((unsigned char)(*p))) {
+        p++; /* skip width */
+    }
+
+    if (isdigit((unsigned char)(*p))) {
+        p++; /* (2 digits at most) */
+    }
+
+    if (*p == '.') {
+        p++;
+        if (isdigit((unsigned char)(*p))) {
+            p++; /* skip precision */
+        }
+        if (isdigit((unsigned char)(*p))) {
+            p++; /* (2 digits at most) */
+        }
+    }
+    if (isdigit((unsigned char)(*p))) {
+        luaL_error(L, "invalid format (width or precision too long)");
+    }
+
+    *(form++) = '%';
+    strncpy(form, strfrmt, p - strfrmt + 1);
+    form += p - strfrmt + 1;
+    *form = '\0';
+    return p;
+}
+
+static void addintlen(char* form) {
+    size_t l = SStrLen(form);
+    char spec = form[l - 1];
+    strcpy(form + l - 1, LUA_INTFRMLEN);
+    form[l + sizeof(LUA_INTFRMLEN) - 2] = spec;
+    form[l + sizeof(LUA_INTFRMLEN) - 1] = '\0';
+}
+
+void FrameScript_Sprintf(lua_State* L, int startIndex, char* buffer, uint32_t bufferSize) {
+    // maximum size of each formatted item (> len(format('%99.99f', -1e308)))
+    const size_t MAX_ITEM = 512;
+
+    // maximum size of each format specification (such as '%-099.99d')
+    // (+10 accounts for %99.99x plus margin of error)
+    const size_t MAX_FORMAT = sizeof(FORMAT_FLAGS) + sizeof(LUA_INTFRMLEN) + 10;
+
+    int arg = startIndex;
+    size_t sfl;
+    const char* strfrmt = luaL_checklstring(L, arg, &sfl);
+    const char* strfrmt_end = strfrmt + sfl;
+    while (strfrmt < strfrmt_end) {
+        if (*strfrmt != '%') {
+            addchar(buffer, bufferSize, *strfrmt++);
+        } else if (*++strfrmt == '%') {
+            addchar(buffer, bufferSize, *strfrmt++); /* %% */
+        } else {                      /* format item */
+            char form[MAX_FORMAT];  /* to store the format (`%...') */
+            char buff[MAX_ITEM];    /* to store the formatted item */
+            arg++;
+            strfrmt = scanformat(L, strfrmt, form);
+            switch (*strfrmt++) {
+            case 'c': {
+                sprintf(buff, form, (int)luaL_checknumber(L, arg));
+                break;
+            }
+            case 'd':
+            case 'i': {
+                addintlen(form);
+                sprintf(buff, form, (LUA_INTFRM_T)luaL_checknumber(L, arg));
+                break;
+            }
+            case 'o':
+            case 'u':
+            case 'x':
+            case 'X': {
+                addintlen(form);
+                sprintf(buff, form, (unsigned LUA_INTFRM_T)luaL_checknumber(L, arg));
+                break;
+            }
+            case 'e':
+            case 'E':
+            case 'f':
+            case 'g':
+            case 'G': {
+                sprintf(buff, form, (double)luaL_checknumber(L, arg));
+                break;
+            }
+            case 'q': {
+                addquoted(L, buffer, bufferSize, arg);
+                continue; /* skip the 'addsize' at the end */
+            }
+            case 's': {
+                size_t l;
+                const char* s = luaL_checklstring(L, arg, &l);
+                if (!strchr(form, '.') && l >= 100) {
+                    /* no precision and string is too long to be formatted;
+                       keep original string */
+                    continue; /* skip the `addsize' at the end */
+                } else {
+                    sprintf(buff, form, s);
+                    break;
+                }
+            }
+            default: { /* also treat cases `pnLlh' */
+                luaL_error(L, "invalid option " LUA_QL("%%%c") " to " LUA_QL("format"), *(strfrmt - 1));
+            }
+            }
+            addstring(buffer, bufferSize, buff);
         }
     }
 }

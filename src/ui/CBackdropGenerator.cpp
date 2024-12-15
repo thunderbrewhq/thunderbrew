@@ -152,6 +152,13 @@ void CBackdropGenerator::LoadXML(XMLNode* node, CStatus* status) {
     }
 }
 
+void CBackdropGenerator::SetVertexColor(const CImVector& color) {
+    this->m_color = color;
+    if (this->m_backgroundTexture) {
+        this->m_backgroundTexture->SetVertexColor(color);
+    }
+}
+
 void CBackdropGenerator::SetBorderVertexColor(const CImVector& borderColor) {
     this->m_borderColor = borderColor;
 

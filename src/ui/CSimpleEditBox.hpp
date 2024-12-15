@@ -98,6 +98,7 @@ class CSimpleEditBox : public CSimpleFrame, CSimpleFontedFrame {
         void RunOnEditFocusGainedScript();
         void RunOnEditFocusLostScript();
         void RunOnEnterPressedScript();
+        void RunOnTabPressedScript();
         void RunOnTextChangedScript(int32_t changed);
         void SetCursorPosition(int32_t position);
         void SetHistoryLines(int32_t a2);

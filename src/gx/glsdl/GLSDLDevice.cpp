@@ -1578,7 +1578,7 @@ GLTexture* GLSDLDevice::CreateTextureCubeMap(uint32_t size, uint32_t numMipMap, 
 }
 
 void GLSDLDevice::Draw(GLEnum primitive, uint32_t a3, uint32_t a4) {
-    // TODO
+    this->GLSDLDraw(primitive, a3, a3 + a4, 0, 0, 0);
 }
 
 void GLSDLDevice::DrawIndexed(GLEnum primitive, uint32_t a3, uint32_t a4, uint32_t a5, uint32_t a6, uint32_t count) {

@@ -871,6 +871,11 @@ int32_t CSimpleEditBox::OnLayerKeyDown(const CKeyEvent& evt) {
             return 1;
         }
 
+        case KEY_TAB: {
+            // TODO correct implementation
+            this->RunOnTabPressedScript();
+        }
+
         // TODO
         // - remaining keys
 
@@ -991,6 +996,12 @@ void CSimpleEditBox::RunOnEditFocusLostScript() {
 void CSimpleEditBox::RunOnEnterPressedScript() {
     if (this->m_onEnterPressed.luaRef) {
         this->RunScript(this->m_onEnterPressed, 0, 0);
+    }
+}
+
+void CSimpleEditBox::RunOnTabPressedScript() {
+    if (this->m_onTabPressed.luaRef) {
+        this->RunScript(this->m_onTabPressed, 0, 0);
     }
 }
 

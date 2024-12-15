@@ -100,6 +100,8 @@ void FrameScript_SignalEvent(uint32_t index, const char* format, ...);
 
 void FrameScript_UnregisterScriptEvent(FrameScript_Object* object, FrameScript_EventObject* event);
 
+void FrameScript_Sprintf(lua_State* L, int startIndex, char* buffer, uint32_t bufferSize);
+
 void GlueScriptEventsInitialize();
 
 void ScriptEventsInitialize();

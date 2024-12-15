@@ -539,7 +539,10 @@ int32_t OsWindowProc(void* window, uint32_t message, uintptr_t wparam, intptr_t 
         uint32_t character = wparam;
 
         if (wparam >= 128) {
-            // TODO
+            // Workaround
+            wchar_t u16_character = 0;
+            ::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, reinterpret_cast<char*>(&wparam), 1, &u16_character, 1);
+            character = u16_character;
         }
 
         OsQueuePut(OS_INPUT_CHAR, character, LOWORD(lparam), 0, 0);

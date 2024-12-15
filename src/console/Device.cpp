@@ -274,6 +274,7 @@ void ConsoleDeviceInitialize(const char* title) {
     s_requestedFormat.hwTnL = true;
 
     // TODO
+    s_requestedFormat.hwCursor = true;
 
     CGxFormat format;
     memcpy(&format, &s_requestedFormat, sizeof(s_requestedFormat));

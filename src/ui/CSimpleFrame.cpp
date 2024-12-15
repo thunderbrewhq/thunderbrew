@@ -1327,7 +1327,19 @@ void CSimpleFrame::SetBeingScrolled(int32_t a2, int32_t a3) {
 }
 
 void CSimpleFrame::SetFrameAlpha(uint8_t alpha) {
-    // TODO
+    if (this->m_alpha == alpha) {
+        return;
+    }
+
+    this->m_alpha = alpha;
+
+    for (auto region = this->m_regions.Head(); region; region = this->m_regions.Link(region)->Next()) {
+        region->OnColorChanged(true);
+    }
+
+    for (auto child = this->m_children.Head(); child; child = this->m_children.Link(child)->Next()) {
+        child->frame->SetFrameAlpha(alpha);
+    }
 }
 
 void CSimpleFrame::SetFrameFlag(int32_t flag, int32_t on) {

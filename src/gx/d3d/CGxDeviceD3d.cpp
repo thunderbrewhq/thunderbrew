@@ -334,11 +334,17 @@ LRESULT CGxDeviceD3d::WindowProcD3d(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
     case WM_SETCURSOR: {
         if (device) {
-            if (device->m_d3dDevice && lParam == 1) {
+            if (device->m_d3dDevice && LOWORD(lParam) == HTCLIENT) {
                 SetCursor(nullptr);
                 BOOL show = device->m_cursorVisible && device->m_hardwareCursor ? TRUE : FALSE;
                 device->m_d3dDevice->ShowCursor(show);
+            } else {
+                // Uncomment when the "glove" cursor will be fixed
+                //break;
             }
+        } else {
+            // Uncomment when the "glove" cursor will be fixed
+            //break;
         }
 
         return 1;
@@ -488,8 +494,7 @@ int32_t CGxDeviceD3d::DeviceSetFormat(const CGxFormat& format) {
 
     if (this->ICreateWindow(createFormat) && this->ICreateD3dDevice(createFormat) && this->CGxDevice::DeviceSetFormat(format)) {
         this->intF64 = 1;
-
-        // TODO
+        this->m_hwCursorNeedsUpdate = 1;
 
         if (this->m_format.window == 0) {
             RECT windowRect;
@@ -1102,6 +1107,17 @@ void CGxDeviceD3d::IRsSendToHw(EGxRenderState which) {
         break;
     }
 
+    case GxRs_Lighting: {
+        int32_t lightingEnable = 0;
+
+        if (this->MasterEnable(GxMasterEnable_Lighting)) {
+            lightingEnable = static_cast<int32_t>(state->m_value);
+        }
+
+        this->m_d3dDevice->SetRenderState(D3DRS_LIGHTING, lightingEnable);
+        break;
+    }
+
     case GxRs_DepthTest:
     case GxRs_DepthFunc: {
         auto depthTest = static_cast<uint32_t>((&this->m_appRenderStates[GxRs_DepthTest])->m_value);
@@ -1247,6 +1263,11 @@ void CGxDeviceD3d::CursorSetVisible(int32_t visible) {
             this->m_d3dDevice->ShowCursor(this->m_cursorVisible);
         }
     }
+}
+
+void CGxDeviceD3d::CursorUnlock(uint32_t x, uint32_t y) {
+    CGxDevice::CursorUnlock(x, y);
+    this->m_hwCursorNeedsUpdate = 1;
 }
 
 void CGxDeviceD3d::ICursorDraw() {

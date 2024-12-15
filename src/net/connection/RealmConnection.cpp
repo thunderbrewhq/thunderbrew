@@ -110,7 +110,7 @@ int32_t RealmConnection::HandleAuthChallenge(AuthenticationChallenge* challenge)
     // TODO switch to WDataStore
     CDataStore msg;
 
-    uint32_t localChallenge;
+    uint32_t localChallenge = 0;
 
     msg.Put(static_cast<uint32_t>(CMSG_AUTH_SESSION));
 
