@@ -176,11 +176,19 @@ int32_t CSimpleEditBox_GetTextInsets(lua_State* L) {
 }
 
 int32_t CSimpleEditBox_SetFocus(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CSimpleEditBox::GetObjectType();
+    auto object = static_cast<CSimpleEditBox*>(FrameScript_GetObjectThis(L, type));
+
+    CSimpleEditBox::SetKeyboardFocus(object);
+    return 0;
 }
 
 int32_t CSimpleEditBox_ClearFocus(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CSimpleEditBox::GetObjectType();
+    auto object = static_cast<CSimpleEditBox*>(FrameScript_GetObjectThis(L, type));
+
+    CSimpleEditBox::ClearKeyboardFocus(object, true);
+    return 0;
 }
 
 int32_t CSimpleEditBox_HasFocus(lua_State* L) {

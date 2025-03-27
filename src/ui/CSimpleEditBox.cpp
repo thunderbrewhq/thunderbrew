@@ -79,6 +79,13 @@ void CSimpleEditBox::SetKeyboardFocus(CSimpleEditBox* editBox) {
     editBox->m_dirtyFlags |= 0x4;
 }
 
+void CSimpleEditBox::ClearKeyboardFocus(CSimpleEditBox* editBox, bool) {
+    if (CSimpleEditBox::s_currentFocus == editBox) {
+        CSimpleEditBox::s_currentFocus = nullptr;
+        // TODO: CSimpleEditBox::OnFocusChange
+    }
+}
+
 CSimpleEditBox::CSimpleEditBox(CSimpleFrame* parent) : CSimpleFrame(parent) {
     this->m_autoFocus = 1;
     this->m_multiline = 0;
