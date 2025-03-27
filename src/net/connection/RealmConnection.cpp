@@ -110,8 +110,6 @@ int32_t RealmConnection::HandleAuthChallenge(AuthenticationChallenge* challenge)
     // TODO switch to WDataStore
     CDataStore msg;
 
-    uint32_t localChallenge;
-
     msg.Put(static_cast<uint32_t>(CMSG_AUTH_SESSION));
 
     msg.Put(static_cast<uint32_t>(12340));
@@ -119,7 +117,8 @@ int32_t RealmConnection::HandleAuthChallenge(AuthenticationChallenge* challenge)
     msg.PutString(this->GetLoginData().m_account);
     msg.Put(static_cast<uint32_t>(this->GetLoginData().m_loginServerType));
 
-    // TODO
+    // TODO: uint32_t localChallenge = NTempest::CRandom::uint32_(v11);
+    uint32_t localChallenge = 0;
     msg.Put(localChallenge);
 
     // TODO
