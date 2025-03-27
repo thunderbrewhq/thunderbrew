@@ -2,11 +2,49 @@
 #include "gx/Coordinate.hpp"
 #include "ui/CSimpleFrame.hpp"
 #include "ui/FrameScript.hpp"
+#include "ui/CBackdropGenerator.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <limits>
+
+static int32_t sub_960420(lua_State* L, int idx, CImVector& color) {
+    auto red = lua_tonumber(L, idx++);
+    if (red < 0.0) {
+        red = 0.0;
+    }
+    if (red >= 1.0) {
+        red = 1.0;
+    }
+
+    auto green = lua_tonumber(L, idx++);
+    if (green < 0.0) {
+        green = 0.0;
+    }
+    if (green >= 1.0) {
+        green = 1.0;
+    }
+
+    auto blue = lua_tonumber(L, idx++);
+    if (blue < 0.0) {
+        blue = 0.0;
+    }
+    if (blue >= 1.0) {
+        blue = 1.0;
+    }
+
+    auto alpha = lua_isnumber(L, idx) ? lua_tonumber(L, idx++) : 1.0;
+    if (alpha < 0.0) {
+        alpha = 0.0;
+    }
+    if (alpha >= 1.0) {
+        alpha = 1.0;
+    }
+
+    color.Set(alpha, red, green, blue);
+    return idx;
+}
 
 int32_t CSimpleFrame_GetTitleRegion(lua_State* L) {
     WHOA_UNIMPLEMENTED(0);
@@ -460,7 +498,17 @@ int32_t CSimpleFrame_GetBackdropColor(lua_State* L) {
 }
 
 int32_t CSimpleFrame_SetBackdropColor(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CSimpleFrame::GetObjectType();
+    CSimpleFrame* object = static_cast<CSimpleFrame*>(FrameScript_GetObjectThis(L, type));
+
+    CImVector color;
+    sub_960420(L, 2, color);
+
+    if (object->m_backdrop) {
+        object->m_backdrop->SetVertexColor(color);
+    }
+
+    return 0;
 }
 
 int32_t CSimpleFrame_GetBackdropBorderColor(lua_State* L) {
@@ -468,7 +516,17 @@ int32_t CSimpleFrame_GetBackdropBorderColor(lua_State* L) {
 }
 
 int32_t CSimpleFrame_SetBackdropBorderColor(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CSimpleFrame::GetObjectType();
+    CSimpleFrame* object = static_cast<CSimpleFrame*>(FrameScript_GetObjectThis(L, type));
+
+    CImVector color;
+    sub_960420(L, 2, color);
+
+    if (object->m_backdrop) {
+        object->m_backdrop->SetBorderVertexColor(color);
+    }
+
+    return 0;
 }
 
 int32_t CSimpleFrame_SetDepth(lua_State* L) {
