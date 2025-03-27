@@ -455,6 +455,173 @@ lua_State* FrameScript_GetContext(void) {
     return FrameScript::s_context;
 }
 
+char* FrameScript_Sprintf(lua_State* L, int32_t idx, char* buffer, uint32_t size) {
+    size_t formatLength = 0;
+    const char* format = luaL_checklstring(L, idx, &formatLength);
+    const char* formatEnd = format + formatLength;
+
+    char* result = buffer;
+
+    if (format >= formatEnd) {
+        *buffer = '\0';
+        return result;
+    }
+
+    
+    int32_t currentIndex = idx;
+
+    while (size > 1) {
+        char character = *format++;
+        if (character == '%') {
+            char argument = *format;
+            if (argument == '%') {
+                *buffer++ = '%';
+                ++format;
+                --size;
+            } else {
+                char subformat[128] = {};
+                subformat[0] = '%';
+
+                if (argument >= '0' && argument <= '9' && format[1] == '$') {
+                    currentIndex = argument + idx - '1';
+                    format += 2;
+                }
+                ++currentIndex;
+
+                const char* subformatStart = format;
+
+                while (true) {
+                    char flag = *format;
+                    if (flag != '-' && flag != '+' && flag != ' ' && flag != '#' && flag != '0') {
+                        break;
+                    }
+                    ++format;
+                }
+
+                for (char ch = *format; ch >= '0'; ch = *++format) {
+                    if (ch > '9') {
+                        break;
+                    }
+                }
+
+                if (*format == '.') {
+                    ++format;
+                }
+
+                if (*format == '-') {
+                    ++format;
+                }
+
+                for (char ch = *format; ch >= '0'; ch = *++format) {
+                    if (ch > '9') {
+                        break;
+                    }
+                }
+
+                size_t subformatSize = format - subformatStart;
+                if (subformatSize > 125) {
+                    luaL_error(L, "invalid format (width or precision too long)");
+                }
+
+                char specifier = *format++;
+
+                memcpy(&subformat[1], subformatStart, subformatSize + 1);
+                subformat[subformatSize + 2] = '\0'; // Warning: possibility of buffer overrun
+
+                switch (specifier) {
+                case 'E':
+                case 'G':
+                case 'e':
+                case 'f':
+                case 'g': {
+                    double number = luaL_checknumber(L, currentIndex);
+                    size_t length = SStrPrintf(buffer, size, subformat, number);
+                    if (length > 0) {
+                        buffer += length;
+                        size -= length;
+                    }
+                    break;
+                }
+
+                case 'F': {
+                    for (auto s = subformat; *s; ++s) {
+                        if (*s == 'F') {
+                            *s = 'f';
+                        }
+                    }
+                    double number = luaL_checknumber(L, currentIndex);
+                    size_t length = SStrPrintf(buffer, size, subformat, number);
+                    if (length > 0) {
+                        // TODO: lua_convertdecimal(buffer)
+                        buffer += length;
+                        size -= length;
+                    }
+                    break;
+                }
+
+                case 'X':
+                case 'o':
+                case 'u':
+                case 'x': {
+                    auto number = static_cast<uint64_t>(luaL_checknumber(L, currentIndex));
+                    size_t length = SStrPrintf(buffer, size, subformat, number);
+                    if (length > 0) {
+                        buffer += length;
+                        size -= length;
+                    }
+                    break;
+                }
+
+                case 'c': {
+                    auto number = static_cast<int32_t>(luaL_checknumber(L, currentIndex));
+                    *buffer++ = static_cast<char>(number);
+                    --size;
+                    break;
+                }
+
+                case 'd':
+                case 'i': {
+                    auto number = static_cast<int32_t>(luaL_checknumber(L, currentIndex));
+                    size_t length = SStrPrintf(buffer, size, subformat, number);
+                    if (length > 0) {
+                        // TODO: lua_convertdecimal(buffer)
+                        buffer += length;
+                        size -= length;
+                    }
+                    break;
+                }
+
+                case 's': {
+                    size_t stringLength = 0;
+                    auto string = luaL_checklstring(L, currentIndex, &stringLength);
+                    size_t length = SStrPrintf(buffer, size, subformat, string);
+                    if (length > 0) {
+                        buffer += length;
+                        size -= length;
+                    }
+                    break;
+                }
+
+                default: {
+                    luaL_error(L, "invalid option in `format'");
+                }
+
+                }
+            }
+        } else {
+            *buffer++ = character;
+            --size;
+        }
+
+        if (format >= formatEnd) {
+            break;
+        }
+    }
+
+    *buffer = '\0';
+    return result;
+}
+
 const char* FrameScript_GetCurrentObject(lua_State* L, int32_t a2) {
     lua_Debug info;
 

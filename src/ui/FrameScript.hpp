@@ -80,6 +80,8 @@ void FrameScript_GetColor(lua_State* L, int32_t idx, CImVector& color);
 
 lua_State* FrameScript_GetContext();
 
+char* FrameScript_Sprintf(lua_State * L, int32_t idx, char* buffer, uint32_t size);
+
 const char* FrameScript_GetCurrentObject(lua_State* L, int32_t a2);
 
 char const* FrameScript_GetText(const char* a1, int32_t count, FRAMESCRIPT_GENDER gender);
