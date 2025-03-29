@@ -24,6 +24,7 @@
 
 CVar* Client::g_accountListVar;
 HEVENTCONTEXT Client::g_clientEventContext;
+char Client::g_currentLocaleName[5] = {};
 
 void AsyncFileInitialize() {
     // TODO
@@ -158,12 +159,17 @@ void SetPaths() {
     OsSetCurrentDirectory(datadir);
 }
 
+bool LocaleChangedCallback(CVar*, const char*, const char* value, void*) {
+    SStrCopy(Client::g_currentLocaleName, value, sizeof(Client::g_currentLocaleName));
+    return true;
+}
+
 int32_t InitializeGlobal() {
-    // TODO
-
     ProcessCommandLine();
+    SetPaths();
 
-    // sub_403600("WoW.mfil");
+    // TODO:
+    // WowConfigureFileSystem::ReadBuildKeyFromFile("WoW.mfil");
 
     // if (dword_B2FA10 != 2) {
     //     sub_403560();
@@ -175,42 +181,70 @@ int32_t InitializeGlobal() {
     //     LOBYTE(v24) = OsDirectoryExists((int)"WTF/Account") == 0;
     // }
 
-    // ClientServices::LoadCDKey();
-
-    SetPaths();
-
-    OpenArchives();
+    ClientServices::LoadCDKey();
 
     ConsoleInitializeClientCommand();
-
     ConsoleInitializeClientCVar("Config.wtf");
-
-    // TODO
-    // replace enUS with detected locale
-    ClientServices::InitLoginServerCVars(1, "enUS");
-
-    // sub_7663F0();
+    // TODO: CVar::ArchiveCodeRegisteredOnly();
 
     // v18 = 0;
     // v19 = 0;
     // ptr = 0;
     // v21 = 0;
 
-    // sub_406740(&v18, &CVar::Load);
+    // ::ForEveryRunOnceWTF::Execute(&v18, &CVar::Load);
 
     // if (ptr) {
     //     SMemFree(ptr, a_pad, -2, 0);
     // }
 
-    // CVar::Register("dbCompress", "Database compression", 0, "-1", 0, 5, 0, 0, 0);
+    CVar::Register(
+        "dbCompress",
+        "Database compression",
+        0,
+        "-1",
+        nullptr,
+        CATEGORY::DEFAULT,
+        false,
+        nullptr,
+        false
+    );
 
-    // v2 = CVar::Register("locale", "Set the game locale", 0, "****", &LocaleChangedCallback, 5, 0, 0, 0);
+    CVar* locale = CVar::Register(
+        "locale",
+        "Set the game locale",
+        0,
+        "****",
+        &LocaleChangedCallback,
+        CATEGORY::DEFAULT,
+        false,
+        nullptr,
+        false
+    );
 
-    // if (!SStrCmp(v2->m_stringValue.m_str, "****", 0x7FFFFFFFu)) {
-    //     CVar::Set(v2, "enUS", 1, 0, 0, 1);
-    // }
+    if (!SStrCmp(locale->GetString(), "****", STORM_MAX_STR)) {
+        locale->Set("enUS", true, false, false, true);
+    }
 
-    // CVar::Register("useEnglishAudio", "override the locale and use English audio", 0, "0", 0, 5, 0, 0, 0);
+    CVar::Register(
+        "useEnglishAudio",
+        "override the locale and use English audio",
+        0,
+        "0",
+        nullptr,
+        CATEGORY::DEFAULT,
+        false,
+        nullptr,
+        false
+    );
+
+
+    OpenArchives();
+
+    // TODO
+    // replace enUS with detected locale
+    ClientServices::InitLoginServerCVars(1, locale->GetString());
+
 
     // if (sub_422140()) {
     //     sub_4036B0(v24, 0, a2, (int)v2, (char)v24);
@@ -343,19 +377,36 @@ int32_t InitializeGlobal() {
 void CommonMain() {
     StormInitialize();
 
-    // TODO
-    // - error log setup
-    // - misc other setup
+    // TODO:
+    // SErrCatchUnhandledExceptions();
+    // OsSystemInitialize("Blizzard Entertainment World of Warcraft", 0);
+    // int option = 1;
+    // StormSetOption(10, &option, sizeof(option));
+    // StormSetOption(11, &option, sizeof(option));
+    // OsSystemEnableCpuLog();
+
+    // SetPaths() moved into InitializeGlobal()
+
+    // int sendErrorLogs = 1;
+    // if (!SRegLoadValue("World of Warcraft\\Client", "SendErrorLogs", 0, &sendErrorLogs)) {
+    //     sendErrorLogs = 1;
+    //     SRegSaveValue("World of Warcraft\\Client", "SendErrorLogs", 0, sendErrorLogs);
+    // }
+
+    // SErrSetLogTitleString("World of WarCraft (build 12340)");
+    // SErrSetLogTitleCallback(WowLogHeader);
+    // if (sendErrorLogs) {
+    //     SErrRegisterHandler(SendErrorLog);
+    // }
 
     if (InitializeGlobal()) {
         EventDoMessageLoop();
-
-        // TODO
-        // sub_406B70();
+        // TODO: DestroyGlobal();
     }
 
-    // TODO
-    // - misc cleanup
+    // TODO:
+    // StormDestroy();
+    // Misc Cleanup
 }
 
 void BlizzardAssertCallback(const char* a1, const char* a2, const char* a3, uint32_t a4) {

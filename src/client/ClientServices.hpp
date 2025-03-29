@@ -45,6 +45,7 @@ class ClientServices : public LoginResponse {
         static void InitLoginServerCVars(int32_t overwrite, const char* locale);
         static const char* GetDefaultRealmlistString();
         static const char* GetDefaultPatchListString();
+        static bool LoadCDKey();
 
         // Virtual member functions
         virtual int32_t GetLoginServerType();
