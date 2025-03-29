@@ -589,3 +589,24 @@ void FrameXML_StoreHashNode(XMLNode* node, const char* name, const char* a3, CSt
         status->Add(STATUS_INFO, "-- Added virtual frame %s", name);
     }
 }
+
+int32_t FrameXML_GuessNumFiles(const char* data) {
+    int32_t result = 0;
+    while (*data) {
+        while (*data == '\r' || *data == '\n') {
+            ++data;
+        }
+        if (!*data) {
+            break;
+        }
+        char v3 = *data;
+        if (v3 != '#')
+            ++result;
+        while (v3 != '\r' && v3 != '\n') {
+            v3 = *++data;
+            if (!v3)
+                return result;
+        }
+    }
+    return result;
+}

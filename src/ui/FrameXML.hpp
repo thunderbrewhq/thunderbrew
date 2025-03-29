@@ -52,4 +52,6 @@ void FrameXML_ReleaseHashNode(const char* name);
 
 void FrameXML_StoreHashNode(XMLNode* node, const char* name, const char* a3, CStatus* status);
 
+int32_t FrameXML_GuessNumFiles(const char* data);
+
 #endif

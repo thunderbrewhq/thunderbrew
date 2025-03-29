@@ -6,6 +6,10 @@
 #include "gx/Texture.hpp"
 #include <cstdint>
 
+
+float CalculateAspectRatio();
+
+
 class CSimpleTop;
 
 class CGlueMgr {
