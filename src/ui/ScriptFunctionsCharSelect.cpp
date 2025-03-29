@@ -76,7 +76,7 @@ int32_t Script_GetCharacterInfo(lua_State* L) {
     lua_pushstring(L, raceName ? raceName : "");
 
     // TODO: auto className = CGUnit_C::GetDisplayClassNameFromRecord(g_chrClassesDB.GetRecord(character.classID), character.sexID);
-    auto className = "ClassName";
+    auto className = "Warrior";
     lua_pushstring(L, className ? className : "");
 
     lua_pushnumber(L, character.experienceLevel);
@@ -150,16 +150,23 @@ int32_t Script_GetSelectBackgroundModel(lua_State* L) {
         return luaL_error(L, "Usage: GetSelectBackgroundModel(index)");
     }
 
-    auto characterIndex = static_cast<int32_t>(lua_tonumber(L, 1)) - 1;
+    auto index = static_cast<int32_t>(lua_tonumber(L, 1)) - 1;
+
+    // TODO: if (SFile::IsTrial())
+    if (false) {
+        lua_pushstring(L, "CharacterSelect");
+        return 1;
+    }
 
     // TODO
 
     ChrRacesRec* racesRec = nullptr;
 
-    if (characterIndex < 0 || characterIndex >= CCharacterSelection::s_characterList.Count()) {
+    if (index < 0 || index >= CCharacterSelection::s_characterList.Count()) {
         racesRec = g_chrRacesDB.GetRecord(2);
     } else {
-        // TODO
+        auto raceID = CCharacterSelection::s_characterList[index].m_characterInfo.raceID;
+        racesRec = g_chrRacesDB.GetRecord(raceID);
     }
 
     if (racesRec) {
