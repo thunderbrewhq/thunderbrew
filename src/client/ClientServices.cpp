@@ -66,6 +66,14 @@ ClientServices* ClientServices::GetInstance() {
     return ClientServices::s_instance;
 }
 
+void ClientServices::GetRealmList() {
+    // TODO
+}
+
+void ClientServices::GetCharacterList() {
+    // TODO
+}
+
 REALM_INFO* ClientServices::GetRealmInfoByIndex(int32_t index) {
     if (index >= ClientServices::GetInstance()->m_realmList.Count()) {
         return nullptr;

@@ -5,7 +5,7 @@
 #include "ui/Types.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
-#include <cstdint>
+#include "glue/CGlueMgr.hpp"
 
 int32_t Script_SetCharSelectModelFrame(lua_State* L) {
     if (!lua_isstring(L, 1)) {
@@ -35,7 +35,10 @@ int32_t Script_SetCharSelectBackground(lua_State* L) {
 }
 
 int32_t Script_GetCharacterListUpdate(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO: CCharSelectInfo::ClearCharacterModel();
+    // TODO: CCharSelectInfo::ClearPetModel();
+    CGlueMgr::GetCharacterList();
+    return 0;
 }
 
 int32_t Script_GetNumCharacters(lua_State* L) {

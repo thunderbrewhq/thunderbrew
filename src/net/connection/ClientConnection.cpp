@@ -2,6 +2,7 @@
 #include "net/Login.hpp"
 #include "client/ClientServices.hpp"
 #include "ui/FrameScript.hpp"
+#include <storm/Error.hpp>
 
 const char* s_errorCodeTokens[] = {
     "RESPONSE_SUCCESS",
@@ -109,6 +110,13 @@ const char* s_errorCodeTokens[] = {
     "CHAR_NAME_RUSSIAN_SILENT_CHARACTER_AT_BEGINNING_OR_END",
     "CHAR_NAME_DECLENSION_DOESNT_MATCH_BASE_NAME",
 };
+
+void ClientConnection::AccountLogin(const char* name, const char* password, int32_t region, int32_t locale) {
+    STORM_ASSERT(this->m_statusComplete == 1);
+    STORM_ASSERT(name);
+    STORM_ASSERT(password);
+    this->Initiate(COP_AUTHENTICATE, 11, nullptr);
+}
 
 void ClientConnection::AccountLogin_Finish(int32_t errorCode) {
     this->Complete(errorCode == 12, errorCode);

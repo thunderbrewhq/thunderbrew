@@ -59,6 +59,7 @@ int32_t CGlueMgr::m_lastLoginResult;
 int32_t CGlueMgr::m_lastLoginState;
 int32_t CGlueMgr::m_loginResult;
 int32_t CGlueMgr::m_loginState;
+int32_t CGlueMgr::m_matrixChallengeCount;
 int32_t CGlueMgr::m_matrixRemaining;
 int32_t CGlueMgr::m_reconnect;
 int32_t CGlueMgr::m_reload;
@@ -68,6 +69,13 @@ float CGlueMgr::m_screenWidth;
 int32_t CGlueMgr::m_showedDisconnect;
 CSimpleTop* CGlueMgr::m_simpleTop;
 int32_t CGlueMgr::m_suspended;
+
+int32_t CGlueMgr::m_surveyTimer;
+int32_t CGlueMgr::m_executedSurvey;
+int32_t CGlueMgr::m_surveyDownload;
+int32_t CGlueMgr::m_patchDownload;
+bool CGlueMgr::m_deleteLocalPatch;
+
 
 float CalculateAspectRatio() {
     auto widescreenVar = CVar::Lookup("widescreen");
@@ -199,6 +207,25 @@ int32_t CGlueMgr::HandleDisplaySizeChanged(const CSizeEvent& event) {
     return 1;
 }
 
+void CGlueMgr::GetRealmList(bool showProgress) {
+    CGlueMgr::m_idleState = IDLE_REALM_LIST;
+    CGlueMgr::m_showedDisconnect = 0;
+    if (showProgress) {
+        auto text = FrameScript_GetText("REALM_LIST_IN_PROGRESS", -1, FRAMESCRIPT_GENDER::GENDER_NOT_APPLICABLE);
+        FrameScript_SignalEvent(3, "%s%s", "CANCEL", text);
+    }
+    ClientServices::GetRealmList();
+}
+
+void CGlueMgr::GetCharacterList() {
+    if (CGlueMgr::m_idleState != IDLE_WORLD_LOGIN) {
+        CGlueMgr::m_idleState = IDLE_CHARACTER_LIST;
+        auto text = FrameScript_GetText("CHAR_LIST_RETRIEVING", -1, GENDER_NOT_APPLICABLE);
+        FrameScript_SignalEvent(3, "%s%s", "CANCEL", text);
+        ClientServices::GetCharacterList();
+    }
+}
+
 // TODO a1: const EVENT_DATA_IDLE*
 int32_t CGlueMgr::Idle(const void* a1, void* a2) {
     // TODO:
@@ -264,6 +291,25 @@ int32_t CGlueMgr::Idle(const void* a1, void* a2) {
 
     case IDLE_ACCOUNT_LOGIN: {
         CGlueMgr::PollAccountLogin(errorCode, msg, complete, result, op);
+        break;
+    }
+
+    case IDLE_CHARACTER_LIST: {
+        CGlueMgr::PollCharacterList(errorCode, msg, complete, result, op);
+        break;
+    }
+
+    case IDLE_12: {
+        if (CGlueMgr::m_patchDownload) {
+            CGlueMgr::PatchDownloadIdle();
+        } else if (CGlueMgr::m_surveyDownload) {
+            CGlueMgr::SurveyDownloadIdle();
+        }
+        break;
+    }
+
+    case IDLE_13: {
+        CGlueMgr::PollUserSurvey();
         break;
     }
 
@@ -397,14 +443,15 @@ void CGlueMgr::PollAccountLogin(int32_t errorCode, const char* msg, int32_t comp
     if (result == 0) {
         if (errorCode != 2) {
             // TODO
+            // Select Error Description with or without URL
         }
 
         CGlueMgr::m_idleState = IDLE_NONE;
         CGlueMgr::m_showedDisconnect = 0;
 
         if (errorCode == 2) {
-            // TODO CGlueMgr::m_disconnectPending = 1;
-            // TODO ClientServices::Connection()->Disconnect();
+            CGlueMgr::m_disconnectPending = 1;
+            ClientServices::Connection()->Disconnect();
         }
 
         if (errorCode != 13) {
@@ -414,7 +461,7 @@ void CGlueMgr::PollAccountLogin(int32_t errorCode, const char* msg, int32_t comp
                 FrameScript_SignalEvent(5, nullptr);
                 CRealmList::UpdateList();
             } else {
-                // TODO
+                CGlueMgr::GetRealmList(true);
             }
 
             return;
@@ -429,10 +476,12 @@ void CGlueMgr::PollAccountLogin(int32_t errorCode, const char* msg, int32_t comp
     }
 
     if (op == COP_CONNECT) {
-        // TODO
-
+        // TODO: Correct arguments (they're not used inside method)
+        ClientServices::Connection()->AccountLogin("", "", 0, 0);
         return;
     }
+
+    CGlueMgr::SetScreen("charselect");
 }
 
 void CGlueMgr::PollLoginServerLogin() {
@@ -452,32 +501,53 @@ void CGlueMgr::PollLoginServerLogin() {
 
     switch (CGlueMgr::m_loginState) {
     case LOGIN_STATE_FAILED: {
-        // TODO
-
+        ClientServices::LoginConnection()->Logoff();
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
         break;
     }
 
     case LOGIN_STATE_DOWNLOADFILE: {
         // TODO
-
+        // Get String from Server's answer
+        // v14 = (char *)(ClientServices::LoginConnection() + 3928);
+        const char* v14 = "";
+        if (!SStrCmpI(v14, "Patch", STORM_MAX_STR)) {
+            CGlueMgr::PatchDownloadStart();
+        }
+        if (!SStrCmpI(v14, "Survey", STORM_MAX_STR)) {
+            CGlueMgr::SurveyDownloadStart();
+        }
         break;
     }
 
     case LOGIN_STATE_PIN: {
+        FrameScript_SignalEvent(5, nullptr);
         // TODO
-
+        // Calling GruntLogin::GetPinInfo
+        // v9 = (unsigned __int8 *)(*(int (__thiscall **)(int))(*(_DWORD *)v8 + 136))(v8);
+        int32_t v9[10] = {};
+        FrameScript_SignalEvent(26, "%d%d%d%d%d%d%d%d%d%d", v9[0], v9[1], v9[2], v9[3], v9[4], v9[5], v9[6], v9[7], v9[8], v9[9]);
+        CGlueMgr::m_loginState = LOGIN_STATE_PIN_WAIT;
         break;
     }
 
     case LOGIN_STATE_MATRIX: {
         // TODO
-
+        // Calling GruntLogin::GetMatrixInfo
+        // (*(void (__thiscall **)(int, int *, int *, int *, int *, unsigned __int8 *, _DWORD **))(*(_DWORD *)v10 + 160))(v10, &v73, &v69, &v72, &v70, &v77, &v75);
+        CGlueMgr::m_matrixChallengeCount = 0;
+        CGlueMgr::m_matrixRemaining = 0;
+        CGlueMgr::m_loginState = LOGIN_STATE_MATRIX_WAIT;
+        FrameScript_SignalEvent(5, 0);
+        // TODO: FrameScript_SignalEvent(0x1Cu, "%d%d%d%d%b%d", v73, v69, v72, v70, v77, v75);
         break;
     }
 
     case LOGIN_STATE_TOKEN: {
-        // TODO
-
+        CGlueMgr::m_loginState = LOGIN_STATE_TOKEN_WAIT;
+        FrameScript_SignalEvent(5, 0);
+        FrameScript_SignalEvent(38, 0);
         break;
     }
 
@@ -493,6 +563,59 @@ void CGlueMgr::PollLoginServerLogin() {
 
     default:
         break;
+    }
+}
+
+void CGlueMgr::PollCharacterList(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op) {
+    FrameScript_SignalEvent(4, "%s", msg);
+
+    // TODO: if (CGlueMgr::HandleBattlenetDisconnect())
+    if (false) {
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+    }
+
+    if (!complete) {
+        return;
+    }
+
+    if (!result) {
+        if (errorCode == 2) {
+            // TODO CCharacterSelection::ClearCharacterList();
+            CGlueMgr::GetRealmList(true);
+        } else {
+            FrameScript_SignalEvent(3, "%s%s", "OKAY", msg);
+            CGlueMgr::m_idleState = IDLE_NONE;
+            CGlueMgr::m_showedDisconnect = 0;
+        }
+        return;
+    }
+
+    CGlueMgr::m_idleState = IDLE_NONE;
+    CGlueMgr::m_showedDisconnect = 0;
+    FrameScript_SignalEvent(5, nullptr);
+    // TODO: sub_4E4610();
+    if (!CGlueMgr::m_accountMsgAvailable) {
+        return;
+    }
+
+    FrameScript_SignalEvent(34, 0);
+    CGlueMgr::m_accountMsgAvailable = 0;
+}
+
+void CGlueMgr::PollUserSurvey() {
+    if (CGlueMgr::m_surveyDownload && false /* virtual call */) {
+        if (CGlueMgr::m_executedSurvey) {
+            // TODO
+        } else {
+            CGlueMgr::m_executedSurvey = 1;
+            if (CGlueMgr::SurveyExecute()) {
+                auto text = FrameScript_GetText("LOGIN_STATE_SURVEY", -1, FRAMESCRIPT_GENDER::GENDER_NOT_APPLICABLE);
+                FrameScript_SignalEvent(3, "%s%s", "CANCEL", text);
+                CGlueMgr::SurveySendResults();
+                // TODO: CGlueMgr::m_surveyTimer = OsGetAsyncTimeMs();
+            }
+        }
     }
 }
 
@@ -690,13 +813,13 @@ void CGlueMgr::StatusDialogClick() {
         }
 
         case IDLE_ACCOUNT_LOGIN:
-        case IDLE_3: {
+        case IDLE_CHARACTER_LIST: {
             ClientServices::Connection()->Cancel(2);
 
             break;
         }
 
-        case IDLE_4:
+        case IDLE_REALM_LIST:
         case IDLE_5:
         case IDLE_6:
         case IDLE_10: {
@@ -717,7 +840,7 @@ void CGlueMgr::StatusDialogClick() {
             break;
         }
 
-        case IDLE_11: {
+        case IDLE_WORLD_LOGIN: {
             CGlueMgr::m_showedDisconnect = 0;
             CGlueMgr::m_idleState = IDLE_NONE;
 
@@ -769,4 +892,23 @@ void CGlueMgr::UpdateCurrentScreen(const char* screen) {
     SStrCopy(CGlueMgr::m_currentScreen, screen, sizeof(CGlueMgr::m_currentScreen));
 
     // TODO
+}
+
+void CGlueMgr::SurveyDownloadStart() {
+}
+
+void CGlueMgr::SurveyDownloadIdle() {
+}
+
+bool CGlueMgr::SurveyExecute() {
+    return false;
+}
+
+void CGlueMgr::SurveySendResults() {
+}
+
+void CGlueMgr::PatchDownloadStart() {
+}
+
+void CGlueMgr::PatchDownloadIdle() {
 }

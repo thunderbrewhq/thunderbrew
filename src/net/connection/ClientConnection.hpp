@@ -23,6 +23,7 @@ class ClientConnection : public RealmConnection {
         ClientConnection(RealmResponse* realmResponse)
             : RealmConnection(realmResponse)
             {};
+        void AccountLogin(const char* name, const char* password, int32_t region, int32_t locale);
         void AccountLogin_Finish(int32_t authResult);
         void AccountLogin_Queued();
         void Cancel(int32_t errorCode);
