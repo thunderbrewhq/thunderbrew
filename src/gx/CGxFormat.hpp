@@ -19,6 +19,8 @@ class CGxFormat {
             Formats_Last = 8
         };
 
+        static const char* formatToColorBitsString[Formats_Last];
+
         // Member variables
         bool hwTnL;
         bool hwCursor;

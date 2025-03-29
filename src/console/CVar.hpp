@@ -6,6 +6,8 @@
 #include <storm/Hash.hpp>
 #include <bc/os/File.hpp>
 
+#include "console/Types.hpp"
+
 class CVar : public TSHashObject<CVar, HASHKEY_STRI> {
     public:
         // Static variables
@@ -14,7 +16,17 @@ class CVar : public TSHashObject<CVar, HASHKEY_STRI> {
 
         // Static functions
         static CVar* Lookup(const char* name);
-        static CVar* Register(const char*, const char*, uint32_t, const char*, bool (*)(CVar*, const char*, const char*, void*), uint32_t, bool, void*, bool);
+        static CVar* Register(
+            const char* name,
+            const char* help,
+            uint32_t flags,
+            const char* value,
+            bool (*fcn)(CVar*, const char*, const char*, void*) = nullptr,
+            uint32_t category = CATEGORY::DEFAULT,
+            bool setCommand = false,
+            void* arg = nullptr,
+            bool a9 = false
+        );
         static void  Initialize(const char* filename);
         static int32_t Load(const char* filename);
         static int32_t Load(HOSFILE fileHandle);

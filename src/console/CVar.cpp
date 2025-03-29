@@ -17,7 +17,7 @@ CVar* CVar::Lookup(const char* name) {
         : nullptr;
 }
 
-CVar* CVar::Register(const char* name, const char* help, uint32_t flags, const char* value, bool (*fcn)(CVar*, const char*, const char*, void*), uint32_t category, bool a7, void* arg, bool a9) {
+CVar* CVar::Register(const char* name, const char* help, uint32_t flags, const char* value, bool (*fcn)(CVar*, const char*, const char*, void*), uint32_t category, bool setCommand, void* arg, bool a9) {
     CVar* var = CVar::s_registeredCVars.Ptr(name);
 
     if (var) {
@@ -36,7 +36,7 @@ CVar* CVar::Register(const char* name, const char* help, uint32_t flags, const c
 
         var->Set(value, setValue, setReset, setDefault, false);
 
-        if (!a7) {
+        if (!setCommand) {
             var->m_flags |= 0x80000000;
         }
 
@@ -59,7 +59,7 @@ CVar* CVar::Register(const char* name, const char* help, uint32_t flags, const c
         var->m_arg = arg;
         var->m_help.Copy(help);
 
-        if (a7) {
+        if (setCommand) {
             var->Set(value, true, true, false, false);
         } else {
             var->Set(value, true, false, true, false);
@@ -67,7 +67,7 @@ CVar* CVar::Register(const char* name, const char* help, uint32_t flags, const c
 
         var->m_flags = flags | 0x1;
 
-        if (!a7) {
+        if (!setCommand) {
             var->m_flags |= 0x8000000;
         }
 

@@ -8,6 +8,24 @@
 #include <cstring>
 #include <cstdio>
 
+
+CVar* s_cvGxFixedFunction;
+CVar* s_cvGxWindowResizeLock;
+CVar* s_cvGxVideoOptionsVersion;
+CVar* s_cvGxMaxFPSBk;
+CVar* s_cvGxMaxFPS;
+CVar* s_cvGxOverride;
+CVar* s_cvGxStereoEnabled;
+CVar* s_cvGxFixLag;
+CVar* s_cvGxMultisampleQuality;
+CVar* s_cvGxMultisample;
+CVar* s_cvGxCursor;
+CVar* s_cvGxAspect;
+CVar* s_cvGxVSync;
+CVar* s_cvGxTripleBuffer;
+CVar* s_cvGxRefresh;
+CVar* s_cvGxDepthBits;
+CVar* s_cvGxColorBits;
 CVar* s_cvGxMaximize;
 CVar* s_cvGxResolution;
 CVar* s_cvGxWidescreen;
@@ -43,6 +61,86 @@ EGxApi g_gxApiSupported[] = {
 };
 
 size_t g_numGxApiSupported = sizeof(g_gxApiSupported) / sizeof(EGxApi);
+
+
+bool CVGxWindowResizeLockCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool GxVideoOptionsVersionCallback(CVar*, const char*, const char*, void*) {
+    return true;
+}
+
+bool CVGxMaxFPSBkCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxMaxFPSCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxOverrideCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxStereoEnabledCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxFixLagCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxMultisampleQualityCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxMultisampleCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxCursorCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxAspectCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxVSyncCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxTripleBufferCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxRefreshCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxDepthBitsCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
+
+bool CVGxColorBitsCallback(CVar*, const char*, const char*, void*) {
+    // TODO
+    return true;
+}
 
 bool CVGxMaximizeCallback(CVar*, const char*, const char*, void*) {
     // TODO
@@ -107,92 +205,52 @@ EGxApi GxApiDefault() {
 }
 
 void RegisterGxCVars() {
-    auto& format = s_defaults.format;
+    const auto& format = s_defaults.format;
 
-    // TODO CURRENT_LANGUAGE check?
-    auto v1 = true;
+    // TODO: bool isChinese = s_currentLocaleIndex == 4 (zhCN)
+    bool isChinese = false;
 
-    s_cvGxWidescreen = CVar::Register(
-        "widescreen",
-        "Allow widescreen support",
-        0x0,
-        "1",
-        nullptr,
-        1,
-        false,
-        nullptr,
-        false
-    );
+    const uint32_t graphics = CATEGORY::GRAPHICS;
 
-    s_cvGxWindow = CVar::Register(
-        "gxWindow",
-        "toggle fullscreen/window",
-        0x1 | 0x2,
-        v1 ? "1" : "0",
-        &CVGxWindowCallback,
-        1,
-        0,
-        0,
-        0
-    );
+    s_cvGxWidescreen = CVar::Register("widescreen", "Allow widescreen support", 0x0, "1", nullptr, graphics);
+    s_cvGxWindow = CVar::Register("gxWindow", "toggle fullscreen/window", 0x1 | 0x2, isChinese ? "1" : "0", &CVGxWindowCallback, graphics);
+    s_cvGxMaximize = CVar::Register("gxMaximize", "maximize game window", 0x1 | 0x2, isChinese ? "1" : "0", &CVGxMaximizeCallback, graphics);
 
-    s_cvGxMaximize = CVar::Register(
-        "gxMaximize",
-        "maximize game window",
-        0x1 | 0x2,
-        v1 ? "1" : "0",
-        &CVGxMaximizeCallback,
-        1,
-        0,
-        0,
-        0
-    );
+    char value[260] = {};
+    SStrPrintf(value, sizeof(value), "%s", CGxFormat::formatToColorBitsString[format.colorFormat]);
+    s_cvGxColorBits = CVar::Register("gxColorBits", "color bits", 0x1 | 0x2, value, &CVGxColorBitsCallback, graphics);
 
-    // TODO s_cvGxColorBits
-    // TODO s_cvGxDepthBits
+    SStrPrintf(value, sizeof(value), "%s", CGxFormat::formatToColorBitsString[format.depthFormat]);
+    s_cvGxDepthBits = CVar::Register("gxDepthBits", "depth bits", 0x1 | 0x2, value, &CVGxDepthBitsCallback, graphics);
 
-    char resolution[260];
-    SStrPrintf(resolution, 260, "%dx%d", format.size.x, format.size.y);
-    s_cvGxResolution = CVar::Register(
-        "gxResolution",
-        "resolution",
-        0x1 | 0x2,
-        resolution,
-        &CVGxResolutionCallback,
-        1,
-        false,
-        nullptr,
-        false
-    );
+    SStrPrintf(value, 260, "%dx%d", format.size.x, format.size.y);
+    s_cvGxResolution = CVar::Register("gxResolution", "resolution", 0x1 | 0x2, value, &CVGxResolutionCallback, graphics);
 
-    // TODO s_cvGxRefresh
-    // TODO s_cvGxTripleBuffer
-    // TODO s_cvGxApi
+    s_cvGxRefresh = CVar::Register("gxRefresh", "refresh rate", 0x1 | 0x2, "75", &CVGxRefreshCallback, graphics);
+    s_cvGxTripleBuffer = CVar::Register("gxTripleBuffer", "triple buffer", 0x1 | 0x2, "0", &CVGxTripleBufferCallback, graphics);
+    s_cvGxApi = CVar::Register("gxApi", "graphics api", 0x1 | 0x2, g_gxApiNames[GxApiDefault()], &CVGxApiCallback, graphics);
 
-    s_cvGxApi = CVar::Register(
-        "gxApi",
-        "graphics api",
-        0x1 | 0x2,
-        g_gxApiNames[GxApiDefault()],
-        CVGxApiCallback,
-        1,
-        false,
-        nullptr,
-        false
-    );
+    s_cvGxVSync = CVar::Register("gxVSync", "vsync on or off", 0x1 | 0x2, "1", &CVGxVSyncCallback, graphics);
+    s_cvGxAspect = CVar::Register("gxAspect", "constrain window aspect", 0x1 | 0x2, "1", &CVGxAspectCallback, graphics);
 
-    // TODO s_cvGxVSync
-    // TODO s_cvGxAspect
-    // TODO s_cvGxCursor
-    // TODO s_cvGxMultisample
-    // TODO s_cvGxFixLag
-    // TODO s_cvGxStereoEnabled
-    // TODO s_cvGxOverride
-    // TODO s_cvGxAspect
-    // TODO s_cvGxMaxFPS
-    // TODO s_cvGxMaxFPSBk
-    // TODO s_cvWindowResizeLock
-    // TODO s_cvFixedFunction
+    s_cvGxCursor = CVar::Register("gxCursor", "toggle hardware cursor", 0x1 | 0x2, "1", &CVGxCursorCallback, graphics);
+
+    // TODO: v10 = *(_DWORD*)(dword_CABB60 + 84);
+    int v10 = 0;
+    SStrPrintf(value, sizeof(value), "%d", v10);
+    s_cvGxMultisample = CVar::Register("gxMultisample", "multisample", 0x1 | 0x2, value, &CVGxMultisampleCallback, graphics);
+    s_cvGxMultisampleQuality = CVar::Register("gxMultisampleQuality", "multisample quality", 0x1 | 0x2, "0.0", &CVGxMultisampleQualityCallback, graphics);
+
+    // TODO: v10 = *(_DWORD*)(dword_CABB60 + 80);
+    SStrPrintf(value, sizeof(value), "%d", v10);
+    s_cvGxFixLag = CVar::Register("gxFixLag", "prevent cursor lag", 0x1 | 0x2, value, &CVGxFixLagCallback, graphics);
+    s_cvGxStereoEnabled = CVar::Register("gxStereoEnabled", "Enable stereoscopic rendering", 0x1, "0", &CVGxStereoEnabledCallback, graphics);
+    s_cvGxOverride = CVar::Register("gxOverride", "gx overrides", 0x1, "", &CVGxOverrideCallback, graphics);
+    s_cvGxMaxFPS = CVar::Register("maxFPS", "Set FPS limit", 0x1, "200", &CVGxMaxFPSCallback, graphics);
+    s_cvGxMaxFPSBk = CVar::Register("maxFPSBk", "Set background FPS limit", 0x1, "30", &CVGxMaxFPSBkCallback, graphics);
+    s_cvGxVideoOptionsVersion = CVar::Register("videoOptionsVersion", "Video options version", 0x1 | 0x2, "0", &GxVideoOptionsVersionCallback, graphics);
+    s_cvGxWindowResizeLock = CVar::Register("windowResizeLock", "prevent resizing in windowed mode", 1, "0", &CVGxWindowResizeLockCallback, graphics);
+    s_cvGxFixedFunction = CVar::Register("fixedFunction", "Force fixed function rendering", 0x1 | 0x2, "0", 0, graphics);
 }
 
 void UpdateGxCVars() {
