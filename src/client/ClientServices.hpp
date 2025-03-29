@@ -2,6 +2,7 @@
 #define CLIENT_CLIENT_SERVICES_HPP
 
 #include "net/login/LoginResponse.hpp"
+#include <tempest/Vector.hpp>
 
 class ClientConnection;
 class CVar;
@@ -35,6 +36,7 @@ class ClientServices : public LoginResponse {
         static ClientServices* GetInstance();
         static void GetRealmList();
         static void GetCharacterList();
+        static void CharacterLogin(uint64_t id, const C3Vector& position);
         static REALM_INFO* GetRealmInfoByIndex(int32_t index);
         static const char* GetSelectedRealmName();
         static const REALM_INFO* GetSelectedRealm();

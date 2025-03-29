@@ -74,6 +74,10 @@ void ClientServices::GetCharacterList() {
     ClientServices::s_currentConnection->GetCharacterList();
 }
 
+void ClientServices::CharacterLogin(uint64_t id, const C3Vector& position) {
+    // TODO
+}
+
 REALM_INFO* ClientServices::GetRealmInfoByIndex(int32_t index) {
     if (index >= ClientServices::GetInstance()->m_realmList.Count()) {
         return nullptr;

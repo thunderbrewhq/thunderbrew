@@ -9,6 +9,7 @@
 #include "console/Command.hpp"
 #include "db/Db.hpp"
 #include "glue/CGlueMgr.hpp"
+#include "gameui/CGGameUI.hpp"
 #include "gx/Screen.hpp"
 #include "gx/Texture.hpp"
 #include "model/Model2.hpp"
@@ -661,4 +662,10 @@ void WowClientInit() {
     // sub_7FC5A0();
 
     EventRegister(EVENT_ID_POLL, &PollNet);
+}
+
+void ClientInitializeGame(int32_t continentID, const C3Vector& position) {
+    // TODO
+    CGGameUI::InitializeGame();
+    // TODO
 }

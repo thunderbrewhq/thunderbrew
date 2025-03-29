@@ -2,6 +2,7 @@
 #define CLIENT_CLIENT_HPP
 
 #include "event/Event.hpp"
+#include "tempest/Vector.hpp"
 #include <cstdint>
 
 class CVar;
@@ -26,5 +27,7 @@ void CommonMain();
 void StormInitialize();
 
 void WowClientInit();
+
+void ClientInitializeGame(int32_t continentID, const C3Vector& position);
 
 #endif

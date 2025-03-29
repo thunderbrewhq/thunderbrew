@@ -21,12 +21,12 @@ class CGlueMgr {
             IDLE_ACCOUNT_LOGIN = 2,
             IDLE_CHARACTER_LIST = 3,
             IDLE_REALM_LIST = 4,
-            IDLE_5 = 5,
-            IDLE_6 = 6,
+            IDLE_CREATE_CHARACTER = 5,
+            IDLE_DELETE_CHARACTER = 6,
             IDLE_7 = 7,
             IDLE_8 = 8,
             IDLE_9 = 9,
-            IDLE_10 = 10,
+            IDLE_ENTER_WORLD = 10,
             IDLE_WORLD_LOGIN = 11,
             IDLE_12 = 12,
             IDLE_13 = 13
@@ -69,6 +69,8 @@ class CGlueMgr {
         static int32_t m_patchDownload;
         static bool m_deleteLocalPatch;
 
+        static CHARACTER_INFO* m_characterInfo;
+
         // Static functions
         static void ChangeRealm(const REALM_INFO* realmInfo);
         static void DisplayLoginStatus();
@@ -81,6 +83,7 @@ class CGlueMgr {
         static void InitCursor();
         static void LoginServerLogin(const char* accountName, const char* password);
         static void QuitGame();
+        static void EnterWorld();
         static void PollAccountLogin(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
         static void PollLoginServerLogin();
         static void PollCharacterList(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
@@ -94,6 +97,8 @@ class CGlueMgr {
         static void Suspend();
         static void UpdateCurrentScreen(const char* screen);
         static bool HandleBattlenetDisconnect();
+
+        static void PollEnterWorld();
 
         // Survey Download System
         static void SurveyDownloadStart();

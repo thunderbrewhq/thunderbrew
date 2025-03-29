@@ -39,6 +39,7 @@ target_link_libraries(client
         console
         db
         event
+        gameui
         gx
         model
         net

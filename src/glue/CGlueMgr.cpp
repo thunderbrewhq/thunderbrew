@@ -77,6 +77,8 @@ int32_t CGlueMgr::m_surveyDownload;
 int32_t CGlueMgr::m_patchDownload;
 bool CGlueMgr::m_deleteLocalPatch;
 
+CHARACTER_INFO* CGlueMgr::m_characterInfo = nullptr;
+
 
 float CalculateAspectRatio() {
     auto widescreenVar = CVar::Lookup("widescreen");
@@ -300,6 +302,11 @@ int32_t CGlueMgr::Idle(const void* a1, void* a2) {
         break;
     }
 
+    case IDLE_ENTER_WORLD: {
+        CGlueMgr::PollEnterWorld();
+        break;
+    }
+
     case IDLE_12: {
         if (CGlueMgr::m_patchDownload) {
             CGlueMgr::PatchDownloadIdle();
@@ -409,6 +416,20 @@ void CGlueMgr::LoginServerLogin(const char* accountName, const char* password) {
 
 void CGlueMgr::QuitGame() {
     ClientPostClose(0);
+}
+
+void CGlueMgr::EnterWorld() {
+    // TODO: Proper implementation
+    if (CCharacterSelection::GetNumCharacters() < 1) {
+        return;
+    }
+    CGlueMgr::m_characterInfo = &CCharacterSelection::s_characterList[0].m_characterInfo;
+    if (!m_characterInfo || !ClientServices::Connection()->IsConnected()) {
+        return;
+    }
+
+    CGlueMgr::m_idleState = IDLE_ENTER_WORLD;
+    CGlueMgr::m_showedDisconnect = 0;
 }
 
 void CGlueMgr::PollAccountLogin(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op) {
@@ -820,9 +841,9 @@ void CGlueMgr::StatusDialogClick() {
         }
 
         case IDLE_REALM_LIST:
-        case IDLE_5:
-        case IDLE_6:
-        case IDLE_10: {
+        case IDLE_CREATE_CHARACTER:
+        case IDLE_DELETE_CHARACTER:
+        case IDLE_ENTER_WORLD: {
             ClientServices::Connection()->Cancel(2);
 
             CGlueMgr::m_showedDisconnect = 0;
@@ -897,6 +918,29 @@ void CGlueMgr::UpdateCurrentScreen(const char* screen) {
 
 bool CGlueMgr::HandleBattlenetDisconnect() {
     return false;
+}
+
+void CGlueMgr::PollEnterWorld() {
+    //if (!LoadingScreenDrawing())
+    //    return;
+
+    if (CGlueMgr::m_suspended) {
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+        //SI3::StopGlueMusic(3.0);
+        //SI3::StopGlueAmbience(-1.0);
+        ClientServices::CharacterLogin(CGlueMgr::m_characterInfo->guid, C3Vector());
+        return;
+    }
+
+    auto info = CGlueMgr::m_characterInfo;
+
+    //if (*(_BYTE*)(info + 385))
+    //    sub_4D9660(*(_BYTE*)(info + 377), (int)v51, *(_BYTE*)(info + 376), (int)&v68);
+
+
+    CGlueMgr::Suspend();
+    ClientInitializeGame(info->mapID, info->position);
 }
 
 void CGlueMgr::SurveyDownloadStart() {

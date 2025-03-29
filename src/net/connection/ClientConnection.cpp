@@ -141,6 +141,15 @@ void ClientConnection::GetCharacterList() {
     }
 }
 
+void ClientConnection::CharacterLogin(uint64_t id) {
+    this->Initiate(COP_LOGIN_CHARACTER, 76, nullptr);
+    if (this->m_connected) {
+        this->RequestCharacterLogin(id);
+    } else {
+        this->Cancel(4);
+    }
+}
+
 void ClientConnection::Cancel(int32_t errorCode) {
     this->Complete(0, errorCode);
 }
