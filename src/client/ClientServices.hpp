@@ -2,6 +2,7 @@
 #define CLIENT_CLIENT_SERVICES_HPP
 
 #include "net/login/LoginResponse.hpp"
+#include "net/connection/NetClient.hpp"
 #include <tempest/Vector.hpp>
 
 class ClientConnection;
@@ -34,6 +35,7 @@ class ClientServices : public LoginResponse {
         static void ConnectToSelectedServer();
         static ClientConnection* Connection();
         static ClientServices* GetInstance();
+        static void SetMessageHandler(NETMESSAGE msgId, MESSAGE_HANDLER handler, void* param);
         static void GetRealmList();
         static void GetCharacterList();
         static void CharacterLogin(uint64_t id, const C3Vector& position);

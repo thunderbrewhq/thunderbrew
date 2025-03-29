@@ -65,6 +65,12 @@ ClientServices* ClientServices::GetInstance() {
 
     return ClientServices::s_instance;
 }
+void ClientServices::SetMessageHandler(NETMESSAGE msgId, MESSAGE_HANDLER handler, void* param) {
+    STORM_ASSERT(ClientServices::s_currentConnection);
+    STORM_ASSERT(handler);
+    s_currentConnection->SetMessageHandler(msgId, handler, param);
+}
+
 
 void ClientServices::GetRealmList() {
     // TODO

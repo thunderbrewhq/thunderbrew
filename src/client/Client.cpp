@@ -2,6 +2,7 @@
 #include "async/AsyncFile.hpp"
 #include "client/ClientServices.hpp"
 #include "client/CmdLine.hpp"
+#include "client/ClientHandlers.hpp"
 #include "console/CVar.hpp"
 #include "console/Client.hpp"
 #include "console/Device.hpp"
@@ -667,5 +668,9 @@ void WowClientInit() {
 void ClientInitializeGame(int32_t continentID, const C3Vector& position) {
     // TODO
     CGGameUI::InitializeGame();
+
+    ClientServices::SetMessageHandler(SMSG_NEW_WORLD, &NewWorldHandler, nullptr);
+    ClientServices::SetMessageHandler(SMSG_LOGIN_VERIFY_WORLD, &LoginVerifyWorldHandler, nullptr);
+
     // TODO
 }
