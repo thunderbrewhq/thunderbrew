@@ -4,6 +4,7 @@
 #include <storm/Log.hpp>
 
 #include "client/Client.hpp"
+#include "gameui/CGWorldFrame.hpp"
 #include "gx/Coordinate.hpp"
 #include "gx/Device.hpp"
 #include "ui/FrameScript.hpp"
@@ -175,7 +176,7 @@ void CGGameUI::Initialize() {
 }
 
 void CGGameUI::RegisterFrameFactories() {
-    //FrameXML_RegisterFactory("WorldFrame", (int)CGWorldFrame::Create, 1);
+    FrameXML_RegisterFactory("WorldFrame", CGWorldFrame::Create, 1);
     //FrameXML_RegisterFactory("GameTooltip", (int)CGTooltip::Create, 0);
     //FrameXML_RegisterFactory("Cooldown", (int)sub_51A380, 0);
     //FrameXML_RegisterFactory("Minimap", (int)CGMinimapFrame::Create, 0);

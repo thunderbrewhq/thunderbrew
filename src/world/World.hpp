@@ -3,4 +3,6 @@
 
 #include "world/CWorld.hpp"
 
+int32_t LoadNewWorld();
+
 #endif

@@ -4,6 +4,7 @@
 #include <common/DataStore.hpp>
 
 #include "console/Line.hpp"
+#include "world/World.hpp"
 
 
 uint32_t s_newZoneID = 0;
@@ -54,7 +55,7 @@ int32_t LoginVerifyWorldHandler(void* param, NETMESSAGE msgId, uint32_t time, CD
         //    return 0;
         //}
         //s_newMapname = *(_DWORD*)(v0 + 4);
-        //LoadNewWorld(0, 0);
+        LoadNewWorld();
     }
     return 1;
 }

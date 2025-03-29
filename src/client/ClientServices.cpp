@@ -81,7 +81,7 @@ void ClientServices::GetCharacterList() {
 }
 
 void ClientServices::CharacterLogin(uint64_t id, const C3Vector& position) {
-    // TODO
+    ClientServices::s_currentConnection->CharacterLogin(id);
 }
 
 REALM_INFO* ClientServices::GetRealmInfoByIndex(int32_t index) {

@@ -150,7 +150,10 @@ void FrameScript_CreateEvents(const char* names[], uint32_t count) {
     FrameScript::s_scriptEvents.SetCount(count);
 
     for (int32_t i = 0; i < count; i++) {
-        auto event = FrameScript::s_scriptEventsHash.New(names[i], 0, 0);
+        FrameScript_EventObject* event = nullptr;
+        if (names[i]) {
+            event = FrameScript::s_scriptEventsHash.New(names[i], 0, 0);
+        }
         FrameScript::s_scriptEvents[i] = event;
     }
 }
