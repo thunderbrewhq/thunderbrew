@@ -252,6 +252,7 @@ class CGxDeviceD3d : public CGxDevice {
     virtual void ICursorDestroy();
     virtual void ICursorDraw();
     virtual void CursorSetVisible(int32_t visible);
+    virtual void CursorUnlock(uint32_t x, uint32_t y);
     virtual int32_t DeviceCreate(int32_t (*windowProc)(void* window, uint32_t message, uintptr_t wparam, intptr_t lparam), const CGxFormat& format);
     virtual int32_t DeviceSetFormat(const CGxFormat& format);
     virtual void* DeviceWindow();
