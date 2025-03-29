@@ -1,6 +1,7 @@
 add_subdirectory(app)
 add_subdirectory(async)
 add_subdirectory(client)
+add_subdirectory(clientobject)
 add_subdirectory(console)
 add_subdirectory(cursor)
 add_subdirectory(db)

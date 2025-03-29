@@ -6,6 +6,8 @@
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
 #include "glue/CGlueMgr.hpp"
+#include "db/Db.hpp"
+#include "clientobject/Unit_C.hpp"
 
 int32_t Script_SetCharSelectModelFrame(lua_State* L) {
     if (!lua_isstring(L, 1)) {
@@ -42,13 +44,67 @@ int32_t Script_GetCharacterListUpdate(lua_State* L) {
 }
 
 int32_t Script_GetNumCharacters(lua_State* L) {
-    lua_pushnumber(L, CCharacterSelection::s_characterList.Count());
+    lua_pushnumber(L, CCharacterSelection::GetNumCharacters());
 
     return 1;
 }
 
 int32_t Script_GetCharacterInfo(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1)) {
+        luaL_error(L, "Usage: GetCharacterInfo(index)");
+    }
+
+    int index = static_cast<int>(lua_tonumber(L, 1)) - 1;
+    if (index < 0 || index > CCharacterSelection::GetNumCharacters()) {
+        lua_pushnil(L); // name
+        lua_pushnil(L); // race
+        lua_pushnil(L); // class
+        lua_pushnumber(L, 0.0); // level
+        lua_pushnumber(L, 0.0); // zone
+        lua_pushnil(L); // sex
+        lua_pushnil(L); // ghost
+        lua_pushnil(L); // PCC
+        lua_pushnil(L); // PRC
+        lua_pushnil(L); // PFC
+        return 10;
+    }
+
+    auto& character = CCharacterSelection::s_characterList[index].m_characterInfo;
+    lua_pushstring(L, character.name);
+
+    auto raceName = CGUnit_C::GetDisplayRaceNameFromRecord(g_chrRacesDB.GetRecord(character.raceID), character.sexID);
+    lua_pushstring(L, raceName ? raceName : "");
+
+    // TODO: auto className = CGUnit_C::GetDisplayClassNameFromRecord(g_chrClassesDB.GetRecord(character.classID), character.sexID);
+    auto className = "ClassName";
+    lua_pushstring(L, className ? className : "");
+
+    lua_pushnumber(L, character.experienceLevel);
+
+    // TODO: auto areaRecord = g_areaTableDB.GetRecord(character.zoneID);
+    void* areaRecord = nullptr;
+    if (areaRecord) {
+        // TODO: lua_pushstring(L, areaRecord->name)
+    } else {
+        lua_pushnil(L);
+    }
+
+    // TODO: Use g_glueFrameScriptGenders[character.sexID]
+    lua_pushnumber(L, 0);
+
+    // ghost
+    lua_pushboolean(L, character.flags & 0x2000);
+
+    // PCC
+    lua_pushboolean(L, character.customizeFlags & 1);
+
+    // PRC
+    lua_pushboolean(L, character.customizeFlags & 0x100000);
+
+    // PFC
+    lua_pushboolean(L, character.customizeFlags & 0x10000);
+
+    return 10;
 }
 
 int32_t Script_SelectCharacter(lua_State* L) {

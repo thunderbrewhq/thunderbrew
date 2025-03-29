@@ -1,6 +1,8 @@
 #include "glue/CCharacterSelection.hpp"
 #include "model/CM2Shared.hpp"
 #include "ui/CSimpleModelFFX.hpp"
+#include "client/ClientServices.hpp"
+#include "net/Connection.hpp"
 
 TSGrowableArray<CharacterSelectionDisplay> CCharacterSelection::s_characterList;
 CSimpleModelFFX* CCharacterSelection::s_modelFrame;
@@ -37,4 +39,31 @@ void CCharacterSelection::SetBackgroundModel(const char* modelPath) {
 
 void CCharacterSelection::SetCharFacing(float facing) {
     // TODO:
+}
+
+void CCharacterSelection::ClearCharacterList() {
+}
+
+void CCharacterSelection::UpdateCharacterList() {
+    // TODO: ClearAddOnEnableState(0);
+    // TODO: Proper implementation
+
+    auto& received = ClientServices::Connection()->m_characterList;
+    CCharacterSelection::s_characterList.SetCount(received.Count());
+    for (uint32_t i = 0; i < received.Count(); ++i) {
+        CCharacterSelection::s_characterList[i].m_characterInfo = received[i];
+    }
+
+    if (CCharacterSelection::GetNumCharacters()) {
+        int32_t currentIndex = 0;
+        FrameScript_SignalEvent(8, "%d", currentIndex + 1);
+    } else {
+        int32_t currentIndex = 0;
+        FrameScript_SignalEvent(8, "%d", currentIndex + 1);
+    }
+    FrameScript_SignalEvent(7, nullptr);
+}
+
+uint32_t CCharacterSelection::GetNumCharacters() {
+    return s_characterList.Count();
 }

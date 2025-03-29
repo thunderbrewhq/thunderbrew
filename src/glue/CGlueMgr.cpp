@@ -1,5 +1,6 @@
 #include "glue/CGlueMgr.hpp"
 #include "glue/CRealmList.hpp"
+#include "glue/CCharacterSelection.hpp"
 #include "client/Client.hpp"
 #include "client/ClientServices.hpp"
 #include "gx/Coordinate.hpp"
@@ -455,7 +456,7 @@ void CGlueMgr::PollAccountLogin(int32_t errorCode, const char* msg, int32_t comp
         }
 
         if (errorCode != 13) {
-            // TODO CCharacterSelection::ClearCharacterList();
+            CCharacterSelection::ClearCharacterList();
 
             if (ClientServices::GetInstance()->m_realmList.Count()) {
                 FrameScript_SignalEvent(5, nullptr);
@@ -569,8 +570,7 @@ void CGlueMgr::PollLoginServerLogin() {
 void CGlueMgr::PollCharacterList(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op) {
     FrameScript_SignalEvent(4, "%s", msg);
 
-    // TODO: if (CGlueMgr::HandleBattlenetDisconnect())
-    if (false) {
+    if (CGlueMgr::HandleBattlenetDisconnect()) {
         CGlueMgr::m_idleState = IDLE_NONE;
         CGlueMgr::m_showedDisconnect = 0;
     }
@@ -581,7 +581,7 @@ void CGlueMgr::PollCharacterList(int32_t errorCode, const char* msg, int32_t com
 
     if (!result) {
         if (errorCode == 2) {
-            // TODO CCharacterSelection::ClearCharacterList();
+            CCharacterSelection::ClearCharacterList();
             CGlueMgr::GetRealmList(true);
         } else {
             FrameScript_SignalEvent(3, "%s%s", "OKAY", msg);
@@ -594,7 +594,7 @@ void CGlueMgr::PollCharacterList(int32_t errorCode, const char* msg, int32_t com
     CGlueMgr::m_idleState = IDLE_NONE;
     CGlueMgr::m_showedDisconnect = 0;
     FrameScript_SignalEvent(5, nullptr);
-    // TODO: sub_4E4610();
+    CCharacterSelection::UpdateCharacterList();
     if (!CGlueMgr::m_accountMsgAvailable) {
         return;
     }
@@ -893,6 +893,10 @@ void CGlueMgr::UpdateCurrentScreen(const char* screen) {
     SStrCopy(CGlueMgr::m_currentScreen, screen, sizeof(CGlueMgr::m_currentScreen));
 
     // TODO
+}
+
+bool CGlueMgr::HandleBattlenetDisconnect() {
+    return false;
 }
 
 void CGlueMgr::SurveyDownloadStart() {

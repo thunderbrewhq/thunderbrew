@@ -89,6 +89,7 @@ class CGlueMgr {
         static void Sub4D8BA0();
         static void Suspend();
         static void UpdateCurrentScreen(const char* screen);
+        static bool HandleBattlenetDisconnect();
 
         // Survey Download System
         static void SurveyDownloadStart();
