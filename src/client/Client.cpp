@@ -46,7 +46,8 @@ static char* s_localeArray[12] = {
 
 
 int32_t CCommand_ReloadUI(const char*, const char*) {
-    // TODO:
+    CGlueMgr::m_reload = 1;
+    // CGGameUI::Reload();
     return 1;
 }
 
