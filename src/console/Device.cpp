@@ -110,8 +110,9 @@ bool CVGxMultisampleCallback(CVar*, const char*, const char*, void*) {
     return true;
 }
 
-bool CVGxCursorCallback(CVar*, const char*, const char*, void*) {
-    // TODO
+bool CVGxCursorCallback(CVar*, const char*, const char* value, void*) {
+    s_requestedFormat.hwCursor = SStrToInt(value) != 0;
+    ConsoleWrite("set pending gxRestart", DEFAULT_COLOR);
     return true;
 }
 
@@ -342,6 +343,12 @@ void ConsoleDeviceInitialize(const char* title) {
 
     // TODO: sub_76B520(&unk_CABAF0, &unk_CABB38);
 
+    // CHANGE: Remove this when the rest will be ready
+    s_defaults.format.size.x = 1024;
+    s_defaults.format.size.y = 768;
+    s_defaults.format.colorFormat = CGxFormat::Fmt_Argb8888;
+    s_defaults.format.depthFormat = CGxFormat::Fmt_Ds248;
+
     RegisterGxCVars();
     ConsoleCommandRegister("gxRestart", &CCGxRestart, CATEGORY::GRAPHICS, nullptr);
 
@@ -395,17 +402,6 @@ void ConsoleDeviceInitialize(const char* title) {
         SetGxCVars(s_requestedFormat);
     }
 
-    // TODO
-
-    // TODO s_requestedFormat.hwTnL = !CmdLineGetBool(CMD_SW_TNL);
-    s_requestedFormat.hwTnL = true;
-
-    // TODO
-
-    CGxFormat format;
-    memcpy(&format, &s_requestedFormat, sizeof(s_requestedFormat));
-
-    // Select gxApi based on user CVars and command-line parameters
     EGxApi api = GxApiDefault();
 
     auto gxApiName = s_cvGxApi->GetString();
@@ -413,6 +409,12 @@ void ConsoleDeviceInitialize(const char* title) {
     auto gxOverride = CmdLineGetString(WOWCMD_GX_OVERRIDE);
     if (*gxOverride != '\0') {
         gxApiName = gxOverride;
+    } else if (CmdLineGetBool(CMD_OPENGL)) {
+        gxApiName = g_gxApiNames[GxApi_OpenGl];
+    } else if (CmdLineGetBool(CMD_D3D)) {
+        gxApiName = g_gxApiNames[GxApi_D3d9];
+    } else if (CmdLineGetBool(CMD_D3D9EX)) {
+        gxApiName = g_gxApiNames[GxApi_D3d9Ex];
     }
 
     // Sanitize chosen gxApi against list of supported gxApis
@@ -424,12 +426,27 @@ void ConsoleDeviceInitialize(const char* title) {
         }
     }
 
-    // Log
-    printf("GxApi_%s selected\n", g_gxApiNames[api]);
+    s_requestedFormat.fixLag = s_cvGxFixLag->GetInt() != 0;
+    s_requestedFormat.hwTnL = !CmdLineGetBool(CMD_SW_TNL);
+
+    bool windowed = s_cvGxWindow->GetInt() != 0;
+    if (CmdLineGetBool(CMD_FULL_SCREEN)) {
+        windowed = false;
+    } else if (CmdLineGetBool(WOWCMD_WINDOWED)) {
+        windowed = true;
+    }
+
+    s_requestedFormat.window = windowed;
+    // TODO: byte_CABD47 = windowed;
+
+    GxLog("GxApi_%s selected\n", g_gxApiNames[api]);
 
     // Set internally (CVar value reflects the current gxApi at launch),
     // this will not Set() as CVar gxApi is latched
     s_cvGxApi->InternalSet(g_gxApiNames[api], true, false, false, true);
+
+    CGxFormat format;
+    memcpy(&format, &s_requestedFormat, sizeof(s_requestedFormat));
 
     CGxDevice* device = GxDevCreate(api, OsWindowProc, format);
 
