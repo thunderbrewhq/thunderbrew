@@ -2,6 +2,7 @@
 #include "ui/FrameScriptInternal.hpp"
 #include "ui/FrameScript_Object.hpp"
 #include "ui/LuaMemory.hpp"
+#include "ui/LuaExtraFuncs.hpp"
 #include "util/CStatus.hpp"
 #include "util/Lua.hpp"
 #include "util/SFile.hpp"
@@ -451,26 +452,24 @@ void FrameScript_GetColor(lua_State* L, int32_t idx, CImVector& color) {
     color.Set(a, r, g, b);
 }
 
+int32_t SetDecimalConversion(int32_t enabled) {
+    return lua_setdecimalconversion(enabled);
+}
+
 lua_State* FrameScript_GetContext(void) {
     return FrameScript::s_context;
 }
 
-char* FrameScript_Sprintf(lua_State* L, int32_t idx, char* buffer, uint32_t size) {
+const char* FrameScript_Sprintf(lua_State* L, int32_t idx, char* buffer, uint32_t size) {
     size_t formatLength = 0;
     const char* format = luaL_checklstring(L, idx, &formatLength);
     const char* formatEnd = format + formatLength;
 
     char* result = buffer;
 
-    if (format >= formatEnd) {
-        *buffer = '\0';
-        return result;
-    }
-
-    
     int32_t currentIndex = idx;
 
-    while (size > 1) {
+    while (format < formatEnd && size > 1) {
         char character = *format++;
         if (character == '%') {
             char argument = *format;
@@ -552,7 +551,7 @@ char* FrameScript_Sprintf(lua_State* L, int32_t idx, char* buffer, uint32_t size
                     double number = luaL_checknumber(L, currentIndex);
                     size_t length = SStrPrintf(buffer, size, subformat, number);
                     if (length > 0) {
-                        // TODO: lua_convertdecimal(buffer)
+                        lua_convertdecimal(buffer);
                         buffer += length;
                         size -= length;
                     }
@@ -584,7 +583,7 @@ char* FrameScript_Sprintf(lua_State* L, int32_t idx, char* buffer, uint32_t size
                     auto number = static_cast<int32_t>(luaL_checknumber(L, currentIndex));
                     size_t length = SStrPrintf(buffer, size, subformat, number);
                     if (length > 0) {
-                        // TODO: lua_convertdecimal(buffer)
+                        lua_convertdecimal(buffer);
                         buffer += length;
                         size -= length;
                     }
@@ -611,10 +610,6 @@ char* FrameScript_Sprintf(lua_State* L, int32_t idx, char* buffer, uint32_t size
         } else {
             *buffer++ = character;
             --size;
-        }
-
-        if (format >= formatEnd) {
-            break;
         }
     }
 

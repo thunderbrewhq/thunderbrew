@@ -5,6 +5,10 @@
 #include "util/Unimplemented.hpp"
 #include <cstdint>
 
+
+static bool s_luaDecimalConversion = false;
+
+
 luaL_Reg FrameScriptInternal::extra_funcs[31] = {
     { "setglobal", &sub_8168D0 },
     { "getglobal", &sub_816910 },
@@ -168,4 +172,54 @@ int32_t debuglocals(lua_State* L) {
 
 int32_t scrub(lua_State* L) {
     WHOA_UNIMPLEMENTED(0);
+}
+
+int32_t lua_setdecimalconversion(int32_t enabled) {
+    s_luaDecimalConversion = (enabled != 0);
+    return static_cast<int32_t>(s_luaDecimalConversion);
+}
+
+void lua_convertdecimal(char* string) {
+    if (!s_luaDecimalConversion) {
+        return;
+    }
+
+    size_t length = SStrLen(string);
+    if (!length) {
+        return;
+    }
+
+    char* end = &string[length];
+    while (string < end) {
+        if (*string < '0' || *string > '9') {
+            ++string;
+            continue;
+        }
+
+        char ch;
+        while (true) {
+            ch = *string;
+
+            if ((ch < '0' || ch > '9') && ch != '.') {
+                break;
+            }
+
+            if (ch == ',') {
+LABEL_13:
+                if (string[1] >= '0' && string[1] <= '9') {
+                    *string = '.';
+                }
+            } else {
+                if (ch == '.' && (string[1] < '0' || string[1] > '9')) {
+                    *string = ',';
+                }
+            }
+            ++string;
+        }
+        if (ch == ',') {
+            goto LABEL_13;
+        }
+
+        ++string;
+    }
 }

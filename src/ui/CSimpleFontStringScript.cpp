@@ -139,8 +139,8 @@ int32_t CSimpleFontString_SetFormattedText(lua_State* L) {
         luaL_error(L, "%s:SetFormattedText(): Font not set", string->GetDisplayName());
     }
 
-    char buffer[4096] = {};
-    char* text = FrameScript_Sprintf(L, 2, buffer, sizeof(buffer));
+    char buffer[4096];
+    auto text = FrameScript_Sprintf(L, 2, buffer, sizeof(buffer));
     string->SetText(text, 1);
     return 0;
 }

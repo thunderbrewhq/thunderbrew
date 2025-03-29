@@ -36,4 +36,7 @@ int32_t debugstack(lua_State*);
 int32_t debuglocals(lua_State*);
 int32_t scrub(lua_State*);
 
+int32_t lua_setdecimalconversion(int32_t enabled);
+void lua_convertdecimal(char* string);
+
 #endif

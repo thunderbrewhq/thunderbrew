@@ -78,9 +78,11 @@ void FrameScript_Flush();
 
 void FrameScript_GetColor(lua_State* L, int32_t idx, CImVector& color);
 
+int32_t SetDecimalConversion(int32_t enabled);
+
 lua_State* FrameScript_GetContext();
 
-char* FrameScript_Sprintf(lua_State * L, int32_t idx, char* buffer, uint32_t size);
+const char* FrameScript_Sprintf(lua_State * L, int32_t idx, char* buffer, uint32_t size);
 
 const char* FrameScript_GetCurrentObject(lua_State* L, int32_t a2);
 
