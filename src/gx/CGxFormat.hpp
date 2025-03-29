@@ -19,20 +19,34 @@ class CGxFormat {
             Formats_Last = 8
         };
 
+        CGxFormat();
+        CGxFormat(bool p_window, const C2iVector& p_size, Format p_colorFormat, Format p_depthFormat, uint32_t p_refreshRate, uint32_t p_vsync, bool p_hwTnl, bool p_fixLag, bool p_hwCursor, bool p_aspect, bool p_maximize);
+
         static const char* formatToColorBitsString[Formats_Last];
 
         // Member variables
+        uint32_t apiSpecificModeID;
         bool hwTnL;
         bool hwCursor;
         bool fixLag;
         int8_t window;
+        int8_t aspect;
         int32_t maximize;
         Format depthFormat;
         C2iVector size;
+        uint32_t backbuffers;
         uint32_t sampleCount;
+        float sampleQuality;
         Format colorFormat;
         uint32_t refreshRate;
         uint32_t vsync;
+        bool stereoEnabled;
+        uint32_t unk1;
+        uint32_t unk2;
+        uint32_t unk3;
+        uint32_t unk4;
+        uint32_t unk5;
+        uint32_t unk6;
         C2iVector pos;
 };
 
