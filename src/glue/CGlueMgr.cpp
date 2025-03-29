@@ -43,6 +43,8 @@ unsigned char InterfaceKey[256] = {
 int32_t CGlueMgr::m_acceptedEULA = 1; // TODO
 int32_t CGlueMgr::m_acceptedTerminationWithoutNotice;
 int32_t CGlueMgr::m_acceptedTOS = 1; // TODO
+int32_t CGlueMgr::m_processServerAlert = 1;
+int32_t CGlueMgr::m_pendingTimerAlert;
 int32_t CGlueMgr::m_accountMsgAvailable;
 char CGlueMgr::m_accountName[1280];
 float CGlueMgr::m_aspect;
@@ -199,7 +201,30 @@ int32_t CGlueMgr::HandleDisplaySizeChanged(const CSizeEvent& event) {
 
 // TODO a1: const EVENT_DATA_IDLE*
 int32_t CGlueMgr::Idle(const void* a1, void* a2) {
-    // TODO
+    // TODO:
+    // if (gxDevice->IsStereoEnabled) {
+    //     CGlueMgr::SetUIDepth(gxDevice->StereoGetConvergence);
+    // }
+
+    auto loginConnection = ClientServices::LoginConnection();
+    if (loginConnection) {
+        // Virtual call (loginConnection + 184) leads to nullsub
+        // Checked by tracing in debugger
+    }
+
+    if (CGlueMgr::m_processServerAlert) {
+        // TODO:
+        // v2 = SStrLen("SERVERALERT:");
+        // FrameScript_SignalEvent(0x15u, "%s", &CGlueMgr::m_serverAlert[(_DWORD)&v2[CGlueMgr::m_serverAlert[0] != -17 ? 0 : 3]]);
+        CGlueMgr::m_processServerAlert = 0;
+    }
+
+    if (CGlueMgr::m_pendingTimerAlert) {
+        FrameScript_SignalEvent(0x21u, "%d", CGlueMgr::m_pendingTimerAlert);
+        CGlueMgr::m_pendingTimerAlert = 0;
+    }
+
+    // TODO: CKBPage::UpdateLoadingQueue();
 
     if (CGlueMgr::m_idleState == IDLE_NONE) {
         if (CGlueMgr::m_reload) {
@@ -213,18 +238,17 @@ int32_t CGlueMgr::Idle(const void* a1, void* a2) {
             CGlueMgr::m_reload = 0;
         }
 
-        // TODO
-        // if (CGlueMgr::m_accountMsgAvailable) {
-        //     FrameScript_SignalEvent(0x22u, 0);
-        //     CGlueMgr::m_accountMsgAvailable = 0;
-        // }
+        if (CGlueMgr::m_accountMsgAvailable) {
+            FrameScript_SignalEvent(0x22u, 0);
+            CGlueMgr::m_accountMsgAvailable = 0;
+        }
 
-        // TODO sub_4D84A0();
+        // TODO CGlueMgr::HandleBattlenetDisconnect();
 
         return 1;
     }
 
-    // TODO
+    // TODO: LOOP { ConsoleWrite(GRUNT DEBUG MESSAGE) }
 
     WOWCS_OPS op;
     const char* msg;
@@ -366,46 +390,48 @@ void CGlueMgr::PollAccountLogin(int32_t errorCode, const char* msg, int32_t comp
         FrameScript_SignalEvent(4, "%s", msg);
     }
 
-    if (complete) {
-        if (result == 0) {
-            if (errorCode != 2) {
+    if (!complete) {
+        return;
+    }
+
+    if (result == 0) {
+        if (errorCode != 2) {
+            // TODO
+        }
+
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+
+        if (errorCode == 2) {
+            // TODO CGlueMgr::m_disconnectPending = 1;
+            // TODO ClientServices::Connection()->Disconnect();
+        }
+
+        if (errorCode != 13) {
+            // TODO CCharacterSelection::ClearCharacterList();
+
+            if (ClientServices::GetInstance()->m_realmList.Count()) {
+                FrameScript_SignalEvent(5, nullptr);
+                CRealmList::UpdateList();
+            } else {
                 // TODO
             }
 
-            CGlueMgr::m_idleState = IDLE_NONE;
-            CGlueMgr::m_showedDisconnect = 0;
-
-            if (errorCode == 2) {
-                // TODO CGlueMgr::m_disconnectPending = 1;
-                // TODO ClientServices::Connection()->Disconnect();
-            }
-
-            if (errorCode != 13) {
-                // TODO CCharacterSelection::ClearCharacterList();
-
-                if (ClientServices::GetInstance()->m_realmList.Count()) {
-                    FrameScript_SignalEvent(5, nullptr);
-                    CRealmList::UpdateList();
-                } else {
-                    // TODO
-                }
-
-                return;
-            }
-
-            if (!SStrCmpI(CGlueMgr::m_currentScreen, "charselect", STORM_MAX_STR)) {
-                CGlueMgr::SetScreen("login");
-                return;
-            }
-
             return;
         }
 
-        if (op == COP_CONNECT) {
-            // TODO
-
+        if (!SStrCmpI(CGlueMgr::m_currentScreen, "charselect", STORM_MAX_STR)) {
+            CGlueMgr::SetScreen("login");
             return;
         }
+
+        return;
+    }
+
+    if (op == COP_CONNECT) {
+        // TODO
+
+        return;
     }
 }
 

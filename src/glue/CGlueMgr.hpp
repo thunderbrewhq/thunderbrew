@@ -32,6 +32,8 @@ class CGlueMgr {
         static int32_t m_acceptedEULA;
         static int32_t m_acceptedTerminationWithoutNotice;
         static int32_t m_acceptedTOS;
+        static int32_t m_processServerAlert;
+        static int32_t m_pendingTimerAlert;
         static int32_t m_accountMsgAvailable;
         static char m_accountName[];
         static float m_aspect;

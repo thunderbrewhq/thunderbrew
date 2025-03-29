@@ -7,7 +7,12 @@
 class CVar;
 
 namespace Client {
+    extern CVar* g_accountNameVar;
     extern CVar* g_accountListVar;
+    extern CVar* g_accountUsesTokenVar;
+    extern CVar* g_movieVar;
+    extern CVar* g_expansionMovieVar;
+    extern CVar* g_movieSubtitleVar;
     extern HEVENTCONTEXT g_clientEventContext;
     extern char g_currentLocaleName[5];
 }

@@ -6,6 +6,7 @@
 #include "console/Client.hpp"
 #include "console/Device.hpp"
 #include "console/Screen.hpp"
+#include "console/Command.hpp"
 #include "db/Db.hpp"
 #include "glue/CGlueMgr.hpp"
 #include "gx/Screen.hpp"
@@ -23,7 +24,15 @@
 #include <bc/os/Path.hpp>
 #include <bc/file/File.hpp>
 
+
+CVar* Client::g_accountNameVar;
 CVar* Client::g_accountListVar;
+CVar* Client::g_accountUsesTokenVar;
+CVar* Client::g_movieVar;
+CVar* Client::g_expansionMovieVar;
+CVar* Client::g_movieSubtitleVar;
+
+
 HEVENTCONTEXT Client::g_clientEventContext;
 char Client::g_currentLocaleName[5] = {};
 
@@ -34,6 +43,16 @@ static char* s_localeArray[12] = {
     "deDE", "enGB", "enUS", "esES", "frFR", "koKR",
     "zhCN", "zhTW", "enCN", "enTW", "esMX", "ruRU"
 };
+
+
+int32_t CCommand_ReloadUI(const char*, const char*) {
+    // TODO:
+    return 1;
+}
+
+int32_t CCommand_Perf(const char*, const char*) {
+    return 1;
+}
 
 
 void AsyncFileInitialize() {
@@ -47,18 +66,20 @@ void BaseInitializeGlobal() {
 
 void ClientMiscInitialize() {
     // TODO
+}
 
-    Client::g_accountListVar = CVar::Register(
-        "accountList",
-        "List of wow accounts for saved Blizzard account",
-        0,
-        "",
-        nullptr,
-        4,
-        false,
-        nullptr,
-        false
-    );
+void ClientRegisterConsoleCommands() {
+    ConsoleCommandRegister("reloadUI", &CCommand_ReloadUI, CATEGORY::GRAPHICS, nullptr);
+    ConsoleCommandRegister("perf", &CCommand_Perf, CATEGORY::DEBUG, nullptr);
+
+    const auto game = CATEGORY::GAME;
+
+    Client::g_accountNameVar = CVar::Register("accountName", "Saved account name", 64, "", nullptr, game);
+    Client::g_accountListVar = CVar::Register("accountList", "List of wow accounts for saved Blizzard account", 0, "", nullptr, game);
+    Client::g_accountUsesTokenVar = CVar::Register("g_accountUsesToken", "Saved whether uses authenticator", 0, "0", nullptr, game);
+    Client::g_movieVar = CVar::Register("movie", "Show movie on startup", 0, "1", nullptr, game);
+    Client::g_expansionMovieVar = CVar::Register("expansionMovie", "Show expansion movie on startup", 0, "1", nullptr, game);
+    Client::g_movieSubtitleVar = CVar::Register("movieSubtitle", "Show movie subtitles", 0, "0", nullptr, game);
 
     // TODO
 }
@@ -559,7 +580,7 @@ void WowClientInit() {
 
     ClientMiscInitialize();
 
-    // sub_401B60();
+    ClientRegisterConsoleCommands();
 
     ClientDBInitialize();
 
@@ -617,27 +638,22 @@ void WowClientInit() {
     //     sub_421630();
     // }
 
-    // TODO
-    // if (byte_B2F9E1 != 1) {
-    //     if ((g_playIntroMovie + 48) == 1) {
-    //         CVar::Set(g_playIntroMovie, "0", 1, 0, 0, 1);
-    //         CGlueMgr::SetScreen("movie");
-    //     } else {
-    //         CGlueMgr::SetScreen("login");
-    //     }
-    // } else {
-    //     if ((dword_B2F980 + 48) == 1) {
-    //         CVar::Set(dword_B2F980, "0", 1, 0, 0, 1);
-    //         CVar::Set(g_playIntroMovie, "0", 1, 0, 0, 1);
-    //         CGlueMgr::SetScreen("movie");
-    //     } else {
-    //         CGlueMgr::SetScreen("login");
-    //     }
-    // }
-
-    // TODO
-    // - temporary until above logic is implemented
-    CGlueMgr::SetScreen("login");
+    if (s_expansionLevel != 1) {
+        if (Client::g_movieVar->GetInt()) {
+            Client::g_movieVar->Set("0", true, false, false, true);
+            CGlueMgr::SetScreen("movie");
+        } else {
+            CGlueMgr::SetScreen("login");
+        }
+    } else {
+        if (Client::g_expansionMovieVar->GetInt()) {
+            Client::g_expansionMovieVar->Set("0", true, false, false, true);
+            Client::g_movieVar->Set("0", true, false, false, true);
+            CGlueMgr::SetScreen("movie");
+        } else {
+            CGlueMgr::SetScreen("login");
+        }
+    }
 
     // TODO
     // CGlueMgr::m_pendingTimerAlert = dword_B2F9D8;
