@@ -5,6 +5,7 @@
 #include "glue/CGlueMgr.hpp"
 #include "gx/Coordinate.hpp"
 #include "net/connection/ClientConnection.hpp"
+#include "net/Login.hpp"
 #include "ui/CSimpleTop.hpp"
 #include "ui/Types.hpp"
 #include "console/CVar.hpp"
@@ -19,11 +20,11 @@ int32_t Script_IsShiftKeyDown(lua_State* L) {
 }
 
 int32_t Script_GetBuildInfo(lua_State* L) {
-    auto version = FrameScript_GetText("VERSION", -1, GENDER_NOT_APPLICABLE);
-    lua_pushstring(L, version);
+    auto szVersion = FrameScript_GetText("VERSION", -1, GENDER_NOT_APPLICABLE);
+    auto szVersionType = FrameScript_GetText("RELEASE_BUILD", -1, GENDER_NOT_APPLICABLE);
 
-    auto releaseBuild = FrameScript_GetText("RELEASE_BUILD", -1, GENDER_NOT_APPLICABLE);
-    lua_pushstring(L, releaseBuild);
+    lua_pushstring(L, szVersion);
+    lua_pushstring(L, szVersionType);
     lua_pushstring(L, "3.3.5");
     lua_pushstring(L, "12340");
     lua_pushstring(L, "Jun 24 2010");
@@ -274,7 +275,12 @@ int32_t Script_GetServerName(lua_State* L) {
 }
 
 int32_t Script_DisconnectFromServer(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (ClientServices::Connection()->IsConnected()) {
+        CGlueMgr::m_disconnectPending = 1;
+        ClientServices::Connection()->Disconnect();
+    }
+    ClientServices::LoginConnection()->Logoff();
+    return 0;
 }
 
 int32_t Script_IsConnectedToServer(lua_State* L) {

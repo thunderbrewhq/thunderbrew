@@ -14,10 +14,12 @@ class CCharacterSelection {
         // Static variables
         static TSGrowableArray<CharacterSelectionDisplay> s_characterList;
         static CSimpleModelFFX* s_modelFrame;
+        static float s_charFacing;
 
         // Static functions
         static void RenderPrep();
         static void SetBackgroundModel(const char* modelPath);
+        static void SetCharFacing(float facing);
 };
 
 #endif

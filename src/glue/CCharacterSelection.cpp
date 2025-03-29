@@ -4,6 +4,7 @@
 
 TSGrowableArray<CharacterSelectionDisplay> CCharacterSelection::s_characterList;
 CSimpleModelFFX* CCharacterSelection::s_modelFrame;
+float CCharacterSelection::s_charFacing = 0.0f;
 
 void CCharacterSelection::RenderPrep() {
     // TODO
@@ -32,4 +33,8 @@ void CCharacterSelection::SetBackgroundModel(const char* modelPath) {
 
         model->IsDrawable(1, 1);
     }
+}
+
+void CCharacterSelection::SetCharFacing(float facing) {
+    // TODO:
 }

@@ -18,6 +18,7 @@ class ClientConnection : public RealmConnection {
 
         // Virtual member functions
         virtual int32_t HandleConnect();
+        virtual void Complete(int32_t result, int32_t errorCode);
 
         // Member functions
         ClientConnection(RealmResponse* realmResponse)
@@ -26,9 +27,9 @@ class ClientConnection : public RealmConnection {
         void AccountLogin(const char* name, const char* password, int32_t region, int32_t locale);
         void AccountLogin_Finish(int32_t authResult);
         void AccountLogin_Queued();
+        void GetCharacterList();
         void Cancel(int32_t errorCode);
         void Cleanup();
-        void Complete(int32_t result, int32_t errorCode);
         void Connect();
         int32_t Disconnect();
         void Initiate(WOWCS_OPS op, int32_t errorCode, void (*cleanup)());

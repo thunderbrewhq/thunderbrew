@@ -132,6 +132,15 @@ void ClientConnection::AccountLogin_Queued() {
     // TODO CGlueMgr::UpdateWaitQueue(this->m_queuePosition);
 }
 
+void ClientConnection::GetCharacterList() {
+    this->Initiate(COP_GET_CHARACTERS, 43, nullptr);
+    if (this->m_connected) {
+        this->RequestCharacterEnum();
+    } else {
+        this->Cancel(4);
+    }
+}
+
 void ClientConnection::Cancel(int32_t errorCode) {
     this->Complete(0, errorCode);
 }

@@ -74,11 +74,19 @@ int32_t Script_UpdateSelectionCustomizationScene(lua_State* L) {
 }
 
 int32_t Script_GetCharacterSelectFacing(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // Radian to Degree
+    lua_pushnumber(L, CCharacterSelection::s_charFacing * 57.29578f);
+    return 1;
 }
 
 int32_t Script_SetCharacterSelectFacing(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1)) {
+        luaL_error(L, "Usage: SetCharacterSelectFacing(degrees)");
+    }
+    // Degree to Radian
+    float facing = lua_tonumber(L, 1) * 0.017453292;
+    CCharacterSelection::SetCharFacing(facing);
+    return 1;
 }
 
 int32_t Script_GetSelectBackgroundModel(lua_State* L) {

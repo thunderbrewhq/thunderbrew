@@ -24,7 +24,7 @@ int32_t RealmConnection::MessageHandler(void* param, NETMESSAGE msgId, uint32_t 
     }
 
     case SMSG_ENUM_CHARACTERS_RESULT: {
-        // TODO
+        result = connection->HandleCharEnum(msgId, time, msg);
         break;
     }
 
@@ -192,6 +192,98 @@ int32_t RealmConnection::HandleAuthResponse(uint32_t msgId, uint32_t time, CData
     return 1;
 }
 
+int32_t RealmConnection::HandleCharEnum(uint32_t msgId, uint32_t time, CDataStore* msg) {
+    if (this->m_realmResponse) {
+        this->m_realmResponse->GameServerResult(this, "SMSG_CHAR_ENUM", nullptr, nullptr);
+    }
+
+    uint8_t count;
+    msg->Get(count);
+
+    bool overflow = false;
+    if (count > 10) {
+        count = 0;
+        overflow = true;
+    }
+
+    m_characterList.SetCount(count);
+
+    for (uint32_t i = 0; i < count; ++i) {
+        auto& character = m_characterList[i];
+        msg->Get(character.guid);
+        msg->GetString(character.name, 48);
+        msg->Get(character.raceID);
+        msg->Get(character.classID);
+        msg->Get(character.sexID);
+        msg->Get(character.skinID);
+        msg->Get(character.faceID);
+        msg->Get(character.hairStyleID);
+        msg->Get(character.hairColorID);
+        msg->Get(character.facialHairStyleID);
+        msg->Get(character.experienceLevel);
+        msg->Get(character.zoneID);
+        msg->Get(character.mapID);
+        msg->Get(character.position.x);
+        msg->Get(character.position.y);
+        msg->Get(character.position.z);
+        msg->Get(character.guildID);
+        msg->Get(character.flags);
+        msg->Get(character.customizeFlags);
+        msg->Get(character.firstLogin);
+        msg->Get(character.petDisplayInfoID);
+        msg->Get(character.petExperienceLevel);
+        msg->Get(character.petCreatureFamilyID);
+        for (uint32_t j = 0; j < 23; ++j) {
+            msg->Get(character.items[j].displayID);
+            msg->Get(character.items[j].type);
+            msg->Get(character.items[j].auraID);
+        }
+    }
+
+    bool success = false;
+    if (msg->IsRead()) {
+        if (!overflow) {
+            success = true;
+        }
+    } else if (!overflow) {
+        // TODO: Proper implementation
+        uint32_t value;
+        msg->Get(value);
+        msg->Get(value);
+        msg->Get(value);
+        msg->Get(value);
+        msg->Get(value);
+        msg->Get(value);
+        msg->Get(value);
+        msg->Get(value);
+        msg->Get(value);
+        msg->Get(value);
+        if (msg->IsRead()) {
+            success = true;
+        }
+    }
+
+    if (!success) {
+        m_characterList.Clear();
+    }
+
+    // TODO: Should be implemented as call of sub_6B2000
+    if (success) {
+        this->Complete(1, 44);
+    } else {
+        this->Complete(1, 45);
+    }
+
+    return 1;
+}
+
 void RealmConnection::SetSelectedRealm(uint32_t a2, uint32_t a3, uint32_t a4) {
     // TODO
+}
+
+void RealmConnection::RequestCharacterEnum() {
+    CDataStore msg;
+    msg.Put(static_cast<uint32_t>(CMSG_ENUM_CHARACTERS));
+    msg.Finalize();
+    this->Send(&msg);
 }

@@ -71,7 +71,7 @@ void ClientServices::GetRealmList() {
 }
 
 void ClientServices::GetCharacterList() {
-    // TODO
+    ClientServices::s_currentConnection->GetCharacterList();
 }
 
 REALM_INFO* ClientServices::GetRealmInfoByIndex(int32_t index) {

@@ -24,6 +24,7 @@ class RealmConnection : public NetClient {
 
         // Member variables
         RealmResponse* m_realmResponse;
+        TSFixedArray<CHARACTER_INFO> m_characterList;
         uint8_t m_authenticated = 0;
         uint32_t m_queuePosition = 0;
         uint32_t m_freeCharacterMigration = 0;
@@ -34,11 +35,14 @@ class RealmConnection : public NetClient {
 
         // Virtual member functions
         virtual int32_t HandleAuthChallenge(AuthenticationChallenge* challenge);
+        virtual void Complete(int32_t result, int32_t errorCode) = 0;
 
         // Member functions
         RealmConnection(RealmResponse* realmResponse);
         int32_t HandleAuthResponse(uint32_t msgId, uint32_t time, CDataStore* msg);
+        int32_t HandleCharEnum(uint32_t msgId, uint32_t time, CDataStore* msg);
         void SetSelectedRealm(uint32_t a2, uint32_t a3, uint32_t a4);
+        void RequestCharacterEnum();
 };
 
 #endif
