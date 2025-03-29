@@ -150,7 +150,7 @@ int32_t StringToJustify(const char* string, uint32_t& justify) {
         { 0x20, "BOTTOM" }
     };
 
-    for (int32_t i = 0; i < 5; i++) {
+    for (int32_t i = 0; i < 6; i++) {
         if (!SStrCmpI(justifyMap[i].string, string, 0x7FFFFFFFu)) {
             justify = justifyMap[i].value;
             return 1;
