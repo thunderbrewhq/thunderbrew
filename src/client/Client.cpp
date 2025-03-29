@@ -376,17 +376,16 @@ int32_t InitializeGlobal() {
     CheckAvailableLocales(existingLocale);
     locale->Set(existingLocale, true, false, false, true);
 
+    char path[STORM_MAX_PATH];
+    SStrPrintf(path, sizeof(path), "%s%s", "Data\\", locale->GetString());
+    SFile::SetDataPathAlternate(path);
+    SFile::RebuildHash();
+
 
     OpenArchives();
 
     // TODO: This method should be placed inside OpenArchives
     ClientServices::InitLoginServerCVars(1, locale->GetString());
-
-    // SStrPrintf(dest, 260, "%s%s", *(_DWORD *)off_AB6158, v2->m_stringValue.m_str);
-
-    // sub_421B50(dest);
-
-    // sub_423D70();
 
     // sub_405DD0();
 

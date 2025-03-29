@@ -8,8 +8,9 @@
 #include <bc/file/File.hpp>
 #include "util/Filesystem.hpp"
 
-static char s_basepath[STORM_MAX_PATH] = {0};
-static char s_datapath[STORM_MAX_PATH] = {0};
+static char s_basepath[STORM_MAX_PATH] = { 0 };
+static char s_datapath[STORM_MAX_PATH] = { 0 };
+static char s_datapath2[STORM_MAX_PATH] = { 0 };
 
 // TODO Proper implementation
 int32_t SFile::Close(SFile* file) {
@@ -277,5 +278,19 @@ int32_t SFile::GetBasePath(char* buffer, size_t bufferchars) {
 
 int32_t SFile::GetDataPath(char* buffer, size_t bufferchars) {
     SStrCopy(buffer, s_datapath, bufferchars);
+    return 1;
+}
+
+int32_t SFile::SetDataPathAlternate(const char* path) {
+    SStrCopy(s_datapath2, path, STORM_MAX_PATH);
+    size_t length = SStrLen(s_datapath2);
+    if (length && s_datapath2[length - 1] != '\\' && s_datapath2[length - 1] != '/') {
+        SStrPack(s_datapath2, "\\", STORM_MAX_PATH);
+    }
+    return 1;
+}
+
+int32_t SFile::RebuildHash() {
+    // TODO
     return 1;
 }

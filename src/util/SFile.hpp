@@ -39,6 +39,8 @@ class SFile {
         static int32_t SetDataPath(const char* path);
         static int32_t GetBasePath(char* path, size_t capacity);
         static int32_t GetDataPath(char* path, size_t capacity);
+        static int32_t SetDataPathAlternate(const char* path);
+        static int32_t RebuildHash();
 
         // Member variables
         SFILE_TYPE m_type;

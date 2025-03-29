@@ -14,6 +14,8 @@ namespace Client {
 
 void ClientPostClose(int32_t a1);
 
+const char* UpdateInstallLocation();
+
 void CommonMain();
 
 void StormInitialize();
