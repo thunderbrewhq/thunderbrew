@@ -21,10 +21,20 @@
 #include <storm/Error.hpp>
 #include <storm/Log.hpp>
 #include <bc/os/Path.hpp>
+#include <bc/file/File.hpp>
 
 CVar* Client::g_accountListVar;
 HEVENTCONTEXT Client::g_clientEventContext;
 char Client::g_currentLocaleName[5] = {};
+
+
+static uint8_t s_expansionLevel = 0;
+static bool g_hasIsoLocale[12] = {};
+static char* s_localeArray[12] = {
+    "deDE", "enGB", "enUS", "esES", "frFR", "koKR",
+    "zhCN", "zhTW", "enCN", "enTW", "esMX", "ruRU"
+};
+
 
 void AsyncFileInitialize() {
     // TODO
@@ -140,6 +150,32 @@ int32_t InitializeEngineCallback(const void* a1, void* a2) {
     return 1;
 }
 
+uint8_t GetExpansionLevel() {
+    return s_expansionLevel;
+}
+
+const char* UpdateInstallLocation() {
+    // TODO
+    return nullptr;
+}
+
+bool UpdateInstallLocationForName(int32_t a1, size_t size, const char* filename, char* buffer, const char* locale) {
+    if (a1 == 2) {
+        auto location = UpdateInstallLocation();
+        if (!location) {
+            return false;
+        }
+        SStrPrintf(buffer, size, "%s%s%s", location, "Data\\", filename);
+    } else {
+        SStrPrintf(buffer, size, "%s%s", "Data\\", filename);
+    }
+    for (auto i = SStrStr(buffer, "****"); i; i = SStrStr(buffer, "****")) {
+        size_t offset = static_cast<size_t>(i - buffer);
+        memcpy(&buffer[offset], locale, 4);
+    }
+    return true;
+}
+
 void SetPaths() {
     // SFile::DisableSFileCheckDisk();
     // SFile::EnableDirectAccess(0);
@@ -157,6 +193,98 @@ void SetPaths() {
     SFile::SetDataPath("Data\\");
 
     OsSetCurrentDirectory(datadir);
+}
+
+bool IsCommonMpqExists() {
+    char path1[1024];
+    SStrPrintf(path1, sizeof(path1), "%s%s", "Data\\", "common.MPQ");
+    for (auto i = SStrStr(path1, "****"); i; i = SStrStr(path1, "****")) {
+        size_t offset = static_cast<size_t>(i - path1);
+        memcpy(&path1[offset], "----", 4);
+    }
+
+    char path2[1024];
+    SStrPrintf(path2, sizeof(path2), "%s%s", "..\\Data\\", "common.MPQ");
+    for (auto i = SStrStr(path2, "****"); i; i = SStrStr(path2, "****")) {
+        size_t offset = static_cast<size_t>(i - path2);
+        memcpy(&path2[offset], "----", 4);
+    }
+
+    auto location = UpdateInstallLocation();
+    if (location) {
+        char path3[1024];
+        SStrPrintf(path3, sizeof(path3), "%s%s%s", location, "Data\\", "common.MPQ");
+        for (auto i = SStrStr(path3, "****"); i; i = SStrStr(path3, "****")) {
+            size_t offset = static_cast<size_t>(i - path3);
+            memcpy(&path3[offset], "----", 4);
+        }
+
+        if (!Blizzard::File::Exists(path1) && !Blizzard::File::Exists(path2)) {
+            return Blizzard::File::Exists(path3);
+        }
+    } else if (!Blizzard::File::Exists(path1)) {
+        return Blizzard::File::Exists(path2);
+    }
+
+    return true;
+}
+
+size_t GetLocaleIndex(const char* locale) {
+    for (size_t i = 0; i < 12; ++i) {
+        if (SStrCmpI(locale, s_localeArray[i], 4) == 0) {
+            return i;
+        }
+    }
+    return 2; // s_localeArray[2] == "enUS"
+}
+
+void CheckAvailableLocales(char* locale) {
+    if (!IsCommonMpqExists()) {
+        return;
+    }
+
+    for (size_t localeIndex = 0; localeIndex < 12; ++localeIndex) {
+        g_hasIsoLocale[localeIndex] = false;
+
+        const char* filename = "****\\locale-****.MPQ";
+
+        char path[1024];
+        SStrPrintf(path, sizeof(path), "%s%s", "Data\\", filename);
+        for (auto i = SStrStr(path, "****"); i; i = SStrStr(path, "****")) {
+            size_t offset = static_cast<size_t>(i - path);
+            memcpy(&path[offset], s_localeArray[localeIndex], 4);
+        }
+
+        if (Blizzard::File::Exists(path)) {
+            g_hasIsoLocale[localeIndex] = true;
+            continue;
+        }
+
+        SStrPrintf(path, sizeof(path), "%s%s", "..\\Data\\", filename);
+        for (auto i = SStrStr(path, "****"); i; i = SStrStr(path, "****")) {
+            size_t offset = static_cast<size_t>(i - path);
+            memcpy(&path[offset], s_localeArray[localeIndex], 4);
+        }
+
+        if (Blizzard::File::Exists(path)) {
+            g_hasIsoLocale[localeIndex] = true;
+            continue;
+        }
+
+        if (UpdateInstallLocationForName(2, sizeof(path), filename, path, s_localeArray[localeIndex]) &&
+            Blizzard::File::Exists(path)) {
+            g_hasIsoLocale[localeIndex] = true;
+        }
+    }
+
+    size_t localeIndex = GetLocaleIndex(locale);
+    for (size_t i = 0; i < 12; ++i) {
+        if (g_hasIsoLocale[localeIndex]) {
+            break;
+        }
+        localeIndex = (localeIndex + 1) % 12;
+    }
+    SStrCopy(locale, s_localeArray[localeIndex], STORM_MAX_STR);
 }
 
 bool LocaleChangedCallback(CVar*, const char*, const char* value, void*) {
@@ -238,23 +366,21 @@ int32_t InitializeGlobal() {
         false
     );
 
-
-    OpenArchives();
-
-    // TODO
-    // replace enUS with detected locale
-    ClientServices::InitLoginServerCVars(1, locale->GetString());
-
-
+    // TODO: SFile::IsTrial() check
     // if (sub_422140()) {
     //     sub_4036B0(v24, 0, a2, (int)v2, (char)v24);
     // }
 
-    // SStrCopy(&a1a, v2->m_stringValue.m_str, 5);
+    char existingLocale[5] = {};
+    SStrCopy(existingLocale, locale->GetString(), sizeof(existingLocale));
+    CheckAvailableLocales(existingLocale);
+    locale->Set(existingLocale, true, false, false, true);
 
-    // sub_402D50(&a1a);
 
-    // CVar::Set(v2, &a1a, 1, 0, 0, 1);
+    OpenArchives();
+
+    // TODO: This method should be placed inside OpenArchives
+    ClientServices::InitLoginServerCVars(1, locale->GetString());
 
     // SStrPrintf(dest, 260, "%s%s", *(_DWORD *)off_AB6158, v2->m_stringValue.m_str);
 
