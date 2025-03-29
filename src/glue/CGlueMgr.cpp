@@ -843,17 +843,18 @@ void CGlueMgr::StatusDialogClick() {
         case IDLE_WORLD_LOGIN: {
             CGlueMgr::m_showedDisconnect = 0;
             CGlueMgr::m_idleState = IDLE_NONE;
-
-            // TODO
-            // CGlueMgr::GetCharacterList();
+            CGlueMgr::GetCharacterList();
 
             break;
         }
 
         case IDLE_12:
         case IDLE_13: {
-            // TODO
-
+            if (CGlueMgr::m_surveyDownload) {
+                CGlueMgr::SurveyDownloadCancel();
+                CGlueMgr::m_showedDisconnect = 0;
+                CGlueMgr::m_idleState = IDLE_NONE;
+            }
             break;
         }
     }
@@ -895,6 +896,9 @@ void CGlueMgr::UpdateCurrentScreen(const char* screen) {
 }
 
 void CGlueMgr::SurveyDownloadStart() {
+}
+
+void CGlueMgr::SurveyDownloadCancel() {
 }
 
 void CGlueMgr::SurveyDownloadIdle() {

@@ -92,6 +92,7 @@ class CGlueMgr {
 
         // Survey Download System
         static void SurveyDownloadStart();
+        static void SurveyDownloadCancel();
         static void SurveyDownloadIdle();
         static bool SurveyExecute();
         static void SurveySendResults();
