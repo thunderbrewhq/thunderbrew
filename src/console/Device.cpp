@@ -3,12 +3,15 @@
 #include "client/Gui.hpp"
 #include "console/Console.hpp"
 #include "console/CVar.hpp"
+#include "console/Command.hpp"
 #include "event/Input.hpp"
+#include "gx/Gx.hpp"
 #include "gx/Device.hpp"
 #include <cstring>
 #include <cstdio>
 
 
+CVar* s_cvHwDetect;
 CVar* s_cvGxFixedFunction;
 CVar* s_cvGxWindowResizeLock;
 CVar* s_cvGxVideoOptionsVersion;
@@ -190,6 +193,11 @@ bool CVGxApiCallback(CVar* h, const char* oldValue, const char* newValue, void* 
     return false;
 }
 
+int32_t CCGxRestart(const char*, const char*) {
+    // TODO
+    return 1;
+}
+
 EGxApi GxApiDefault() {
 #if defined(WHOA_SYSTEM_WIN)
     return GxApi_D3d9;
@@ -254,23 +262,27 @@ void RegisterGxCVars() {
 }
 
 void UpdateGxCVars() {
-    // TODO others
-
+    s_cvGxColorBits->Update();
+    s_cvGxDepthBits->Update();
     s_cvGxWindow->Update();
     s_cvGxResolution->Update();
-
-    // TODO others
-
+    s_cvGxRefresh->Update();
+    s_cvGxTripleBuffer->Update();
+    s_cvGxApi->Update();
+    s_cvGxVSync->Update();
+    s_cvGxAspect->Update();
     s_cvGxMaximize->Update();
-
-    // TODO others
+    s_cvGxCursor->Update();
+    s_cvGxMultisample->Update();
+    s_cvGxMultisampleQuality->Update();
+    s_cvGxFixLag->Update();
 }
 
 void SetGxCVars(const CGxFormat& format) {
-    char value[1024];
+    char value[1024] = {};
 
-    // TODO s_cvGxColorBits
-    // TODO s_cvGxDepthBits
+    s_cvGxColorBits->Set(CGxFormat::formatToColorBitsString[format.colorFormat], true, false, false, true);
+    s_cvGxDepthBits->Set(CGxFormat::formatToColorBitsString[format.depthFormat], true, false, false, true);
 
     SStrPrintf(value, sizeof(value), "%d", format.window);
     s_cvGxWindow->Set(value, true, false, false, true);
@@ -278,43 +290,100 @@ void SetGxCVars(const CGxFormat& format) {
     SStrPrintf(value, sizeof(value), "%dx%d", format.size.x, format.size.y);
     s_cvGxResolution->Set(value, true, false, false, true);
 
-    // TODO s_cvGxRefresh
-    // TODO others
+    SStrPrintf(value, sizeof(value), "%d", format.refreshRate);
+    s_cvGxRefresh->Set(value, true, false, false, true);
+
+    // TODO: (format + 28) > 1
+    s_cvGxTripleBuffer->Set("0", true, false, false, true);
+
+    SStrPrintf(value, sizeof(value), "%d", format.vsync);
+    s_cvGxVSync->Set(value, true, false, false, true);
+
+    // TODO: format.aspectRatio
+    SStrPrintf(value, sizeof(value), "%d", 0);
+    s_cvGxAspect->Set(value, true, false, false, true);
 
     SStrPrintf(value, sizeof(value), "%d", format.maximize);
     s_cvGxMaximize->Set(value, true, false, false, true);
 
-    // TODO others
+    SStrPrintf(value, sizeof(value), "%d", format.hwCursor);
+    s_cvGxCursor->Set(value, true, false, false, true);
+
+    SStrPrintf(value, sizeof(value), "%d", format.sampleCount);
+    s_cvGxMultisample->Set(value, true, false, false, true);
+
+    // TODO: format.multisampleQuality
+    SStrPrintf(value, sizeof(value), "%f", 0.0f);
+    s_cvGxMultisampleQuality->Set(value, true, false, false, true);
+
+    SStrPrintf(value, sizeof(value), "%d", format.fixLag);
+    s_cvGxFixLag->Set(value, true, false, false, true);
 
     UpdateGxCVars();
 }
 
 void ConsoleDeviceInitialize(const char* title) {
-    // TODO
+    GxLogOpen();
 
-    // TODO proper logic
-    s_hwDetect = true;
+    s_cvHwDetect = CVar::Register("hwDetect", "do hardware detection", 0x1, "1", nullptr, CATEGORY::GRAPHICS);
+
+    // TODO: sub_76BA30(&unk_CABB38, &byte_CABCBD); << ConsoleDetect
+    // TODO: byte_CABCBC = 1;
+
+    if (CmdLineGetBool(WOWCMD_HW_DETECT) || s_cvHwDetect->GetInt() != 0) {
+        s_hwDetect = true;
+        s_cvHwDetect->Set("0", true, false, false, true);
+    } else {
+        s_hwDetect = false;
+    }
+
 
     ConsoleAccessSetEnabled(CmdLineGetBool(WOWCMD_CONSOLE));
 
-    // TODO
+    // TODO: sub_76B520(&unk_CABAF0, &unk_CABB38);
 
     RegisterGxCVars();
+    ConsoleCommandRegister("gxRestart", &CCGxRestart, CATEGORY::GRAPHICS, nullptr);
 
-    // TODO ConsoleCommandRegister("gxRestart", &CCGxRestart, 1, nullptr);
+    // TODO: GxAdapterMonitorModes((int)&unk_CABCC8);
+    // TODO: ValidateFormatMonitor(&unk_CABDA8);
 
-    // TODO
+    // TODO: if ( GxAdapterDesktopMode(&v28) )
+    if (true) {
+        s_requestedFormat.size.x = 1024;
+        s_requestedFormat.size.y = 768;
+        s_requestedFormat.colorFormat = CGxFormat::Fmt_Argb8888;
+        s_requestedFormat.depthFormat = CGxFormat::Fmt_Ds248;
+    }
 
-    // TODO
-    // - source the size values correctly
-    s_requestedFormat.size.x = 1024;
-    s_requestedFormat.size.y = 768;
-    s_requestedFormat.colorFormat = CGxFormat::Fmt_Argb8888;
-    s_requestedFormat.depthFormat = CGxFormat::Fmt_Ds248;
+    GxLog("ConsoleDeviceInitialize(): hwDetect = %d, hwChanged = %d", s_hwDetect, s_hwChanged);
+
+    if (CmdLineGetBool(WOWCMD_RES_800x600)) {
+        s_requestedFormat.size.x = 800;
+        s_requestedFormat.size.y = 600;
+    } else if (CmdLineGetBool(WOWCMD_RES_1024x768)) {
+        s_requestedFormat.size.x = 1024;
+        s_requestedFormat.size.y = 768;
+    } else if (CmdLineGetBool(WOWCMD_RES_1280x960)) {
+        s_requestedFormat.size.x = 1280;
+        s_requestedFormat.size.y = 960;
+    } else if (CmdLineGetBool(WOWCMD_RES_1280x1024)) {
+        s_requestedFormat.size.x = 1280;
+        s_requestedFormat.size.y = 1024;
+    } else if (CmdLineGetBool(WOWCMD_RES_1600x1200)) {
+        s_requestedFormat.size.x = 1600;
+        s_requestedFormat.size.y = 1200;
+    }
+
+    if (s_cvGxFixedFunction->GetInt() != 0) {
+        // TODO: (dword_CABD20 = 0) s_requestedFormat.unknown_field = 0;
+        s_requestedFormat.pos.y = 0; // <--- CHECK THIS
+        s_requestedFormat.pos.x = 0;
+    }
 
     if (s_hwDetect || s_hwChanged) {
         // TODO Sub76B3F0(&UnkCABAF0, &UnkCABB38);
-        // TODO s_cvFixedFunction->Set("0", 1, 0, 0, 1);
+        s_cvGxFixedFunction->Set("0", true, false, false, true);
         // TODO memcpy(&s_requestedFormat, &s_defaults.format, sizeof(s_requestedFormat));
 
         s_requestedFormat.window = s_cvGxWindow->GetInt() != 0;

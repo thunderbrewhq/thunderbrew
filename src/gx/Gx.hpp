@@ -18,4 +18,10 @@ void GxCapsWindowSize(CRect&);
 
 void GxFormatColor(CImVector&);
 
+void GxLogOpen();
+
+void GxLogClose();
+
+void GxLog(const char* format, ...);
+
 #endif

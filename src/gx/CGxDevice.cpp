@@ -106,6 +106,14 @@ uint32_t CGxDevice::s_texFormatBytesPerBlock[] = {
 CGxShader* CGxDevice::s_uiVertexShader = nullptr;
 CGxShader* CGxDevice::s_uiPixelShader = nullptr;
 
+void CGxDevice::LogOpen() {
+    // TODO
+}
+
+void CGxDevice::LogClose() {
+    // TODO
+}
+
 void CGxDevice::Log(const char* format, ...) {
     // TODO
 }

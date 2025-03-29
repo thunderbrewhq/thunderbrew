@@ -51,6 +51,8 @@ class CGxDevice {
         static CGxShader* s_uiPixelShader;
 
         // Static functions
+        static void LogOpen();
+        static void LogClose();
         static void Log(const char* format, ...);
         static void Log(const CGxFormat& format);
 #if defined(WHOA_SYSTEM_WIN)
