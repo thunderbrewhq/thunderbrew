@@ -240,10 +240,10 @@ int32_t RealmConnection::HandleCharEnum(uint32_t msgId, uint32_t time, CDataStor
         }
     }
 
-    bool success = false;
+    int32_t success = 0;
     if (msg->IsRead()) {
         if (!overflow) {
-            success = true;
+            success = 1;
         }
     } else if (!overflow) {
         // TODO: Proper implementation
@@ -259,7 +259,7 @@ int32_t RealmConnection::HandleCharEnum(uint32_t msgId, uint32_t time, CDataStor
         msg->Get(value);
         msg->Get(value);
         if (msg->IsRead()) {
-            success = true;
+            success = 1;
         }
     }
 
@@ -267,13 +267,7 @@ int32_t RealmConnection::HandleCharEnum(uint32_t msgId, uint32_t time, CDataStor
         m_characterList.Clear();
     }
 
-    // TODO: Should be implemented as call of sub_6B2000
-    if (success) {
-        this->Complete(1, 44);
-    } else {
-        this->Complete(1, 45);
-    }
-
+    this->m_realmResponse->CharacterListReceived(this, msg, success);
     return 1;
 }
 

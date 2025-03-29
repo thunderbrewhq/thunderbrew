@@ -16,3 +16,13 @@ void ClientRealmResponseAdapter::HandleAuthResponse(RealmConnection* realmConnec
 
     AccountDataInitialize(true);
 }
+
+void ClientRealmResponseAdapter::CharacterListReceived(RealmConnection* realmConnection, void* a2, int32_t success) {
+    auto clientConnection = static_cast<ClientConnection*>(realmConnection);
+
+    if (success) {
+        clientConnection->Complete(1, 44);
+    } else {
+        clientConnection->Complete(1, 45);
+    }
+}
