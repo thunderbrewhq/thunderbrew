@@ -1311,17 +1311,28 @@ void CGxDeviceD3d::ICursorDraw() {
 }
 
 void CGxDeviceD3d::ISceneBegin() {
+    if (!this->m_context) {
+        auto result = this->m_d3dDevice->TestCooperativeLevel();
+        if (result == D3DERR_DEVICENOTRESET) {
+            this->IReleaseD3dResources(0);
+            D3DPRESENT_PARAMETERS d3dpp;
+            this->ISetPresentParms(d3dpp, this->m_format);
+            result = this->m_d3dDevice->Reset(&d3dpp);
+            if (result == D3D_OK) {
+                this->IStateSetD3dDefaults();
+                // TODO: CGxDeviceD3d::ICursorClip
+                // TODO: this->NotifyOnDeviceRestored()
+            }
+        }
+    }
+
     if (this->m_context) {
         this->ShaderConstantsClear();
 
         if (SUCCEEDED(this->m_d3dDevice->BeginScene())) {
             this->m_inScene = 1;
         }
-
-        return;
     }
-
-    // TODO
 }
 
 void CGxDeviceD3d::ISceneEnd() {
