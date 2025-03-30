@@ -338,10 +338,10 @@ LRESULT CGxDeviceD3d::WindowProcD3d(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                 SetCursor(nullptr);
                 BOOL show = device->m_cursorVisible && device->m_hardwareCursor ? TRUE : FALSE;
                 device->m_d3dDevice->ShowCursor(show);
+                return 1;
             }
         }
-
-        return 1;
+        break;
     }
 
     case WM_DISPLAYCHANGE: {
