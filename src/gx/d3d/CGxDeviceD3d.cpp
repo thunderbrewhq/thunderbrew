@@ -2200,9 +2200,12 @@ void CGxDeviceD3d::ShaderCreate(CGxShader* shaders[], EGxShTarget target, const 
 }
 
 int32_t CGxDeviceD3d::StereoEnabled() {
+    return this->m_d3dStereoEnabled == 1;
+}
+
+void CGxDeviceD3d::CursorUnlock() {
     CGxDevice::CursorUnlock(x, y);
     this->m_hwCursorNeedsUpdate = 1;
-
 }
 
 void CGxDeviceD3d::XformSetProjection(const C44Matrix& matrix) {
