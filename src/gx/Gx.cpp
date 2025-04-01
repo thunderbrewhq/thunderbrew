@@ -34,6 +34,9 @@ const char** g_gxShaderProfileNames[GxShTargets_Last] = {
     csProfileNames
 };
 
+static uint32_t s_maxFPS;
+static uint32_t s_maxFPSBk;
+
 const CGxCaps& GxCaps() {
     return g_theGxDevicePtr->Caps();
 }
@@ -70,4 +73,20 @@ void GxLogClose() {
 
 void GxLog(const char* format, ...) {
     // TODO
+}
+
+void GxSetMaxFPS(uint32_t maxFPS) {
+    s_maxFPS = maxFPS;
+}
+
+void GxSetMaxFPSBk(uint32_t maxFPSBk) {
+    s_maxFPSBk = maxFPSBk;
+}
+
+uint32_t GxGetMaxFPS() {
+    return s_maxFPS;
+}
+
+uint32_t GxGetMaxFPSBk() {
+    return s_maxFPSBk;
 }

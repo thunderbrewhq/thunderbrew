@@ -24,4 +24,12 @@ void GxLogClose();
 
 void GxLog(const char* format, ...);
 
+void GxSetMaxFPS(uint32_t maxFPS);
+
+void GxSetMaxFPSBk(uint32_t maxFPSBk);
+
+uint32_t GxGetMaxFPS();
+
+uint32_t GxGetMaxFPSBk();
+
 #endif

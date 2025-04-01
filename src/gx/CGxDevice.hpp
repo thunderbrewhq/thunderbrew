@@ -4,6 +4,7 @@
 #include "gx/Buffer.hpp"
 #include "gx/CGxCaps.hpp"
 #include "gx/CGxFormat.hpp"
+#include "gx/CGxMonitorMode.hpp"
 #include "gx/CGxMatrixStack.hpp"
 #include "gx/CGxStateBom.hpp"
 #include "gx/Types.hpp"
@@ -51,10 +52,13 @@ class CGxDevice {
         static CGxShader* s_uiPixelShader;
 
         // Static functions
+        static bool AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes);
+        static void ICursorUpdate(EGxTexCommand, uint32_t, uint32_t, uint32_t, uint32_t, void*, uint32_t&, const void*&);
         static void LogOpen();
-        static void LogClose();
         static void Log(const char* format, ...);
         static void Log(const CGxFormat& format);
+        static void LogClose();
+        static uint32_t PrimCalcCount(EGxPrim primType, uint32_t count);
 #if defined(WHOA_SYSTEM_WIN)
         static CGxDevice* NewD3d();
         static CGxDevice* NewD3d9Ex();
@@ -66,8 +70,6 @@ class CGxDevice {
         static CGxDevice* NewGLSDL();
 #endif
         static CGxDevice* NewOpenGl();
-        static uint32_t PrimCalcCount(EGxPrim primType, uint32_t count);
-        static void ICursorUpdate(EGxTexCommand, uint32_t, uint32_t, uint32_t, uint32_t, void*, uint32_t&, const void*&);
 
         // Member variables
         TSGrowableArray<CGxPushedRenderState> m_pushedStates;
@@ -84,7 +86,7 @@ class CGxDevice {
         int32_t intF5C = 0;
         int32_t m_windowVisible = 0;
         int32_t intF64 = 0;
-        int32_t intF6C = 1;
+        int32_t m_needsReset = 1;
         CBoundingBox m_viewport;
         C44Matrix m_projection;
         C44Matrix m_projNative;
