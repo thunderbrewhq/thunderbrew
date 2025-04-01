@@ -7,9 +7,8 @@
 #include "util/SFile.hpp"
 #include <algorithm>
 #include <cstring>
-#include <new>
+#include <bc/Memory.hpp>
 #include <storm/Error.hpp>
-#include <storm/Memory.hpp>
 #include <storm/String.hpp>
 
 namespace Texture {
@@ -805,7 +804,7 @@ CTexture* CreateBlpSync(int32_t createFlags, char* fileName, char* fileExt, CGxT
 
     size_t fileSize = SFile::GetFileSize(file, 0);
 
-    void* buf = SMemAlloc(fileSize, __FILE__, __LINE__, 0);
+    void* buf = ALLOC(fileSize);
 
     if (!SFile::Read(file, buf, fileSize, nullptr, nullptr, nullptr)) {
         // nullsub_3();
@@ -817,7 +816,7 @@ CTexture* CreateBlpSync(int32_t createFlags, char* fileName, char* fileExt, CGxT
 
     SFile::Close(file);
 
-    SMemFree(buf, __FILE__, __LINE__, 0);
+    FREE(buf);
 
     return texture;
 }
@@ -979,8 +978,7 @@ HTEXTURE TextureCreate(uint32_t width, uint32_t height, EGxTexFormat format, EGx
 }
 
 HTEXTURE TextureCreate(EGxTexTarget target, uint32_t width, uint32_t height, uint32_t depth, EGxTexFormat format, EGxTexFormat dataFormat, CGxTexFlags texFlags, void* userArg, TEXTURE_CALLBACK* userFunc, const char* a10, int32_t a11) {
-    auto m = SMemAlloc(sizeof(CTexture), __FILE__, __LINE__, 0x0);
-    auto texture = new (m) CTexture();
+    auto texture = NEW(CTexture);
 
     if (a11) {
         texFlags.m_filter = CTexture::s_filterMode;
@@ -1010,8 +1008,7 @@ HTEXTURE TextureCreateSolid(const CImVector& color) {
         return textureHandle;
     }
 
-    auto m = SMemAlloc(sizeof(CTexture), __FILE__, __LINE__, 0x0);
-    auto texture = new (m) CTexture();
+    auto texture = NEW(CTexture);
 
     FillInSolidTexture(color, texture);
     textureHandle = HandleCreate(texture);

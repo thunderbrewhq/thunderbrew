@@ -42,6 +42,7 @@ target_link_libraries(event
         client
         gx
     PUBLIC
+        bc
         common
         storm
         tempest

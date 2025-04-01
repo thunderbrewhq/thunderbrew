@@ -12,7 +12,7 @@
 #include <common/Call.hpp>
 #include <common/Prop.hpp>
 #include <common/Time.hpp>
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 #include <storm/String.hpp>
 #include <storm/Thread.hpp>
 
@@ -37,8 +37,7 @@ HEVENTCONTEXT IEvtSchedulerCreateContext(int32_t interactive, int32_t (*initiali
         callContext = OsCallInitializeContext(contextName);
     }
 
-    auto m = SMemAlloc(sizeof(EvtContext), __FILE__, __LINE__, 0x0);
-    auto context = new (m) EvtContext(
+    auto context = NEW(EvtContext,
         interactive != 0 ? 2 : 0,
         idleTime,
         interactive != 0 ? 1000 : 1,

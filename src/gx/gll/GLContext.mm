@@ -121,7 +121,7 @@ bool GLContext::IsCurrentContext() {
 }
 
 void GLContext::MakeCurrent(bool a2) {
-    BLIZZARD_ASSERT(this->m_Context->context != nullptr);
+    BC_ASSERT(this->m_Context->context != nullptr);
 
     if (a2) {
         NSOpenGLContext* v6 = GLContext::GetNSOpenGLCurrentContext();
@@ -213,17 +213,17 @@ void GLContext::SetContextFormat(GLTextureFormat a2, uint32_t sampleCount) {
                 break;
 
             default:
-                BLIZZARD_ASSERT(false);
+                BC_ASSERT(false);
                 break;
         }
 
         if (sampleCount > 1) {
-            BLIZZARD_ASSERT(sampleCount % 2 == 0);
-            BLIZZARD_ASSERT(formatAttributes[13] == 0);
-            BLIZZARD_ASSERT(formatAttributes[14] == 0);
-            BLIZZARD_ASSERT(formatAttributes[15] == 0);
-            BLIZZARD_ASSERT(formatAttributes[16] == 0);
-            BLIZZARD_ASSERT(formatAttributes[17] == 0);
+            BC_ASSERT(sampleCount % 2 == 0);
+            BC_ASSERT(formatAttributes[13] == 0);
+            BC_ASSERT(formatAttributes[14] == 0);
+            BC_ASSERT(formatAttributes[15] == 0);
+            BC_ASSERT(formatAttributes[16] == 0);
+            BC_ASSERT(formatAttributes[17] == 0);
 
             formatAttributes[13] = NSOpenGLPFASampleBuffers;
             formatAttributes[14] = 1;
@@ -237,14 +237,14 @@ void GLContext::SetContextFormat(GLTextureFormat a2, uint32_t sampleCount) {
             initWithAttributes: formatAttributes
         ];
 
-        BLIZZARD_ASSERT(context.pixelFormat != nullptr);
+        BC_ASSERT(context.pixelFormat != nullptr);
 
         context.context = [[NSOpenGLContext alloc]
             initWithFormat: context.pixelFormat
             shareContext: GLContext::s_MainContext
         ];
 
-        BLIZZARD_ASSERT(context.context != nullptr);
+        BC_ASSERT(context.context != nullptr);
 
         this->m_Context = &context;
 
@@ -256,7 +256,7 @@ void GLContext::SetContextFormat(GLTextureFormat a2, uint32_t sampleCount) {
         auto result = this->m_MTGLEnabled
             ? CGLEnable(contextObj, kCGLCEMPEngine)
             : CGLDisable(contextObj, kCGLCEMPEngine);
-        BLIZZARD_ASSERT(result == kCGLNoError);
+        BC_ASSERT(result == kCGLNoError);
 
         if (this->m_Window) {
             this->m_Window->SetOpenGLContext(this);

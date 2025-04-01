@@ -145,7 +145,9 @@ void IEvtQueueRegister(EvtContext* context, EVENTID id, int32_t (*handler)(const
 }
 
 int32_t IEvtQueueCheckSyncKeyState(EvtContext* context, KEY key) {
-    STORM_VALIDATE(context, ERROR_INVALID_PARAMETER, 0);
+    STORM_VALIDATE_BEGIN;
+    STORM_VALIDATE(context);
+    STORM_VALIDATE_END;
 
     context->m_critsect.Enter();
 

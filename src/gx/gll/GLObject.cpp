@@ -5,7 +5,7 @@ void GLObject::AddRefTwin() {
 }
 
 uint32_t GLObject::Release() {
-    BLIZZARD_ASSERT(this->m_RefCount > 0);
+    BC_ASSERT(this->m_RefCount > 0);
 
     this->m_RefCount--;
 

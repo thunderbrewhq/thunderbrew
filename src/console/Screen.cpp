@@ -250,7 +250,7 @@ void GenerateNodeString(CONSOLELINE* node) {
         auto fontHeight = ConsoleGetFontHeight();
 
         GxuFontCreateString(font, node->buffer, fontHeight, pos, 1.0f, fontHeight, 0.0f, node->fontPointer, GxVJ_Middle, GxHJ_Left, s_baseTextFlags, s_colorArray[node->colorType], s_charSpacing, 1.0f);
-        BLIZZARD_ASSERT(node->fontPointer);
+        BC_ASSERT(node->fontPointer);
     }
 }
 
@@ -313,7 +313,7 @@ void PaintText(void* param, const RECTF* rect, const RECTF* visible, float elaps
 
 void UpdateHighlight() {
     auto font = TextBlockGetFontPtr(s_textFont);
-    BLIZZARD_ASSERT(font);
+    BC_ASSERT(font);
 
     auto len = SStrLen(s_copyText);
 

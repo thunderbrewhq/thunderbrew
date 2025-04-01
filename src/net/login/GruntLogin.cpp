@@ -2,8 +2,7 @@
 #include "net/grunt/ClientLink.hpp"
 #include "net/login/LoginResponse.hpp"
 #include <cstring>
-#include <new>
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 #include <storm/String.hpp>
 
 GruntLogin::~GruntLogin() {
@@ -75,7 +74,7 @@ void GruntLogin::GetLogonMethod() {
 
         auto passwordLen = SStrLen(this->m_password);
         memset(this->m_password, 0, passwordLen);
-        SMemFree(this->m_password, __FILE__, __LINE__, 0);
+        FREE(this->m_password);
         this->m_password = nullptr;
     }
 }
@@ -108,8 +107,8 @@ void GruntLogin::GetVersionProof(const uint8_t* versionChallenge) {
 void GruntLogin::Init(LoginResponse* loginResponse) {
     this->m_loginResponse = loginResponse;
 
-    auto clientLinkMem = SMemAlloc(sizeof(Grunt::ClientLink), __FILE__, __LINE__, 0x0);
-    auto clientLink = new (clientLinkMem) Grunt::ClientLink(*this);
+    auto clientLink = NEW(Grunt::ClientLink, *this);
+
     this->m_clientLink = clientLink;
 }
 

@@ -11,6 +11,7 @@ target_include_directories(db
 
 target_link_libraries(db
     PUBLIC
+        bc
         common
         storm
 )

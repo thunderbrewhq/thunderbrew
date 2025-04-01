@@ -23,6 +23,7 @@ target_link_libraries(ui
         net
         util
     PUBLIC
+        bc
         common
         storm
         tempest

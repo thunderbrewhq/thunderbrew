@@ -13,6 +13,9 @@ target_link_libraries(sound
     PRIVATE
         ui
         util
+    PUBLIC
+        bc
+        storm
 )
 
 if(WHOA_BUILD_FMOD)

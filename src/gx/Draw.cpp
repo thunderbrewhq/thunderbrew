@@ -21,7 +21,7 @@ void GxDrawLockedElements(EGxPrim primType, uint32_t indexCount, const uint16_t*
     batch.m_start = 0;
     batch.m_count = indexCount;
 
-    BLIZZARD_ASSERT(batch.m_count > 0);
+    BC_ASSERT(batch.m_count > 0);
 
     g_theGxDevicePtr->Draw(&batch, 1);
 }

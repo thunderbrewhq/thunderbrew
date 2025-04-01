@@ -5,8 +5,7 @@
 #include "util/Filesystem.hpp"
 #include "util/SFile.hpp"
 #include <cstring>
-#include <new>
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 #include <storm/String.hpp>
 #include <tempest/Box.hpp>
 
@@ -36,8 +35,7 @@ CM2Shared* CM2Cache::CreateShared(const char* path, uint32_t flags) {
     SFile* fileptr;
 
     if (SFile::OpenEx(nullptr, convertedPath, (flags >> 2) & 1, &fileptr)) {
-        auto m = SMemAlloc(sizeof(CM2Shared), __FILE__, __LINE__, 0x0);
-        auto shared = new (m) CM2Shared(this);
+        auto shared = NEW(CM2Shared, this);
 
         if (shared->Load(fileptr, flags & 0x4, &v28)) {
             strcpy(shared->m_filePath, convertedPath);
@@ -53,7 +51,7 @@ CM2Shared* CM2Cache::CreateShared(const char* path, uint32_t flags) {
         }
 
         SFile::Close(fileptr);
-        delete shared;
+        DEL(shared);
     }
 
     return nullptr;

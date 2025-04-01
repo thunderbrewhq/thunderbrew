@@ -13,14 +13,14 @@ GLShader* GLShader::Create(ShaderType shaderType, bool hybrid, bool usingCG, con
     const char* shaderCode = reinterpret_cast<const char*>(buf);
 
     if (*reinterpret_cast<const int32_t*>(buf) == 'GSL1') {
-        BLIZZARD_ASSERT(!usingCG);
+        BC_ASSERT(!usingCG);
 
         const ShaderDataHeader header = *reinterpret_cast<const ShaderDataHeader*>(buf);
 
-        BLIZZARD_ASSERT(header.shaderType == shaderType);
-        BLIZZARD_ASSERT(header.size == codeLen);
-        BLIZZARD_ASSERT(header.codePos >= sizeof(ShaderDataHeader));
-        BLIZZARD_ASSERT(header.codeSize > 0);
+        BC_ASSERT(header.shaderType == shaderType);
+        BC_ASSERT(header.size == codeLen);
+        BC_ASSERT(header.codePos >= sizeof(ShaderDataHeader));
+        BC_ASSERT(header.codeSize > 0);
 
         shaderCode = &reinterpret_cast<const char*>(buf)[header.codePos];
     }
@@ -83,7 +83,7 @@ int32_t GLShader::GetShaderType() {
 }
 
 void GLShader::ImmediateCompile(GLShaderLogInfo* logInfo) {
-    BLIZZARD_ASSERT(!this->GetCode().empty());
+    BC_ASSERT(!this->GetCode().empty());
 
     this->m_Device = GLDevice::Get();
 
@@ -103,7 +103,7 @@ void GLShader::ImmediateCompile(GLShaderLogInfo* logInfo) {
 
         glProgramStringARB(this->var5, GL_PROGRAM_FORMAT_ASCII_ARB, arbLen, arbCode);
 
-        BLIZZARD_ASSERT(this->CheckErrorsARB(logInfo));
+        BC_ASSERT(this->CheckErrorsARB(logInfo));
     } else {
         // TODO
         // - handle GLSL shaders

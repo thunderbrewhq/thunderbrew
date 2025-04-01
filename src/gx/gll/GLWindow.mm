@@ -16,7 +16,7 @@ bool GLWindow::CanEnterFullscreenMode() {
 void GLWindow::CreateView() {
     System_Autorelease::ScopedPool autorelease;
 
-    BLIZZARD_ASSERT(this->m_View == nullptr);
+    BC_ASSERT(this->m_View == nullptr);
 
     GLLayerView* v1 = [this->m_ViewClass alloc];
     NSView* v2 = [this->m_Window contentView];
@@ -70,7 +70,7 @@ void GLWindow::Init(const CGRect& a2, GLWindowCallbacks* a3) {
 
     this->SetCallbacks(a3);
 
-    BLIZZARD_ASSERT(this->m_Window == nullptr);
+    BC_ASSERT(this->m_Window == nullptr);
 
     NSScreen* primaryScreen = [[NSScreen screens] objectAtIndex:0];
 
@@ -102,7 +102,7 @@ void GLWindow::Init(const CGRect& a2, GLWindowCallbacks* a3) {
     [window
         setBackgroundColor: [NSColor blackColor]];
 
-    BLIZZARD_ASSERT(this->m_Window != nullptr);
+    BC_ASSERT(this->m_Window != nullptr);
 
     // TODO
     // return 1;
@@ -132,7 +132,7 @@ void GLWindow::SetCallbacks(GLWindowCallbacks* callbacks) {
 }
 
 void GLWindow::SetOpenGLContext(GLContext* a2) {
-    BLIZZARD_ASSERT(this->m_View != nullptr);
+    BC_ASSERT(this->m_View != nullptr);
 
     System_Autorelease::ScopedPool autorelease;
 

@@ -6,8 +6,7 @@
 #include "gx/Gx.hpp"
 #include <algorithm>
 #include <cmath>
-#include <new>
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 #include <storm/String.hpp>
 #include <tempest/Math.hpp>
 
@@ -15,16 +14,13 @@ TEXTLINETEXTURE* TEXTLINETEXTURE::NewTextLineTexture() {
     // TODO
     // Allocate off of TEXTLINETEXTURE::s_freeTextLineTextures
 
-    auto m = SMemAlloc(sizeof(TEXTLINETEXTURE), __FILE__, __LINE__, 0x0);
-    return new (m) TEXTLINETEXTURE();
+    return NEW(TEXTLINETEXTURE);
 }
 
 void TEXTLINETEXTURE::Recycle(TEXTLINETEXTURE* ptr) {
     // TODO if (TEXTLINETEXTURE::s_recycledBytes <= 0x80000)
 
-    if (ptr) {
-        delete ptr;
-    }
+    DEL(ptr);
 }
 
 void TEXTLINETEXTURE::WriteGeometry(CGxVertexPCT* buf, const CImVector& fontColor, const C2Vector& shadowOffset, const CImVector& shadowColor, const C3Vector& viewTranslation, bool a7, bool a8, int32_t ofs, int32_t size) {
@@ -118,8 +114,7 @@ CGxString* CGxString::GetNewString(int32_t linkOnList) {
         return string;
     }
 
-    auto m = SMemAlloc(sizeof(CGxString), __FILE__, __LINE__, 0x8);
-    string = new (m) CGxString();
+    string = NEW_ZERO(CGxString);
 
     if (linkOnList) {
         g_strings.LinkToTail(string);
@@ -331,11 +326,11 @@ int32_t CGxString::Initialize(float fontHeight, const C3Vector& position, float 
     uint32_t textLen = SStrLen(text) + 1;
     if (textLen > this->m_textLen) {
         if (this->m_text) {
-            SMemFree(this->m_text, __FILE__, __LINE__, 0x0);
+            FREE(this->m_text);
         }
 
         this->m_textLen = textLen;
-        this->m_text = static_cast<char*>(SMemAlloc(textLen, __FILE__, __LINE__, 0x0));
+        this->m_text = static_cast<char*>(ALLOC(textLen));
     }
 
     SStrCopy(this->m_text, text, this->m_textLen);

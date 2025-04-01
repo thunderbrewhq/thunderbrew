@@ -5,11 +5,11 @@
 static bool s_GLEW_Initialized = false;
 
 void GLSDLContext::Create(GLSDLWindow* window) {
-    BLIZZARD_ASSERT(this->m_sdlGLContext == nullptr);
+    BC_ASSERT(this->m_sdlGLContext == nullptr);
 
     this->m_sdlGLContext = SDL_GL_CreateContext(window->m_sdlWindow);
 
-    BLIZZARD_ASSERT(this->m_sdlGLContext != nullptr);
+    BC_ASSERT(this->m_sdlGLContext != nullptr);
 
     if (s_GLEW_Initialized == false) {
         glewExperimental = true;
@@ -25,7 +25,7 @@ void GLSDLContext::Create(GLSDLWindow* window) {
 }
 
 void GLSDLContext::Destroy() {
-    BLIZZARD_ASSERT(this->m_sdlGLContext != nullptr);
+    BC_ASSERT(this->m_sdlGLContext != nullptr);
 
     SDL_GL_DeleteContext(this->m_sdlGLContext);
     this->m_sdlGLContext = nullptr;
@@ -37,7 +37,7 @@ bool GLSDLContext::IsCurrentContext() {
 
 void GLSDLContext::MakeCurrent(GLSDLWindow* window) {
     auto status = SDL_GL_MakeCurrent(window->m_sdlWindow, this->m_sdlGLContext);
-    BLIZZARD_ASSERT(status == 0);
+    BC_ASSERT(status == 0);
 }
 
 int32_t GLSDLContext::GetSampleCount() {

@@ -1,11 +1,11 @@
 #ifndef DB_WOW_CLIENT_DB_HPP
 #define DB_WOW_CLIENT_DB_HPP
 
-#include "db/IDatabase.hpp"
-#include "db/WowClientDB_Common.hpp"
 #include <cstring>
 #include <storm/Error.hpp>
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
+#include "db/IDatabase.hpp"
+#include "db/WowClientDB_Common.hpp"
 
 template <class T>
 class WowClientDB : public WowClientDB_Common<T>, IDatabase<T> {

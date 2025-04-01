@@ -22,5 +22,6 @@ target_link_libraries(glue
         ui
         util
     PUBLIC
+        bc
         storm
 )

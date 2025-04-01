@@ -1,8 +1,8 @@
 #include "net/login/Login.hpp"
 #include "net/login/LoginResponse.hpp"
 #include <cstring>
+#include <bc/Memory.hpp>
 #include <common/DataStore.hpp>
-#include <storm/Memory.hpp>
 #include <storm/String.hpp>
 
 Login::~Login() {
@@ -32,7 +32,7 @@ void Login::SetLogonCreds(const char* accountName, const char* password) {
 
     if (this->m_password) {
         memset(this->m_password, 0, SStrLen(this->m_password));
-        SMemFree(this->m_password, __FILE__, __LINE__, 0x0);
+        FREE(this->m_password);
     }
 
     this->m_password = SStrDupA(password, __FILE__, __LINE__);

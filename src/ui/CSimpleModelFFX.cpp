@@ -2,15 +2,14 @@
 #include "gx/Draw.hpp"
 #include "ui/CRenderBatch.hpp"
 #include "ui/CSimpleModelFFXScript.hpp"
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 
 int32_t CSimpleModelFFX::s_metatable;
 
 CSimpleFrame* CSimpleModelFFX::Create(CSimpleFrame* parent) {
     // TODO
     // auto m = CDataAllocator::GetData(CSimpleModelFFX::s_simpleModelFFXHeap, 0, __FILE__, __LINE__);
-    auto m = SMemAlloc(sizeof(CSimpleModelFFX), __FILE__, __LINE__, 0x0);
-    return new (m) CSimpleModelFFX(parent);
+    return NEW(CSimpleModelFFX, parent);
 }
 
 void CSimpleModelFFX::Render(void* arg) {

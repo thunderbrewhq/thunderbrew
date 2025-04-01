@@ -107,7 +107,7 @@ void GLVertexArray::ApplyVertexFormat(GLSDLDevice* device) {
         this->m_GLStates.buffers[1] = indexBufferID;
     }
 
-    BLIZZARD_ASSERT(this->GetProperties().m_VertexBufferFormat != nullptr);
+    BC_ASSERT(this->GetProperties().m_VertexBufferFormat != nullptr);
 
     auto& properties = this->GetProperties();
     bool attribEnable[16] = {};
@@ -115,12 +115,12 @@ void GLVertexArray::ApplyVertexFormat(GLSDLDevice* device) {
     bool useVertexShader = device->GetShader(GLShader::eVertexShader) != nullptr;
 
     for (int32_t index = 0; index < this->GetProperties().m_VertexBufferFormat->m_Size; index++) {
-        BLIZZARD_ASSERT(index < kMAX_VERTEX_ATTRIBS);
+        BC_ASSERT(index < kMAX_VERTEX_ATTRIBS);
 
         auto& attrib = this->GetProperties().m_VertexBufferFormat->m_Attribs[index];
 
-        BLIZZARD_ASSERT(attrib.type != GLVT_INVALID);
-        BLIZZARD_ASSERT(attrib.type < GLVT_NUM_VERTEX_TYPES);
+        BC_ASSERT(attrib.type != GLVT_INVALID);
+        BC_ASSERT(attrib.type < GLVT_NUM_VERTEX_TYPES);
 
         auto vertexBuffer = this->GetProperties().m_VertexBuffer[attrib.stream];
 

@@ -1,9 +1,8 @@
 #include "ui/LuaMemory.hpp"
 #include "ui/FrameScript.hpp"
 #include <cstring>
-#include <new>
 #include <common/MemPool.hpp>
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 
 void* luaM_initPool() {
     void* m = SMemAlloc(sizeof(MemPool*) * 9, __FILE__, __LINE__, 0x0);

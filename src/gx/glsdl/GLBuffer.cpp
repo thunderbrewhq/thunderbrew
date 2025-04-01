@@ -54,10 +54,10 @@ GLBuffer::GLBuffer() : GLObject() {
 }
 
 char* GLBuffer::Map(uint32_t offset, uint32_t size, eMapFlag flag) {
-    BLIZZARD_ASSERT((offset + size) <= this->m_Size);
-    BLIZZARD_ASSERT(this->m_Usage == GL_STATIC_DRAW || flag != GLMap_None);
-    BLIZZARD_ASSERT(this->m_MapFlag == GLMap_NotMapped);
-    BLIZZARD_ASSERT(flag >= GLMap_None && flag < GLMap_Count);
+    BC_ASSERT((offset + size) <= this->m_Size);
+    BC_ASSERT(this->m_Usage == GL_STATIC_DRAW || flag != GLMap_None);
+    BC_ASSERT(this->m_MapFlag == GLMap_NotMapped);
+    BC_ASSERT(flag >= GLMap_None && flag < GLMap_Count);
 
     this->m_MapOffset = offset;
     this->m_MapSize = offset + size == 0 ? this->m_Size : size;
@@ -69,7 +69,7 @@ char* GLBuffer::Map(uint32_t offset, uint32_t size, eMapFlag flag) {
 
         if (flag == GLMap_Unk2) {
             if (this->m_Usage - GL_DYNAMIC_DRAW <= 1) {
-                BLIZZARD_ASSERT(offset == 0);
+                BC_ASSERT(offset == 0);
             }
 
             glBufferData(this->m_Type, this->m_Size, nullptr, this->m_Usage);
@@ -78,7 +78,7 @@ char* GLBuffer::Map(uint32_t offset, uint32_t size, eMapFlag flag) {
         void* data = glMapBuffer(this->m_Type, GLBuffer::s_FlagToAccess[flag]);
         this->m_Data = reinterpret_cast<char*>(data);
 
-        BLIZZARD_ASSERT(this->m_Data != nullptr);
+        BC_ASSERT(this->m_Data != nullptr);
     }
 
     return this->m_Data + offset;
@@ -105,7 +105,7 @@ void GLBuffer::ReleaseObject() {
 }
 
 void GLBuffer::Unmap(uint32_t size) {
-    BLIZZARD_ASSERT((this->m_MapOffset + size) <= m_Size);
+    BC_ASSERT((this->m_MapOffset + size) <= m_Size);
 
     GLSDLDevice* device = GLSDLDevice::Get();
     device->BindBuffer(this, GL_ZERO);
@@ -125,7 +125,7 @@ void GLBuffer::Unmap(uint32_t size) {
     }
 
     GLboolean result = glUnmapBuffer(this->m_Type);
-    BLIZZARD_ASSERT(result);
+    BC_ASSERT(result);
 
     this->m_MapFlag = GLMap_NotMapped;
 }

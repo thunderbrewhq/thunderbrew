@@ -34,6 +34,7 @@ target_link_libraries(net
         client
         event
     PUBLIC
+        bc
         common
         storm
 )

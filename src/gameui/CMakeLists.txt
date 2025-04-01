@@ -22,6 +22,7 @@ target_link_libraries(gameui
         ui
         util
     PUBLIC
+        bc
         common
         storm
         tempest

@@ -2,10 +2,10 @@
 #include "net/connection/WowConnectionNet.hpp"
 #include "net/connection/WowConnectionResponse.hpp"
 #include "util/HMAC.hpp"
+#include <bc/Memory.hpp>
 #include <common/DataStore.hpp>
 #include <common/Time.hpp>
 #include <storm/Error.hpp>
-#include <storm/Memory.hpp>
 #include <storm/String.hpp>
 #include <storm/Thread.hpp>
 #include <algorithm>
@@ -102,8 +102,7 @@ int32_t WowConnection::InitOsNet(bool (*fcn)(const NETADDR*), void (*threadinit)
 
         numThreads = std::min(numThreads, 32);
 
-        auto networkMem = SMemAlloc(sizeof(WowConnectionNet), __FILE__, __LINE__, 0x0);
-        auto network = new (networkMem) WowConnectionNet(numThreads, threadinit);
+        auto network = NEW(WowConnectionNet, numThreads, threadinit);
 
         WowConnection::s_network = network;
         WowConnection::s_network->PlatformInit(useEngine);
@@ -182,8 +181,7 @@ void WowConnection::CheckAccept() {
         fcntl(sock, F_SETFL, O_NONBLOCK);
 #endif
 
-        auto connMem = SMemAlloc(sizeof(WowConnection), __FILE__, __LINE__, 0x0);
-        auto conn = new (connMem) WowConnection(sock, reinterpret_cast<sockaddr_in*>(&addr), this->m_response);
+        auto conn = NEW(WowConnection, sock, reinterpret_cast<sockaddr_in*>(&addr), this->m_response);
         conn->AddRef();
 
         this->AddRef();

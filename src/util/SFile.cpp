@@ -1,11 +1,11 @@
 #include "util/SFile.hpp"
 #include <cstring>
 #include <limits>
+#include <bc/Memory.hpp>
 #include <StormLib.h>
 #include <storm/Error.hpp>
-#include <storm/Memory.hpp>
 #include <storm/String.hpp>
-#include <bc/file/File.hpp>
+#include <bc/File.hpp>
 #include "util/Filesystem.hpp"
 
 static char s_basepath[STORM_MAX_PATH] = { 0 };
@@ -25,7 +25,7 @@ int32_t SFile::Close(SFile* file) {
         STORM_ASSERT(0);
     }
 
-    delete file;
+    DEL(file);
     return 1;
 }
 
@@ -150,7 +150,9 @@ int32_t SFile::OpenEx(SArchive* archive, const char* filename, uint32_t flags, S
     void* filehandle;
     HANDLE handle;
 
-    uint32_t openflags = BC_FILE_OPEN_MUST_EXIST | BC_FILE_OPEN_SHARE_READ | BC_FILE_OPEN_READ;
+
+    using Mode = Blizzard::File::Mode;
+    uint32_t openflags = Mode::mustexist | Mode::shareread | Mode::read;
     Blizzard::File::StreamRecord* stream;
 
     // Attempt to open plain file first
@@ -167,7 +169,7 @@ int32_t SFile::OpenEx(SArchive* archive, const char* filename, uint32_t flags, S
         return 0;
     }
 
-    *file = new SFile;
+    *file = NEW(SFile);
     (*file)->m_handle = filehandle;
     (*file)->m_type   = filetype;
 
@@ -212,7 +214,9 @@ int32_t SFile::Read(SFile* file, void* buffer, size_t bytestoread, size_t* bytes
     switch (file->m_type) {
     case SFILE_PLAIN: {
         auto stream = reinterpret_cast<Blizzard::File::StreamRecord*>(file->m_handle);
-        Blizzard::File::Read(stream, buffer, bytestoread, bytesread);
+        auto count = static_cast<int32_t>(bytestoread);
+        Blizzard::File::Read(stream, buffer, &count);
+        *bytesread = static_cast<size_t>(count);
         return 1;
     }
     case SFILE_PAQ: {

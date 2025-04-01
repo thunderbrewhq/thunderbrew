@@ -15,7 +15,7 @@
 #include <limits>
 #include <new>
 #include <storm/Error.hpp>
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 
 #if defined(WHOA_SYSTEM_WIN)
     #include "gx/d3d/CGxDeviceD3d.hpp"
@@ -124,8 +124,7 @@ void CGxDevice::Log(const CGxFormat& format) {
 
 #if defined(WHOA_SYSTEM_WIN)
 CGxDevice* CGxDevice::NewD3d() {
-    auto m = SMemAlloc(sizeof(CGxDeviceD3d), __FILE__, __LINE__, 0x0);
-    return new (m) CGxDeviceD3d();
+    return NEW(CGxDeviceD3d);
 }
 
 CGxDevice* CGxDevice::NewD3d9Ex() {
@@ -136,8 +135,7 @@ CGxDevice* CGxDevice::NewD3d9Ex() {
 
 #if defined(WHOA_SYSTEM_MAC)
 CGxDevice* CGxDevice::NewGLL() {
-    auto m = SMemAlloc(sizeof(CGxDeviceGLL), __FILE__, __LINE__, 0x0);
-    return new (m) CGxDeviceGLL();
+    return NEW(CGxDeviceGLL);
 }
 #endif
 
@@ -147,8 +145,7 @@ CGxDevice* CGxDevice::NewOpenGl() {
 
 #if defined(WHOA_BUILD_GLSDL)
 CGxDevice* CGxDevice::NewGLSDL() {
-    auto m = SMemAlloc(sizeof(CGxDeviceGLSDL), __FILE__, __LINE__, 0x0);
-    return new (m) CGxDeviceGLSDL();
+    return NEW(CGxDeviceGLSDL);
 }
 #endif
 
@@ -190,8 +187,7 @@ CGxDevice::CGxDevice() {
 }
 
 CGxBuf* CGxDevice::BufCreate(CGxPool* pool, uint32_t itemSize, uint32_t itemCount, uint32_t index) {
-    auto m = SMemAlloc(sizeof(CGxBuf), __FILE__, __LINE__, 0x0);
-    auto buf = new (m) CGxBuf(pool, itemSize, itemCount, index);
+    auto buf = NEW(CGxBuf, pool, itemSize, itemCount, index);
 
     pool->m_bufList.LinkToTail(buf);
 
@@ -904,8 +900,7 @@ void CGxDevice::PrimVertexPtr(CGxBuf* buf, EGxVertexBufferFormat format) {
 }
 
 CGxPool* CGxDevice::PoolCreate(EGxPoolTarget target, EGxPoolUsage usage, uint32_t size, EGxPoolHintBits hint, const char* name) {
-    auto m = SMemAlloc(sizeof(CGxPool), __FILE__, __LINE__, 0x0);
-    auto pool = new (m) CGxPool(target, usage, size, hint, name);
+    auto pool = NEW(CGxPool, target, usage, size, hint, name);
 
     this->m_poolList.LinkToTail(pool);
 
@@ -1160,8 +1155,7 @@ void CGxDevice::ShaderCreate(CGxShader* shaders[], EGxShTarget target, const cha
 }
 
 int32_t CGxDevice::TexCreate(EGxTexTarget target, uint32_t width, uint32_t height, uint32_t depth, EGxTexFormat format, EGxTexFormat dataFormat, CGxTexFlags flags, void* userArg, void (*userFunc)(EGxTexCommand, uint32_t, uint32_t, uint32_t, uint32_t, void*, uint32_t&, const void*&), const char* name, CGxTex*& texId) {
-    auto m = SMemAlloc(sizeof(CGxTex), __FILE__, __LINE__, 0);
-    auto tex = new (m) CGxTex(
+    auto tex = NEW(CGxTex,
         target,
         width,
         height,
@@ -1185,9 +1179,7 @@ int32_t CGxDevice::TexCreate(EGxTexTarget target, uint32_t width, uint32_t heigh
 void CGxDevice::TexDestroy(CGxTex* texId) {
     // TODO
 
-    if (texId) {
-        delete texId;
-    }
+    DEL(texId);
 }
 
 void CGxDevice::TexMarkForUpdate(CGxTex* texId, const CiRect& updateRect, int32_t immediate) {

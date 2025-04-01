@@ -19,14 +19,14 @@ void GLTexture::DestroyBindings(void* ptr) {
 }
 
 void GLTexture::Bind(GLDevice* device, bool force) {
-    BLIZZARD_ASSERT(!this->IsSystemBuffer());
-    BLIZZARD_ASSERT(this->m_Depth != 0);
+    BC_ASSERT(!this->IsSystemBuffer());
+    BC_ASSERT(this->m_Depth != 0);
 
     if (!device) {
         device = GLDevice::Get();
     }
 
-    BLIZZARD_ASSERT(device != nullptr);
+    BC_ASSERT(device != nullptr);
 
     auto& bindings = this->GetBindings();
     uint32_t deviceID = device->GetID();
@@ -179,10 +179,10 @@ TextureFormatInfo& GLTexture::GetFormatInfo() {
 }
 
 GLMipmap* GLTexture::GetMipmap(uint32_t level, GLEnum face) {
-    BLIZZARD_ASSERT(face >= GL_TEXTURE_CUBE_MAP_POSITIVE_X && face <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
-    BLIZZARD_ASSERT(level < this->m_NumMipmap);
-    BLIZZARD_ASSERT(this->m_Mipmaps != nullptr);
-    BLIZZARD_ASSERT(this->m_Mipmaps[face - GL_TEXTURE_CUBE_MAP_POSITIVE_X] != nullptr);
+    BC_ASSERT(face >= GL_TEXTURE_CUBE_MAP_POSITIVE_X && face <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
+    BC_ASSERT(level < this->m_NumMipmap);
+    BC_ASSERT(this->m_Mipmaps != nullptr);
+    BC_ASSERT(this->m_Mipmaps[face - GL_TEXTURE_CUBE_MAP_POSITIVE_X] != nullptr);
 
     return &this->m_Mipmaps[face - GL_TEXTURE_CUBE_MAP_POSITIVE_X][level];
 }
@@ -200,7 +200,7 @@ bool GLTexture::IsValid() {
 }
 
 void* GLTexture::Map(uint32_t level, const GLRect* a3, uint32_t& a4, GLEnum a5) {
-    BLIZZARD_ASSERT(this->m_TextureType != GL_TEXTURE_3D);
+    BC_ASSERT(this->m_TextureType != GL_TEXTURE_3D);
 
     auto mipmap = this->GetMipmap(level, GL_TEXTURE_CUBE_MAP_POSITIVE_X);
     a4 = mipmap->GetPitch();
@@ -208,7 +208,7 @@ void* GLTexture::Map(uint32_t level, const GLRect* a3, uint32_t& a4, GLEnum a5) 
 }
 
 void GLTexture::RecreateGLTexture() {
-    BLIZZARD_ASSERT(GLDevice::Get()->m_TexWorker != nullptr);
+    BC_ASSERT(GLDevice::Get()->m_TexWorker != nullptr);
 
     if (this->m_TextureType == GL_TEXTURE_RECTANGLE_EXT) {
         return;
@@ -238,7 +238,7 @@ void GLTexture::RecreateGLTexture() {
 }
 
 void GLTexture::ResizeMipmaps() {
-    BLIZZARD_ASSERT(this->m_Mipmaps == nullptr);
+    BC_ASSERT(this->m_Mipmaps == nullptr);
 
     int32_t numFace = this->m_TextureType == GL_TEXTURE_CUBE_MAP ? 6 : 1;
 
@@ -312,7 +312,7 @@ void GLTexture::SetBorderColor(const GLColor4f& color) {
 }
 
 void GLTexture::SetCompareMode(GLEnum compareMode) {
-    BLIZZARD_ASSERT(
+    BC_ASSERT(
         this->GetFormatInfo().m_DataFormat == GL_DEPTH_COMPONENT
         || this->GetFormatInfo().m_DataFormat == GL_DEPTH_STENCIL_EXT
         || compareMode == GL_NONE
@@ -364,16 +364,16 @@ void GLTexture::SetMinFilterMode(GLEnum mode) {
 }
 
 void GLTexture::SetupTexture() {
-    BLIZZARD_ASSERT(this->m_NumMipmap == 1 || (this->m_Flags & GLTFLAG_AUTOGEN_MIPMAP) == 0);
-    BLIZZARD_ASSERT(!this->IsRenderTarget() || this->m_NumMipmap == 1);
-    BLIZZARD_ASSERT(!this->IsRenderTarget() || (this->m_Flags & GLTFLAG_READ_ACCESS) == 0);
+    BC_ASSERT(this->m_NumMipmap == 1 || (this->m_Flags & GLTFLAG_AUTOGEN_MIPMAP) == 0);
+    BC_ASSERT(!this->IsRenderTarget() || this->m_NumMipmap == 1);
+    BC_ASSERT(!this->IsRenderTarget() || (this->m_Flags & GLTFLAG_READ_ACCESS) == 0);
 
     GLDevice* device = GLDevice::Get();
 
     if (this->GetFormatInfo().m_IsCompressed) {
         int32_t smallestDim = std::min(this->m_Width, this->m_Height);
 
-        BLIZZARD_ASSERT(smallestDim >= 4);
+        BC_ASSERT(smallestDim >= 4);
 
         if (smallestDim == 4) {
             this->m_NumMipmap = 1;
@@ -451,7 +451,7 @@ void GLTexture::SetupTexture() {
     }
 
     if (!(this->m_Flags & GLTFLAG_SYSTEM_BUFFER)) {
-        BLIZZARD_ASSERT(this->m_RequestedNumMipmaps != 0);
+        BC_ASSERT(this->m_RequestedNumMipmaps != 0);
 
         this->m_NumMipmap = std::min(this->m_NumMipmap, this->m_RequestedNumMipmaps);
     }
@@ -487,7 +487,7 @@ void GLTexture::SetupTexture() {
         return;
     }
 
-    BLIZZARD_ASSERT(this->m_Data == nullptr);
+    BC_ASSERT(this->m_Data == nullptr);
 
     if (!this->IsRenderTarget()) {
         this->m_Data = static_cast<char*>(Blizzard::Memory::Allocate(this->m_Size));
@@ -574,9 +574,9 @@ void GLTexture::SetupTexture() {
 void GLTexture::Unbind(GLDevice* device, uint32_t stage) {
     auto& bindings = this->GetBindings();
 
-    BLIZZARD_ASSERT(device->GetID() < bindings.size());
-    BLIZZARD_ASSERT(bindings[device->GetID()].device == device);
-    BLIZZARD_ASSERT(bindings[device->GetID()].boundStages[stage]);
+    BC_ASSERT(device->GetID() < bindings.size());
+    BC_ASSERT(bindings[device->GetID()].device == device);
+    BC_ASSERT(bindings[device->GetID()].boundStages[stage]);
 
     bindings[device->GetID()].boundStages[stage] = 0;
 }
@@ -628,7 +628,7 @@ GLTexture2D::GLTexture2D() : GLTexture() {
 }
 
 void GLTexture2D::ReleaseObject() {
-    BLIZZARD_ASSERT(this->m_TextureType == GL_TEXTURE_2D);
+    BC_ASSERT(this->m_TextureType == GL_TEXTURE_2D);
     this->FreeTexture();
 }
 

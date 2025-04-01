@@ -13,7 +13,7 @@
 static bool s_GLSDL_Initialized = false;
 
 void GLSDLWindow::Create(const char* title, const GLSDLWindowRect& rect, GLTextureFormat depthFormat, uint32_t sampleCount) {
-    BLIZZARD_ASSERT(this->m_sdlWindow == nullptr);
+    BC_ASSERT(this->m_sdlWindow == nullptr);
 
     if (!s_GLSDL_Initialized) {
         // Initialize SDL video context
@@ -48,7 +48,7 @@ void GLSDLWindow::Create(const char* title, const GLSDLWindowRect& rect, GLTextu
         stencilSize = 8;
         break;
     default:
-        BLIZZARD_ASSERT(false);
+        BC_ASSERT(false);
         break;
     }
 
@@ -74,7 +74,7 @@ void GLSDLWindow::Create(const char* title, const GLSDLWindowRect& rect, GLTextu
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
     );
 
-    BLIZZARD_ASSERT(this->m_sdlWindow != nullptr);
+    BC_ASSERT(this->m_sdlWindow != nullptr);
 
     SDL_StartTextInput();
 }
@@ -126,7 +126,7 @@ void GLSDLWindow::Resize(const GLSDLWindowRect& rect) {
 
     if (current.size.width != rect.size.width || current.size.height != rect.size.width) {
         SDL_SetWindowSize(this->m_sdlWindow, rect.size.width, rect.size.height);
-        // BLIZZARD_ASSERT(status == 0);
+        // BC_ASSERT(status == 0);
     }
 }
 

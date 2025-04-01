@@ -15,7 +15,7 @@ uint32_t GLSDLTextureTypeToIndex(GLEnum textureType) {
     } else {
         index = 5;
 
-        BLIZZARD_ASSERT(false);
+        BC_ASSERT(false);
     }
 
     return index;

@@ -4,9 +4,8 @@
 #include "console/CVar.hpp"
 #include "util/Filesystem.hpp"
 #include <cstring>
-#include <new>
 #include <common/ObjectAlloc.hpp>
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 #include <storm/String.hpp>
 
 static CVar* s_M2UseZFillVar;
@@ -116,8 +115,7 @@ int32_t M2ConvertModelFileName(const char* source, char* dest, uint32_t a3, uint
 }
 
 CM2Scene* M2CreateScene() {
-    auto m = SMemAlloc(sizeof(CM2Scene), __FILE__, __LINE__, 0x0);
-    return new (m) CM2Scene(&CM2Cache::s_cache);
+    return NEW(CM2Scene, &CM2Cache::s_cache);
 }
 
 uint32_t M2GetCacheFlags() {

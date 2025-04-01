@@ -10,10 +10,10 @@ GLFramebuffer* GLFramebuffer::Create(bool a1) {
 
     if (!a1) {
         // TODO
-        // BLIZZARD_ASSERT(framebuffer->m_FramebufferID >= PoolStats<GLFramebuffer>::NAME_POOL_FIRST_NAME);
+        // BC_ASSERT(framebuffer->m_FramebufferID >= PoolStats<GLFramebuffer>::NAME_POOL_FIRST_NAME);
     }
 
-    BLIZZARD_ASSERT(framebuffer->m_NumAttach == 0);
+    BC_ASSERT(framebuffer->m_NumAttach == 0);
 
     framebuffer->m_Width = 0;
     framebuffer->m_Height = 0;
@@ -29,7 +29,7 @@ GLFramebuffer::GLFramebuffer(bool a1) : GLObject() {
 }
 
 void GLFramebuffer::Attach(GLMipmap* image, GLenum a3, int32_t a4) {
-    BLIZZARD_ASSERT(this->m_Device == GLSDLDevice::Get());
+    BC_ASSERT(this->m_Device == GLSDLDevice::Get());
 
     if (!image) {
         this->Detach(a3);
@@ -37,7 +37,7 @@ void GLFramebuffer::Attach(GLMipmap* image, GLenum a3, int32_t a4) {
     }
 
     if (a3 == GL_DEPTH_STENCIL) {
-        BLIZZARD_ASSERT(image->GetFormat() == GLTF_D24S8);
+        BC_ASSERT(image->GetFormat() == GLTF_D24S8);
 
         this->Attach(image, GL_DEPTH_ATTACHMENT, 0);
         this->Attach(image, GL_STENCIL_ATTACHMENT, 0);
@@ -57,7 +57,7 @@ void GLFramebuffer::Attach(GLMipmap* image, GLenum a3, int32_t a4) {
         index = a3 - GL_COLOR_ATTACHMENT0;
     }
 
-    BLIZZARD_ASSERT(index < MAX_ATTACHMENT);
+    BC_ASSERT(index < MAX_ATTACHMENT);
 
     GLMipmap* oldImage = this->m_Attachments[index];
 
@@ -77,7 +77,7 @@ void GLFramebuffer::Attach(GLMipmap* image, GLenum a3, int32_t a4) {
         this->m_Device->Sub38460(0);
     }
 
-    BLIZZARD_ASSERT((*image->m_AttachPoints)[m_FramebufferID].framebuffer == this);
+    BC_ASSERT((*image->m_AttachPoints)[m_FramebufferID].framebuffer == this);
 }
 
 void GLFramebuffer::Detach(GLenum a2) {
@@ -96,7 +96,7 @@ void GLFramebuffer::Detach(GLenum a2) {
         index = a2 - GL_COLOR_ATTACHMENT0;
     }
 
-    BLIZZARD_ASSERT(index < MAX_ATTACHMENT);
+    BC_ASSERT(index < MAX_ATTACHMENT);
 
     GLMipmap* oldImage = this->m_Attachments[index];
 
@@ -129,7 +129,7 @@ GLMipmap* GLFramebuffer::GetAttachment(GLEnum a2) {
         index = a2 - GL_COLOR_ATTACHMENT0;
     }
 
-    BLIZZARD_ASSERT(index < MAX_ATTACHMENT);
+    BC_ASSERT(index < MAX_ATTACHMENT);
 
     return this->m_Attachments[index];
 }

@@ -4,8 +4,7 @@
 #include "net/grunt/Command.hpp"
 #include "net/srp/SRP6_Random.hpp"
 #include <cstring>
-#include <new>
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 #include <storm/String.hpp>
 
 Grunt::Command<Grunt::ClientLink> Grunt::s_clientCommands[] = {
@@ -381,8 +380,7 @@ void Grunt::ClientLink::Connect(const char* a2) {
 
     this->SetState(1);
 
-    auto connectionMem = SMemAlloc(sizeof(WowConnection), __FILE__, __LINE__, 0x0);
-    auto connection = new (connectionMem) WowConnection(this, nullptr);
+    auto connection = NEW(WowConnection, this, nullptr);
 
     this->m_connection = connection;
     this->m_connection->SetType(WOWC_TYPE_STREAM);

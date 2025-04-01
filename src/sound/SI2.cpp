@@ -1,7 +1,7 @@
 #include "sound/SI2.hpp"
 #include "ui/FrameScript.hpp"
 #include "console/CVar.hpp"
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 
 #if defined(WHOA_BUILD_FMOD)
 

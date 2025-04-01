@@ -2,8 +2,7 @@
 #include "client/ClientServices.hpp"
 #include "db/Db.hpp"
 #include "ui/FrameScript.hpp"
-#include <new>
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 #include <storm/String.hpp>
 
 float CRealmList::s_avgLoad;
@@ -15,8 +14,7 @@ void CRealmList::Initialize() {
     CRealmList::s_categories.SetCount(g_cfg_CategoriesDB.GetNumRecords());
 
     for (int32_t i = 0; i < g_cfg_CategoriesDB.GetNumRecords(); i++) {
-        auto m = SMemAlloc(sizeof(RealmCategory), __FILE__, __LINE__, 0x0);
-        auto category = new (m) RealmCategory();
+        auto category = NEW(RealmCategory);
 
         CRealmList::s_categories[i] = category;
         CRealmList::s_categories[i]->m_category = g_cfg_CategoriesDB.GetRecordByIndex(i);

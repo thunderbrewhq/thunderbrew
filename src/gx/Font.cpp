@@ -10,9 +10,8 @@
 #include "gx/Shader.hpp"
 #include <algorithm>
 #include <cstring>
-#include <new>
+#include <bc/Memory.hpp>
 #include <storm/Error.hpp>
-#include <storm/Memory.hpp>
 #include <storm/String.hpp>
 #include <storm/Unicode.hpp>
 #include <tempest/Math.hpp>
@@ -247,8 +246,7 @@ CGxStringBatch* GxuFontCreateBatch(bool a1, bool a2) {
         batch = s_unusedBatches.Head();
         s_unusedBatches.UnlinkNode(batch);
     } else {
-        auto m = SMemAlloc(sizeof(CGxStringBatch), __FILE__, __LINE__, 0x8);
-        batch = new (m) CGxStringBatch();
+        batch = NEW_ZERO(CGxStringBatch);
     }
 
     if (a1) {
@@ -679,7 +677,7 @@ int32_t IGxuFontGlyphRenderGlyph(FT_Face face, uint32_t pixelHeight, uint32_t co
         dummyGlyph = 1;
     }
 
-    void* data = SMemAlloc(dataSize, __FILE__, __LINE__, 0x0);
+    void* data = ALLOC(dataSize);
 
     if (data) {
         memset(data, 0, dataSize);
@@ -737,6 +735,7 @@ float ScreenToPixelWidth(int32_t billboarded, float width) {
     return CMath::fint_n(pixelCoords);
 }
 
+// TODO: name this
 float Sub6C2280(FT_Face face, float height) {
     int32_t numFixedSizes = face->num_fixed_sizes;
 
@@ -774,8 +773,7 @@ HTEXTBLOCK TextBlockCreate(HTEXTFONT font, const char* text, const CImVector& co
     STORM_ASSERT(font);
     STORM_ASSERT(text);
 
-    auto m = SMemAlloc(sizeof(TEXTBLOCK), __FILE__, __LINE__, 0x0);
-    auto textBlock = new (m) TEXTBLOCK();
+    auto textBlock = NEW(TEXTBLOCK);
 
     C3Vector position = { 0.0f, 0.0f, pos.z };
     DDCToNDC(pos.x, pos.y, &position.x, &position.y);

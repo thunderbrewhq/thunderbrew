@@ -586,7 +586,7 @@ void CGxDeviceGLL::IRsSendToHw(EGxRenderState which) {
             int32_t mode = static_cast<int32_t>(state->m_value);
 
             // TODO
-            // BLIZZARD_ASSERT(mode <= GxCullState_CCW);
+            // BC_ASSERT(mode <= GxCullState_CCW);
 
             this->m_glDevice.SetCullMode(cullMode[mode]);
 
@@ -720,7 +720,7 @@ void CGxDeviceGLL::IShaderBindPixel(CGxShader* sh) {
         this->IShaderCreatePixel(sh);
     }
 
-    BLIZZARD_ASSERT(sh->Valid());
+    BC_ASSERT(sh->Valid());
 
     this->m_glDevice.SetShader(GLShader::ePixelShader, static_cast<GLShader*>(sh->apiSpecific));
 }
@@ -737,7 +737,7 @@ void CGxDeviceGLL::IShaderBindVertex(CGxShader* sh) {
         this->IShaderCreateVertex(sh);
     }
 
-    BLIZZARD_ASSERT(sh->Valid());
+    BC_ASSERT(sh->Valid());
 
     this->m_glDevice.SetShader(GLShader::eVertexShader, static_cast<GLShader*>(sh->apiSpecific));
 }
@@ -779,7 +779,7 @@ void CGxDeviceGLL::IShaderCreate(CGxShader* sh) {
 }
 
 void CGxDeviceGLL::IShaderCreatePixel(CGxShader* ps) {
-    BLIZZARD_ASSERT(!ps->loaded);
+    BC_ASSERT(!ps->loaded);
 
     ps->loaded = 1;
     ps->valid = 0;
@@ -805,7 +805,7 @@ void CGxDeviceGLL::IShaderCreatePixel(CGxShader* ps) {
 }
 
 void CGxDeviceGLL::IShaderCreateVertex(CGxShader* vs) {
-    BLIZZARD_ASSERT(!vs->loaded);
+    BC_ASSERT(!vs->loaded);
 
     vs->loaded = 1;
     vs->valid = 0;
@@ -1067,7 +1067,7 @@ void CGxDeviceGLL::ITexUpload(CGxTex* texId) {
                 texels
             );
 
-            BLIZZARD_ASSERT(texels != nullptr || texId->m_flags.m_renderTarget);
+            BC_ASSERT(texels != nullptr || texId->m_flags.m_renderTarget);
 
             if (!texId->m_flags.m_renderTarget) {
                 GLMipmap* mipmap = static_cast<GLTexture*>(texId->m_apiSpecificData)->GetMipmap(mipLevel - baseMip, CGxDeviceGLL::s_glCubeMapFaces[face]);
@@ -1082,8 +1082,8 @@ void CGxDeviceGLL::ITexUpload(CGxTex* texId) {
                 lockRect.maxY = std::min(lockRect.maxY, static_cast<int32_t>(height));
                 lockRect.maxX = std::min(lockRect.maxX, static_cast<int32_t>(width));
 
-                BLIZZARD_ASSERT(lockRect.minX >= 0 && lockRect.maxX <= static_cast<int32_t>(width));
-                BLIZZARD_ASSERT(lockRect.minY >= 0 && lockRect.maxY <= static_cast<int32_t>(height));
+                BC_ASSERT(lockRect.minX >= 0 && lockRect.maxX <= static_cast<int32_t>(width));
+                BC_ASSERT(lockRect.minY >= 0 && lockRect.maxY <= static_cast<int32_t>(height));
 
                 GLRect rect = {
                     lockRect.minX,
@@ -1326,7 +1326,7 @@ int32_t CGxDeviceGLL::StereoEnabled() {
 }
 
 void CGxDeviceGLL::TexDestroy(CGxTex* texId) {
-    BLIZZARD_ASSERT(texId);
+    BC_ASSERT(texId);
 
     auto texture = static_cast<GLTexture*>(texId->m_apiSpecificData);
 

@@ -16,6 +16,7 @@ target_link_libraries(model
         math
         util
     PUBLIC
+        bc
         common
         storm
         tempest

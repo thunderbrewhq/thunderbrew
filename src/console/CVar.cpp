@@ -209,7 +209,7 @@ int32_t CVar::Load(HOSFILE file) {
     auto grown = 0x1fff < size;
 
     int32_t result    = 0;
-    size_t  bytesRead = 0;
+    uint32_t bytesRead = 0;
 
     if (OsReadFile(file, data, size, &bytesRead) == 0) {
         result = 0;

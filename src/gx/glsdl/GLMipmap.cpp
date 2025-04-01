@@ -18,7 +18,7 @@ void GLMipmap::Attach(GLFramebuffer* framebuffer, GLenum attachPoint, int32_t le
     if (framebufferID >= attachPoints.size()) {
         attachPoints.resize(framebufferID + 1);
     } else {
-        BLIZZARD_ASSERT(attachPoints[framebufferID].framebuffer != framebuffer || attachPoints[framebufferID].point != attachPoint);
+        BC_ASSERT(attachPoints[framebufferID].framebuffer != framebuffer || attachPoints[framebufferID].point != attachPoint);
 
         auto& attach = attachPoints[framebufferID];
 
@@ -84,8 +84,8 @@ void GLMipmap::Detach(GLFramebuffer* framebuffer, GLenum attachPoint, bool a4) {
 
     auto& attachPoints = *this->m_AttachPoints;
 
-    BLIZZARD_ASSERT(attachPoints.size() >= framebufferID);
-    BLIZZARD_ASSERT(attachPoints[framebufferID].framebuffer == framebuffer);
+    BC_ASSERT(attachPoints.size() >= framebufferID);
+    BC_ASSERT(attachPoints[framebufferID].framebuffer == framebuffer);
 
     if (!a4 && framebufferID) {
         GLSDLDevice* v12 = GLSDLDevice::Get();
@@ -104,17 +104,17 @@ void GLMipmap::Detach(GLFramebuffer* framebuffer, GLenum attachPoint, bool a4) {
     GLAttachPoint* v9 = &attachPoints[framebufferID];
 
     if (v9->point == GL_DEPTH_STENCIL) {
-        BLIZZARD_ASSERT(this->GetFormat() == GLTF_D24S8);
+        BC_ASSERT(this->GetFormat() == GLTF_D24S8);
 
         if (attachPoint == GL_DEPTH_ATTACHMENT) {
             v9->point = GL_STENCIL_ATTACHMENT;
         } else if (attachPoint == GL_STENCIL_ATTACHMENT) {
             v9->point = GL_DEPTH_ATTACHMENT;
         } else {
-            BLIZZARD_ASSERT(false);
+            BC_ASSERT(false);
         }
     } else {
-        BLIZZARD_ASSERT(attachPoints[framebufferID].point == attachPoint);
+        BC_ASSERT(attachPoints[framebufferID].point == attachPoint);
 
         v9->framebuffer = 0;
         v9->point = 0;
@@ -132,8 +132,8 @@ void GLMipmap::DetachAll() {
 
     auto& attachPoints = *this->m_AttachPoints;
     for (int32_t i = 0; i < attachPoints.size(); i++) {
-        BLIZZARD_ASSERT(attachPoints[i].point != GL_ZERO);
-        BLIZZARD_ASSERT(attachPoints[i].framebuffer->m_FramebufferID == i);
+        BC_ASSERT(attachPoints[i].point != GL_ZERO);
+        BC_ASSERT(attachPoints[i].framebuffer->m_FramebufferID == i);
 
         attachPoints[i].framebuffer->Detach(attachPoints[i].point);
     }
@@ -170,11 +170,11 @@ uint16_t GLMipmap::GetWidth() {
 }
 
 void* GLMipmap::Map(GLEnum mode, const GLBox* area) {
-    BLIZZARD_ASSERT(!this->m_Texture->IsSystemBuffer());
-    BLIZZARD_ASSERT(this->m_Data != nullptr);
-    BLIZZARD_ASSERT(!this->m_Texture->IsRenderTarget());
-    BLIZZARD_ASSERT(mode != GL_ZERO);
-    BLIZZARD_ASSERT(this->m_MapParams == nullptr);
+    BC_ASSERT(!this->m_Texture->IsSystemBuffer());
+    BC_ASSERT(this->m_Data != nullptr);
+    BC_ASSERT(!this->m_Texture->IsRenderTarget());
+    BC_ASSERT(mode != GL_ZERO);
+    BC_ASSERT(this->m_MapParams == nullptr);
 
     if (mode != GL_READ_ONLY) {
         this->m_Texture->m_MappedMipmaps++;
@@ -184,13 +184,13 @@ void* GLMipmap::Map(GLEnum mode, const GLBox* area) {
     this->m_MapParams = mapParams;
 
     if (area) {
-        BLIZZARD_ASSERT(area->width > 0);
-        BLIZZARD_ASSERT(area->height > 0);
-        BLIZZARD_ASSERT(area->depth > 0);
-        BLIZZARD_ASSERT(!this->GetFormatInfo().m_IsCompressed || ((area->top & 0x3) == 0 && (area->left & 0x3) == 0 && (area->width & 0x3) == 0 && (area->height & 0x3) == 0));
-        BLIZZARD_ASSERT((area->height + area->top) <= this->m_Height);
-        BLIZZARD_ASSERT((area->depth + area->front) <= this->m_Depth);
-        BLIZZARD_ASSERT((area->width + area->left) <= this->m_Width);
+        BC_ASSERT(area->width > 0);
+        BC_ASSERT(area->height > 0);
+        BC_ASSERT(area->depth > 0);
+        BC_ASSERT(!this->GetFormatInfo().m_IsCompressed || ((area->top & 0x3) == 0 && (area->left & 0x3) == 0 && (area->width & 0x3) == 0 && (area->height & 0x3) == 0));
+        BC_ASSERT((area->height + area->top) <= this->m_Height);
+        BC_ASSERT((area->depth + area->front) <= this->m_Depth);
+        BC_ASSERT((area->width + area->left) <= this->m_Width);
 
         mapParams->m_MapArea = {
             area->left,
@@ -231,7 +231,7 @@ void* GLMipmap::Map(GLEnum mode, const GLBox* area) {
 
     int32_t rowPitch = this->GetPitch();
 
-    BLIZZARD_ASSERT(((mapParams->m_MapArea.top * rowPitch) + mapParams->m_MapArea.left * this->GetFormatInfo().m_BytePerPixel) < (this->GetFormatInfo().m_IsCompressed ? this->m_Size << 4 : this->m_Size));
+    BC_ASSERT(((mapParams->m_MapArea.top * rowPitch) + mapParams->m_MapArea.left * this->GetFormatInfo().m_BytePerPixel) < (this->GetFormatInfo().m_IsCompressed ? this->m_Size << 4 : this->m_Size));
 
     int32_t v22 = rowPitch * this->m_Height;
     if (this->GetFormatInfo().m_IsCompressed) {
@@ -265,7 +265,7 @@ void* GLMipmap::Map(GLEnum mode, const GLRect* rect) {
 }
 
 void GLMipmap::ReleaseObject() {
-    BLIZZARD_ASSERT(this->m_MapParams == nullptr);
+    BC_ASSERT(this->m_MapParams == nullptr);
 
     this->RemoveDebugMipmap();
     this->DetachAll();
@@ -283,17 +283,17 @@ void GLMipmap::RemoveDebugMipmap() {
 }
 
 void GLMipmap::ResetData(GLEnum target, int32_t level, unsigned char* data) {
-    BLIZZARD_ASSERT(this->m_Target != GL_TEXTURE_3D || !this->GetFormatInfo().m_IsCompressed);
+    BC_ASSERT(this->m_Target != GL_TEXTURE_3D || !this->GetFormatInfo().m_IsCompressed);
 
     this->m_Target = target;
     this->m_Level = level;
     this->m_Data = data;
 
-    BLIZZARD_ASSERT(this->GetFormat() != GLTF_INVALID);
-    BLIZZARD_ASSERT(this->GetFormat() < GLTF_NUM_TEXTURE_FORMATS);
+    BC_ASSERT(this->GetFormat() != GLTF_INVALID);
+    BC_ASSERT(this->GetFormat() < GLTF_NUM_TEXTURE_FORMATS);
 
     if (!this->m_Texture->IsSystemBuffer() && this->m_Texture->IsRenderTarget()) {
-        BLIZZARD_ASSERT(!this->GetFormatInfo().m_IsCompressed);
+        BC_ASSERT(!this->GetFormatInfo().m_IsCompressed);
 
         this->TexImage(nullptr);
         this->m_Unk24 = 1;
@@ -306,7 +306,7 @@ void GLMipmap::ResetSize(uint32_t width, uint32_t height, uint32_t depth) {
     this->m_Depth = depth ? depth : 1;
 
     if (this->GetFormatInfo().m_IsCompressed) {
-        BLIZZARD_ASSERT(this->m_Depth == 1);
+        BC_ASSERT(this->m_Depth == 1);
 
         this->m_Width = (this->m_Width + 3) & 0xFFFC;
         this->m_Height = (this->m_Height + 3) & 0xFFFC;
@@ -332,7 +332,7 @@ void GLMipmap::ResetSize(uint32_t width, uint32_t height, uint32_t depth) {
 }
 
 void GLMipmap::TexImage(const void* pixels) {
-    BLIZZARD_ASSERT((this->m_Texture->IsRenderTarget() || pixels != nullptr) && GLSDLDevice::Get()->GetVertexArrayStates().buffers[eGLBT_PIXEL_UNPACK] == 0);
+    BC_ASSERT((this->m_Texture->IsRenderTarget() || pixels != nullptr) && GLSDLDevice::Get()->GetVertexArrayStates().buffers[eGLBT_PIXEL_UNPACK] == 0);
 
     if (this->m_Target == GL_TEXTURE_3D) {
         glTexImage3D(
@@ -374,7 +374,7 @@ void GLMipmap::TexImage(const void* pixels) {
 }
 
 void GLMipmap::TexSubImage(const GLBox& a2, int32_t size, const void* pixels) {
-    BLIZZARD_ASSERT(!this->m_Texture->IsRenderTarget() && pixels != nullptr && GLSDLDevice::Get()->GetVertexArrayStates().buffers[eGLBT_PIXEL_UNPACK] == 0);
+    BC_ASSERT(!this->m_Texture->IsRenderTarget() && pixels != nullptr && GLSDLDevice::Get()->GetVertexArrayStates().buffers[eGLBT_PIXEL_UNPACK] == 0);
 
     if (this->m_Target == GL_TEXTURE_3D) {
         glPixelStorei(GL_UNPACK_ROW_LENGTH, this->m_Width);
@@ -428,9 +428,9 @@ void GLMipmap::TexSubImage(const GLBox& a2, int32_t size, const void* pixels) {
 }
 
 void GLMipmap::Unmap() {
-    BLIZZARD_ASSERT(!this->m_Texture->IsRenderTarget());
-    BLIZZARD_ASSERT(!this->m_Texture->IsSystemBuffer());
-    BLIZZARD_ASSERT(this->m_MapParams != nullptr);
+    BC_ASSERT(!this->m_Texture->IsRenderTarget());
+    BC_ASSERT(!this->m_Texture->IsSystemBuffer());
+    BC_ASSERT(this->m_MapParams != nullptr);
 
     if (this->m_MapParams->m_MapMode == GL_READ_ONLY) {
         delete this->m_MapParams;
@@ -440,7 +440,7 @@ void GLMipmap::Unmap() {
 
     GLSDLDevice* device = GLSDLDevice::Get();
 
-    BLIZZARD_ASSERT(this->m_Texture->m_MappedMipmaps > 0);
+    BC_ASSERT(this->m_Texture->m_MappedMipmaps > 0);
 
     this->Unmap(this->m_MapParams);
 
@@ -448,7 +448,7 @@ void GLMipmap::Unmap() {
 }
 
 void GLMipmap::Unmap(MapParams* mapParams) {
-    BLIZZARD_ASSERT(mapParams != nullptr);
+    BC_ASSERT(mapParams != nullptr);
 
     this->m_Texture->Bind(nullptr, 0);
 

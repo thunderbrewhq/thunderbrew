@@ -4,7 +4,7 @@
 #include "util/Unimplemented.hpp"
 #include <cstring>
 #include <storm/Error.hpp>
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 
 TSGrowableArray<uint8_t> CBLPFile::s_blpFileLoadBuffer;
 
@@ -259,7 +259,7 @@ int32_t CBLPFile::Lock2(const char* fileName, PIXEL_FORMAT format, uint32_t mipL
 
     switch (this->m_header.colorEncoding) {
     case COLOR_JPEG:
-        STORM_PANIC("%s: JPEG decompression not enabled", fileName);
+        SErrPrepareAppFatal(__FILE__, __LINE__); SErrDisplayAppFatal("%s: JPEG decompression not enabled", fileName);
         return 0;
 
     case COLOR_PAL:
@@ -340,8 +340,9 @@ int32_t CBLPFile::LockChain2(const char* fileName, PIXEL_FORMAT format, MipBits*
 }
 
 int32_t CBLPFile::Open(const char* filename, int32_t a3) {
-    STORM_ASSERT(filename);
-    STORM_VALIDATE(filename, ERROR_INVALID_PARAMETER, 0);
+    STORM_VALIDATE_BEGIN;
+    STORM_VALIDATE(filename);
+    STORM_VALIDATE_END;
 
     this->m_inMemoryImage = nullptr;
 

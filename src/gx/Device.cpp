@@ -42,8 +42,9 @@ CGxDevice* GxDevCreate(EGxApi api, int32_t (*windowProc)(void* window, uint32_t 
         break;
     }
 
-    if (device == nullptr) {
-        STORM_PANIC("GxDevCreate: failed to create graphics device %d", api);
+    if (!device) {
+        SErrPrepareAppFatal(__FILE__, __LINE__);
+        SErrDisplayAppFatal("GxDevCreate: failed to create graphics device %d", api);
     }
 
     // STORM_ASSERT(device != nullptr);

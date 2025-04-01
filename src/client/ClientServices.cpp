@@ -6,9 +6,8 @@
 #include "console/Client.hpp"
 #include "console/CVar.hpp"
 #include "console/Types.hpp"
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 #include <storm/String.hpp>
-#include <new>
 
 ClientConnection* g_clientConnection;
 
@@ -59,18 +58,15 @@ ClientServices* ClientServices::GetInstance() {
         return ClientServices::s_instance;
     }
 
-    auto m = SMemAlloc(sizeof(ClientServices), __FILE__, __LINE__, 0x0);
-    auto instance = new (m) ClientServices();
-    ClientServices::s_instance = instance;
-
+    ClientServices::s_instance = NEW(ClientServices);
     return ClientServices::s_instance;
 }
+
 void ClientServices::SetMessageHandler(NETMESSAGE msgId, MESSAGE_HANDLER handler, void* param) {
     STORM_ASSERT(ClientServices::s_currentConnection);
     STORM_ASSERT(handler);
     s_currentConnection->SetMessageHandler(msgId, handler, param);
 }
-
 
 void ClientServices::GetRealmList() {
     // TODO
@@ -116,13 +112,9 @@ const REALM_INFO* ClientServices::GetSelectedRealm() {
 
 void ClientServices::Initialize() {
     if (!g_clientConnection) {
-        auto adapterMem = SMemAlloc(sizeof(ClientRealmResponseAdapter), __FILE__, __LINE__, 0x0);
-        auto clientRealmResponse = new (adapterMem) ClientRealmResponseAdapter();
-        ClientServices::s_clientRealmResponse = clientRealmResponse;
+        ClientServices::s_clientRealmResponse = NEW(ClientRealmResponseAdapter);
 
-        auto connectionMem = SMemAlloc(sizeof(ClientConnection), __FILE__, __LINE__, 0x0);
-        auto clientConnection = new (connectionMem) ClientConnection(ClientServices::s_clientRealmResponse);
-        g_clientConnection = clientConnection;
+        g_clientConnection = NEW(ClientConnection, ClientServices::s_clientRealmResponse);
     }
 
     ClientServices::s_currentConnection = g_clientConnection;
@@ -153,8 +145,7 @@ void ClientServices::Logon(const char* accountName, const char* password) {
     if (useBattlenet) {
         // TODO
     } else {
-        auto loginMem = SMemAlloc(sizeof(GruntLogin), __FILE__, __LINE__, 0x0);
-        loginObj = new (loginMem) GruntLogin();
+        loginObj = NEW(GruntLogin);
     }
 
     ClientServices::s_loginObj = loginObj;

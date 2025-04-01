@@ -7,7 +7,7 @@
 #include <bc/Debug.hpp>
 
 void MacOnKeyDown(NSEvent* event) {
-    BLIZZARD_ASSERT(false);
+    BC_ASSERT(false);
 }
 
 void MacOnKeyUp(NSEvent* event) {

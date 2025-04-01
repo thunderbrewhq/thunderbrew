@@ -157,7 +157,7 @@ void GLDevice::SetOption(GLDeviceOption option, bool enable) {
         }
 
         default: {
-            BLIZZARD_ASSERT(false);
+            BC_ASSERT(false);
         }
     }
 }
@@ -993,8 +993,8 @@ void GLDevice::ApplyTransforms() {
 }
 
 void GLDevice::BindBuffer(GLBuffer* buffer, GLEnum target) {
-    BLIZZARD_ASSERT(this->m_Context.IsCurrentContext());
-    BLIZZARD_ASSERT(buffer != nullptr || target != GL_ZERO);
+    BC_ASSERT(this->m_Context.IsCurrentContext());
+    BC_ASSERT(buffer != nullptr || target != GL_ZERO);
 
     GLEnum bindTarget = target == GL_ZERO ? buffer->m_Type : target;
     GLuint bindName = buffer == nullptr ? 0 : buffer->m_BufferID;
@@ -1010,7 +1010,7 @@ void GLDevice::BindBuffer(GLBuffer* buffer, GLEnum target) {
     } else if (bindTarget == GL_PIXEL_UNPACK_BUFFER) {
         bindIndex = 3;
     } else {
-        BLIZZARD_ASSERT(false);
+        BC_ASSERT(false);
     }
 
     if (bindTarget == GL_ARRAY_BUFFER) {
@@ -1032,7 +1032,7 @@ void GLDevice::BindBuffer(GLBuffer* buffer, GLEnum target) {
 }
 
 void GLDevice::BindFramebuffer(GLFramebuffer* framebuffer) {
-    BLIZZARD_ASSERT(this->m_Context.IsCurrentContext());
+    BC_ASSERT(this->m_Context.IsCurrentContext());
 
     GLuint v3;
 
@@ -1055,8 +1055,8 @@ void GLDevice::BindGLSLProgram(GLGLSLProgram* a2) {
 }
 
 void GLDevice::BindShader(GLShader* shader) {
-    BLIZZARD_ASSERT(this->m_Context.IsCurrentContext());
-    BLIZZARD_ASSERT(shader);
+    BC_ASSERT(this->m_Context.IsCurrentContext());
+    BC_ASSERT(shader);
 
     if (shader->var5 == GL_FRAGMENT_PROGRAM_ARB) {
         if (this->m_States.binding.pixelProgram != shader->m_ShaderID) {
@@ -1069,19 +1069,19 @@ void GLDevice::BindShader(GLShader* shader) {
             this->m_States.binding.vertexProgram = shader->m_ShaderID;
         }
     } else {
-        BLIZZARD_ASSERT(false);
+        BC_ASSERT(false);
     }
 }
 
 void GLDevice::BindTexture(GLEnum textureType, GLTexture* texture) {
-    BLIZZARD_ASSERT(this->m_Context.IsCurrentContext());
-    BLIZZARD_ASSERT(texture == nullptr || textureType == texture->m_TextureType);
+    BC_ASSERT(this->m_Context.IsCurrentContext());
+    BC_ASSERT(texture == nullptr || textureType == texture->m_TextureType);
 
     uint32_t textureID = texture ? texture->m_TextureID : 0;
     uint32_t index = GLLTextureTypeToIndex(textureType);
 
-    BLIZZARD_ASSERT(this->m_States.binding.texture[index][this->m_States.binding.currentActiveTexture] != textureID);
-    BLIZZARD_ASSERT(this->m_BoundTextures[index][this->m_States.binding.currentActiveTexture] != texture);
+    BC_ASSERT(this->m_States.binding.texture[index][this->m_States.binding.currentActiveTexture] != textureID);
+    BC_ASSERT(this->m_BoundTextures[index][this->m_States.binding.currentActiveTexture] != texture);
 
     GLTexture* boundTexture = this->m_BoundTextures[index][this->m_States.binding.currentActiveTexture];
     if (boundTexture) {
@@ -1125,7 +1125,7 @@ void GLDevice::BindTexture(GLEnum textureType, GLTexture* texture) {
 }
 
 void GLDevice::BindVertexArray(GLVertexArray* a2) {
-    BLIZZARD_ASSERT(this->m_Context.IsCurrentContext());
+    BC_ASSERT(this->m_Context.IsCurrentContext());
 
     int32_t v4 = a2 ? a2->m_VertexArrayID : 0;
 
@@ -1137,8 +1137,8 @@ void GLDevice::BindVertexArray(GLVertexArray* a2) {
 }
 
 void GLDevice::BlitFramebuffer(GLMipmap* src, const GLRect* srcRect, GLMipmap* dst, const GLRect* dstRect, GLEnum mask, GLEnum filter) {
-    BLIZZARD_ASSERT(mask == GL_COLOR_BUFFER_BIT);
-    BLIZZARD_ASSERT(src != nullptr);
+    BC_ASSERT(mask == GL_COLOR_BUFFER_BIT);
+    BC_ASSERT(src != nullptr);
 
     GLRect fullSrcRect = {
         0,
@@ -1154,9 +1154,9 @@ void GLDevice::BlitFramebuffer(GLMipmap* src, const GLRect* srcRect, GLMipmap* d
         dst ? dst->GetHeight() : this->m_Context.GetHeight()
     };
 
-    BLIZZARD_ASSERT(filter == GL_NEAREST);
+    BC_ASSERT(filter == GL_NEAREST);
     // TODO
-    // BLIZZARD_ASSERT(srcRect == nullptr || *srcRect == fullSrcRect);
+    // BC_ASSERT(srcRect == nullptr || *srcRect == fullSrcRect);
 
     // TODO
     // - non-shader code path
@@ -1377,18 +1377,18 @@ void GLDevice::BlitFramebuffer(GLMipmap* src, const GLRect* srcRect, GLMipmap* d
 }
 
 void GLDevice::CheckDepthTarget() {
-    BLIZZARD_ASSERT(this->m_CurrentTargetColor[0] == nullptr || this->m_CurrentTargetColor[0]->GetTexture()->IsValid());
-    BLIZZARD_ASSERT(this->m_CurrentTargetColor[1] == nullptr || this->m_CurrentTargetColor[1]->GetTexture()->IsValid());
-    BLIZZARD_ASSERT(this->m_CurrentTargetColor[2] == nullptr || this->m_CurrentTargetColor[2]->GetTexture()->IsValid());
-    BLIZZARD_ASSERT(this->m_CurrentTargetColor[3] == nullptr || this->m_CurrentTargetColor[3]->GetTexture()->IsValid());
+    BC_ASSERT(this->m_CurrentTargetColor[0] == nullptr || this->m_CurrentTargetColor[0]->GetTexture()->IsValid());
+    BC_ASSERT(this->m_CurrentTargetColor[1] == nullptr || this->m_CurrentTargetColor[1]->GetTexture()->IsValid());
+    BC_ASSERT(this->m_CurrentTargetColor[2] == nullptr || this->m_CurrentTargetColor[2]->GetTexture()->IsValid());
+    BC_ASSERT(this->m_CurrentTargetColor[3] == nullptr || this->m_CurrentTargetColor[3]->GetTexture()->IsValid());
 
-    BLIZZARD_ASSERT(this->m_CurrentTargetDepth == nullptr || this->m_CurrentDepthBuffer != nullptr);
+    BC_ASSERT(this->m_CurrentTargetDepth == nullptr || this->m_CurrentDepthBuffer != nullptr);
 
     if (!this->m_CurrentDepthBuffer) {
         return;
     }
 
-    BLIZZARD_ASSERT(this->m_CurrentDepthBuffer->GetTexture()->IsValid());
+    BC_ASSERT(this->m_CurrentDepthBuffer->GetTexture()->IsValid());
 
     auto currentTargetColor = this->m_CurrentTargetColor[0];
     auto currentDepthBuffer = this->m_CurrentDepthBuffer;
@@ -1540,8 +1540,8 @@ void GLDevice::Clear(uint32_t clearMask, const GLColor4f& clearColor, double cle
 }
 
 void GLDevice::CopyTex(uint32_t a2, uint32_t a3, GLMipmap* dst, const GLRect* framebufferRect) {
-    BLIZZARD_ASSERT(framebufferRect->width == dst->GetWidth());
-    BLIZZARD_ASSERT(framebufferRect->height == dst->GetHeight());
+    BC_ASSERT(framebufferRect->width == dst->GetWidth());
+    BC_ASSERT(framebufferRect->height == dst->GetHeight());
 
     dst->m_Texture->Bind(nullptr, false);
 
@@ -1636,7 +1636,7 @@ const GLStates::VertexArrayObject& GLDevice::GetVertexArrayStates() {
 }
 
 void GLDevice::GLLDraw(GLEnum mode, uint32_t start, uint32_t end, uint32_t a5,  uint32_t a6, uint32_t count) {
-    BLIZZARD_ASSERT(this->m_Context.IsCurrentContext());
+    BC_ASSERT(this->m_Context.IsCurrentContext());
 
     this->CheckDepthTarget();
 
@@ -1698,7 +1698,7 @@ void GLDevice::GLLDraw(GLEnum mode, uint32_t start, uint32_t end, uint32_t a5,  
         } else if (format == GL_UNSIGNED_INT) {
             v18 = 2;
         } else {
-            BLIZZARD_ASSERT(!"buffer uses unknown format");
+            BC_ASSERT(!"buffer uses unknown format");
         }
 
         void* indices = GLBuffer::m_UsingVBO
@@ -2016,7 +2016,7 @@ void GLDevice::LoadDefaultStates() {
 }
 
 void GLDevice::ResetBackbuffer(uint32_t width, uint32_t height, GLTextureFormat colorFormat, GLTextureFormat depthFormat, uint32_t sampleCount) {
-    BLIZZARD_ASSERT(this->m_Context.IsCurrentContext());
+    BC_ASSERT(this->m_Context.IsCurrentContext());
 
     if (
         this->m_BackBufferColor
@@ -2113,7 +2113,7 @@ void GLDevice::ResetBackbuffer(uint32_t width, uint32_t height, GLTextureFormat 
         this->SetDepthTestEnable(1);
     }
 
-    BLIZZARD_ASSERT(this->m_CurrentTarget->IsValid());
+    BC_ASSERT(this->m_CurrentTarget->IsValid());
 
     this->Clear(0x4500, GLColor4f::BLACK, 1.0, 0);
 }
@@ -2135,7 +2135,7 @@ void GLDevice::Resize(uint32_t width, uint32_t height) {
 }
 
 void GLDevice::RestoreTextures() {
-    BLIZZARD_ASSERT(this->m_Context.IsCurrentContext());
+    BC_ASSERT(this->m_Context.IsCurrentContext());
 
     for (int32_t i = 0; i < 16; i++) {
         GLTexture* texture = this->m_Textures[i];
@@ -2182,7 +2182,7 @@ void GLDevice::SetAlphaBlendEnable(bool enable) {
 
 void GLDevice::SetAlphaTest(GLEnum func, float ref) {
     if (this->m_States.fixedFunc.alphaTestFunc != func || this->m_States.fixedFunc.alphaTestRef != ref) {
-        BLIZZARD_ASSERT(ref <= 1.0f);
+        BC_ASSERT(ref <= 1.0f);
 
         glAlphaFunc(func, ref);
         this->m_States.fixedFunc.alphaTestFunc = func;
@@ -2391,12 +2391,12 @@ void GLDevice::SetFogParam(GLEnum param, float value) {
             this->m_States.fixedFunc.fogDensity = value;
         }
     } else {
-        BLIZZARD_ASSERT(false);
+        BC_ASSERT(false);
     }
 }
 
 void GLDevice::SetIndexBuffer(GLBuffer* buffer) {
-    BLIZZARD_ASSERT(buffer == nullptr || buffer->m_IndexFormat != GL_ZERO);
+    BC_ASSERT(buffer == nullptr || buffer->m_IndexFormat != GL_ZERO);
     this->m_DefaultVertexArrayObject.m_Properties.m_IndexBuffer = buffer;
 }
 
@@ -2424,7 +2424,7 @@ void GLDevice::SetModelView(GLEnum transform) {
     }
 
     if (transform != GL_MODELVIEW) {
-        BLIZZARD_ASSERT(false);
+        BC_ASSERT(false);
     }
 
     auto& world = this->m_States.fixedFunc.transforms.world;
@@ -2445,7 +2445,7 @@ void GLDevice::SetModelView(GLEnum transform) {
             modelView.isDirty = true;
         } else {
             // TODO assign model * view to modelView
-            BLIZZARD_ASSERT(!"Unimplemented");
+            BC_ASSERT(!"Unimplemented");
         }
 
         if (this->m_States.fixedFunc.transforms.matrixMode != GL_MODELVIEW) {
@@ -2473,8 +2473,8 @@ void GLDevice::SetShader(GLShader::ShaderType shaderType, GLShader* shader) {
             // TODO
         }
 
-        BLIZZARD_ASSERT(shader->IsEnabled());
-        BLIZZARD_ASSERT(shader->GetShaderType() == shaderType);
+        BC_ASSERT(shader->IsEnabled());
+        BC_ASSERT(shader->GetShaderType() == shaderType);
 
         this->BindShader(shader);
     }
@@ -2506,12 +2506,12 @@ void GLDevice::SetShader(GLShader::ShaderType shaderType, GLShader* shader) {
 
         this->m_PixelShader = shader;
     } else {
-        BLIZZARD_ASSERT(!"Unknown shader type!");
+        BC_ASSERT(!"Unknown shader type!");
     }
 }
 
 void GLDevice::SetShaderConstants(GLShader::ShaderType shaderType, uint32_t index, const float* constants, uint32_t count) {
-    BLIZZARD_ASSERT(count != 0);
+    BC_ASSERT(count != 0);
 
     GLShader* shader = nullptr;
 
@@ -2537,12 +2537,12 @@ void GLDevice::SetShaderConstants(GLShader::ShaderType shaderType, uint32_t inde
 
 void GLDevice::SetShaderConstantsInternal(GLShader::ShaderType shaderType, uint32_t index, const float* constants, uint32_t count) {
     if (shaderType == GLShader::eVertexShader) {
-        BLIZZARD_ASSERT((index + count) <= std::extent<decltype(this->m_States.shader.vertexShaderConst)>::value);
+        BC_ASSERT((index + count) <= std::extent<decltype(this->m_States.shader.vertexShaderConst)>::value);
 
         memcpy(&this->m_States.shader.vertexShaderConst[index], constants, (sizeof(float) * 4) * count);
 
-        BLIZZARD_ASSERT(index <= 0xFFFF);
-        BLIZZARD_ASSERT(count <= 0xFFFF);
+        BC_ASSERT(index <= 0xFFFF);
+        BC_ASSERT(count <= 0xFFFF);
 
         uint16_t start = std::min(static_cast<uint16_t>(index), this->m_DirtyVertexShaderConsts.start);
         uint16_t end = std::max(static_cast<uint16_t>(index + count), this->m_DirtyVertexShaderConsts.end);
@@ -2550,12 +2550,12 @@ void GLDevice::SetShaderConstantsInternal(GLShader::ShaderType shaderType, uint3
         this->m_DirtyVertexShaderConsts.start = start;
         this->m_DirtyVertexShaderConsts.end = end;
     } else if (shaderType == GLShader::ePixelShader) {
-        BLIZZARD_ASSERT((index + count) <= std::extent<decltype(this->m_States.shader.pixelShaderConst)>::value);
+        BC_ASSERT((index + count) <= std::extent<decltype(this->m_States.shader.pixelShaderConst)>::value);
 
         memcpy(&this->m_States.shader.pixelShaderConst[index], constants, (sizeof(float) * 4) * count);
 
-        BLIZZARD_ASSERT(index <= 0xFFFF);
-        BLIZZARD_ASSERT(count <= 0xFFFF);
+        BC_ASSERT(index <= 0xFFFF);
+        BC_ASSERT(count <= 0xFFFF);
 
         uint16_t start = std::min(static_cast<uint16_t>(index), this->m_DirtyPixelShaderConsts.start);
         uint16_t end = std::max(static_cast<uint16_t>(index + count), this->m_DirtyPixelShaderConsts.end);
@@ -2564,16 +2564,16 @@ void GLDevice::SetShaderConstantsInternal(GLShader::ShaderType shaderType, uint3
         this->m_DirtyPixelShaderConsts.end = end;
     } else {
         // TODO
-        // BLIZZARD_ASSERT(false, "Unknown shader type %d!", shaderType);
+        // BC_ASSERT(false, "Unknown shader type %d!", shaderType);
     }
 }
 
 void GLDevice::SetTexture(uint32_t stage, GLTexture* texture) {
     if (stage > 15) {
-        BLIZZARD_ASSERT(!"setting an unsupported texture stage to a non-NULL texture");
+        BC_ASSERT(!"setting an unsupported texture stage to a non-NULL texture");
     }
 
-    BLIZZARD_ASSERT(texture == nullptr || texture->IsValid());
+    BC_ASSERT(texture == nullptr || texture->IsValid());
 
     uint32_t textureID = 0;
     GLEnum textureType = GL_TEXTURE_2D;
@@ -2614,7 +2614,7 @@ void GLDevice::SetTransform(GLEnum transform, const float* a3) {
     } else if (transform >= GL_TEXTURE0 && transform <= GL_TEXTURE7) {
         t = &this->m_States.fixedFunc.transforms.texture[transform - GL_TEXTURE0];
     } else {
-        BLIZZARD_ASSERT(false);
+        BC_ASSERT(false);
     }
 
     if (*t != a3) {
@@ -2639,8 +2639,8 @@ void GLDevice::SetUnpackClientStorage(bool enable) {
 }
 
 void GLDevice::SetVertexBuffer(uint32_t index, GLBuffer* buffer, uint32_t offset, uint32_t stride) {
-    BLIZZARD_ASSERT(index < GL_MAX_STREAM);
-    BLIZZARD_ASSERT(buffer == nullptr || buffer->m_IndexFormat == GL_ZERO);
+    BC_ASSERT(index < GL_MAX_STREAM);
+    BC_ASSERT(buffer == nullptr || buffer->m_IndexFormat == GL_ZERO);
 
     auto properties = &this->m_DefaultVertexArrayObject.m_Properties;
     properties->m_VertexBuffer[index] = buffer;
@@ -2649,7 +2649,7 @@ void GLDevice::SetVertexBuffer(uint32_t index, GLBuffer* buffer, uint32_t offset
 }
 
 void GLDevice::SetVertexFormat(GLVertexFormat* format) {
-    BLIZZARD_ASSERT(format->m_Size <= kMAX_VERTEX_ATTRIBS);
+    BC_ASSERT(format->m_Size <= kMAX_VERTEX_ATTRIBS);
     this->m_DefaultVertexArrayObject.m_Properties.m_VertexBufferFormat = format;
 }
 

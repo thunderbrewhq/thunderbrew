@@ -1,5 +1,5 @@
 #include "gx/font/FreeTypeInternal.hpp"
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 
 void* FreeTypeAllocFunction(FT_Memory memory, long size) {
     return SMemAlloc(size, __FILE__, __LINE__, 0);

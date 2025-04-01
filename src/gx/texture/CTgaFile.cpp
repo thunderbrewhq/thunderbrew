@@ -1,12 +1,15 @@
 #include "gx/texture/CTgaFile.hpp"
 
-#include <storm/Memory.hpp>
+#include <bc/Memory.hpp>
 #include <storm/Error.hpp>
 
 #include <cstring>
 
 int32_t CTgaFile::Open(const char* filename, int32_t a3) {
-    STORM_VALIDATE_STRING(filename, ERROR_INVALID_PARAMETER, 0);
+    STORM_VALIDATE_BEGIN;
+    STORM_VALIDATE(filename);
+    STORM_VALIDATE(*filename);
+    STORM_VALIDATE_END;
 
     this->Close();
 
@@ -40,9 +43,15 @@ int32_t CTgaFile::Open(const char* filename, int32_t a3) {
     }
 
     // 3 pixels with alpha channel makes no sense
-    STORM_VALIDATE(!(this->m_header.bPixelDepth == 24 && this->m_header.desc.bAlphaChannelBits == 8), 0x8720012E, 0);
+    if (this->m_header.bPixelDepth == 24 && this->m_header.desc.bAlphaChannelBits == 8) {
+        SErrSetLastError(0x8720012E);
+        return 0;
+    }
     // 4 pixels with no alpha channel makes no sense
-    STORM_VALIDATE(!(this->m_header.bPixelDepth == 32 && this->m_header.desc.bAlphaChannelBits == 0), 0x8720012F, 0);
+    if (this->m_header.bPixelDepth == 32 && this->m_header.desc.bAlphaChannelBits == 0) {
+        SErrSetLastError(0x8720012F);
+        return 0;
+    }
 
     return 1;
 }
@@ -123,7 +132,10 @@ void CTgaFile::SetTopDown(int32_t set) {
         return;
     }
 
-    STORM_VALIDATE(this->m_header.bImageType >= TGA_RLE_COLOR_MAPPED && this->m_header.bImageType <= TGA_RLE_BLACK_N_WHITE, 0xF7200083);
+    if (!(this->m_header.bImageType >= TGA_RLE_COLOR_MAPPED && this->m_header.bImageType <= TGA_RLE_BLACK_N_WHITE)) {
+        SErrSetLastError(0xF7200083);
+        return;
+    }
 
     auto newImage = static_cast<uint8_t*>(SMemAlloc(this->Bytes(), __FILE__, __LINE__, 0x0));
 
@@ -405,7 +417,10 @@ void CTgaFile::ConvertColorMapped(uint32_t flags) {
 }
 
 int32_t CTgaFile::ReadColorMappedImage(uint32_t flags) {
-    STORM_VALIDATE(this->m_header.bColorMapType, 0xF7200084, 0);
+    if (!this->m_header.bColorMapType) {
+        SErrSetLastError(0xF7200084);
+        return 0;
+    }
 
     int32_t status;
 
@@ -421,8 +436,14 @@ int32_t CTgaFile::ReadColorMappedImage(uint32_t flags) {
 }
 
 int32_t CTgaFile::LoadImageData(uint32_t flags) {
-    STORM_VALIDATE(this->m_image == nullptr, ERROR_INVALID_PARAMETER, 1);
-    STORM_VALIDATE(this->m_file, 0xF720007E, 1);
+    if (this->m_image) {
+        SErrSetLastError(ERROR_INVALID_PARAMETER);
+        return 1;
+    }
+    if (!this->m_file) {
+        SErrSetLastError(0xF720007E);
+        return 1;
+    }
 
     this->m_imageBytes = this->Bytes();
 
