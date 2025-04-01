@@ -1,5 +1,4 @@
 #include "client/CmdLine.hpp"
-
 #include <storm/Command.hpp>
 
 int32_t CmdLineProcess() {
@@ -32,23 +31,23 @@ int32_t CmdLineProcess() {
 
 void ProcessCommandLine() {
     static ARGLIST s_wowArgList[] = {
-        { 0x0,                       WOWCMD_RES_800x600,   "800x600",    nullptr },
-        { 0x0,                       WOWCMD_RES_1024x768,  "1024x768",   nullptr },
-        { 0x0,                       WOWCMD_RES_1280x960,  "1280x960",   nullptr },
-        { 0x0,                       WOWCMD_RES_1280x1024, "1280x1024",  nullptr },
-        { 0x0,                       WOWCMD_RES_1600x1200, "1600x1200",  nullptr },
-        { 0x0,                       WOWCMD_16_BIT,        "16bit",      nullptr },
-        { 0x0,                       WOWCMD_UP_TO_DATE,    "uptodate",   nullptr },
-        { 0x0,                       WOWCMD_NO_SOUND,      "nosound",    nullptr },
-        { 0x0,                       WOWCMD_SOUND_CHAOS,   "soundchaos", nullptr },
-        { 0x0,                       WOWCMD_NO_FIX_LAG,    "nofixlag",   nullptr },
-        { 0x0,                       WOWCMD_DEPTH_16,      "d16",        nullptr },
-        { 0x0,                       WOWCMD_DEPTH_24,      "d24",        nullptr },
-        { 0x0,                       WOWCMD_DEPTH_32,      "d32",        nullptr },
-        { 0x0,                       WOWCMD_WINDOWED,      "windowed",   nullptr },
-        { 0x0,                       WOWCMD_HW_DETECT,     "hwdetect",   nullptr },
-        { 0x0,                       WOWCMD_CONSOLE,       "console",    nullptr },
-        { STORM_COMMAND_TYPE_STRING, WOWCMD_GX_OVERRIDE,   "gxoverride", nullptr }
+        { 0x0,                       CMD_RES_800x600,   "800x600",    nullptr },
+        { 0x0,                       CMD_RES_1024x768,  "1024x768",   nullptr },
+        { 0x0,                       CMD_RES_1280x960,  "1280x960",   nullptr },
+        { 0x0,                       CMD_RES_1280x1024, "1280x1024",  nullptr },
+        { 0x0,                       CMD_RES_1600x1200, "1600x1200",  nullptr },
+        { 0x0,                       CMD_16_BIT,        "16bit",      nullptr },
+        { 0x0,                       CMD_UP_TO_DATE,    "uptodate",   nullptr },
+        { 0x0,                       CMD_NO_SOUND,      "nosound",    nullptr },
+        { 0x0,                       CMD_SOUND_CHAOS,   "soundchaos", nullptr },
+        { 0x0,                       CMD_NO_FIX_LAG,    "nofixlag",   nullptr },
+        { 0x0,                       CMD_DEPTH_16,      "d16",        nullptr },
+        { 0x0,                       CMD_DEPTH_24,      "d24",        nullptr },
+        { 0x0,                       CMD_DEPTH_32,      "d32",        nullptr },
+        { 0x0,                       CMD_WINDOWED,      "windowed",   nullptr },
+        { 0x0,                       CMD_HW_DETECT,     "hwdetect",   nullptr },
+        { 0x0,                       CMD_CONSOLE,       "console",    nullptr },
+        { STORM_COMMAND_TYPE_STRING, CMD_GX_OVERRIDE,   "gxoverride", nullptr }
     };
 
     // Load wow-specific launch flags
@@ -57,7 +56,7 @@ void ProcessCommandLine() {
     CmdLineProcess();
 }
 
-const char* CmdLineGetString(uint32_t opt) {
+const char* CmdLineGetString(CMDOPT opt) {
     static char buffer[260] = {0};
 
     SCmdGetString(opt, buffer, 260);
@@ -65,10 +64,10 @@ const char* CmdLineGetString(uint32_t opt) {
     return buffer;
 }
 
-uint32_t CmdLineGetUint(uint32_t opt) {
+uint32_t CmdLineGetUint(CMDOPT opt) {
     return SCmdGetNum(opt);
 }
 
-int32_t CmdLineGetBool(uint32_t opt) {
+int32_t CmdLineGetBool(CMDOPT opt) {
     return SCmdGetBool(opt);
 }

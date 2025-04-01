@@ -23,35 +23,32 @@ enum CMDOPT {
     CMDOPTS
 };
 
-enum WOWCMDOPT {
-    WOWCMD_RES_800x600 = 16,
-    WOWCMD_RES_1024x768 = 17,
-    WOWCMD_RES_1280x960 = 18,
-    WOWCMD_RES_1280x1024 = 19,
-    WOWCMD_RES_1600x1200 = 20,
-    WOWCMD_UP_TO_DATE = 21,
-    WOWCMD_16_BIT = 22,
-    WOWCMD_NO_FIX_LAG = 24,
-    WOWCMD_NO_SOUND = 26,
-    WOWCMD_SOUND_CHAOS = 27,
-    WOWCMD_DEPTH_16 = 29,
-    WOWCMD_DEPTH_24 = 30,
-    WOWCMD_DEPTH_32 = 31,
-    WOWCMD_WINDOWED = 32,
-    WOWCMD_CONSOLE = 35,
-    WOWCMD_HW_DETECT = 36,
-    WOWCMD_GX_OVERRIDE = 39,
-    WOWCMD_OPTS
-};
+#define CMD_RES_800x600   static_cast<CMDOPT>(16)
+#define CMD_RES_1024x768  static_cast<CMDOPT>(17)
+#define CMD_RES_1280x960  static_cast<CMDOPT>(18)
+#define CMD_RES_1280x1024 static_cast<CMDOPT>(19)
+#define CMD_RES_1600x1200 static_cast<CMDOPT>(20)
+#define CMD_UP_TO_DATE    static_cast<CMDOPT>(21)
+#define CMD_16_BIT        static_cast<CMDOPT>(22)
+#define CMD_NO_FIX_LAG    static_cast<CMDOPT>(24)
+#define CMD_NO_SOUND      static_cast<CMDOPT>(26)
+#define CMD_SOUND_CHAOS   static_cast<CMDOPT>(27)
+#define CMD_DEPTH_16      static_cast<CMDOPT>(29)
+#define CMD_DEPTH_24      static_cast<CMDOPT>(30)
+#define CMD_DEPTH_32      static_cast<CMDOPT>(31)
+#define CMD_WINDOWED      static_cast<CMDOPT>(32)
+#define CMD_CONSOLE       static_cast<CMDOPT>(35)
+#define CMD_HW_DETECT     static_cast<CMDOPT>(36)
+#define CMD_GX_OVERRIDE   static_cast<CMDOPT>(39)
 
 int32_t CmdLineProcess();
 
 void ProcessCommandLine();
 
-const char* CmdLineGetString(uint32_t opt);
+const char* CmdLineGetString(CMDOPT opt);
 
-uint32_t    CmdLineGetUint(uint32_t opt);
+uint32_t CmdLineGetUint(CMDOPT opt);
 
-int32_t     CmdLineGetBool(uint32_t opt);
+int32_t CmdLineGetBool(CMDOPT opt);
 
 #endif
