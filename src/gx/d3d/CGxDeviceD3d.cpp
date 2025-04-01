@@ -336,7 +336,7 @@ LRESULT CGxDeviceD3d::WindowProcD3d(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         if (device) {
             if (device->m_d3dDevice && LOWORD(lParam) == HTCLIENT) {
                 SetCursor(nullptr);
-                BOOL show = device->m_cursorVisible && device->m_hardwareCursor ? TRUE : FALSE;
+                BOOL show = device->m_cursorVisible && device->m_hwCursor ? TRUE : FALSE;
                 device->m_d3dDevice->ShowCursor(show);
                 return 1;
             }
@@ -487,15 +487,7 @@ int32_t CGxDeviceD3d::DeviceSetFormat(const CGxFormat& format) {
     CGxFormat createFormat = format;
 
     if (this->ICreateWindow(createFormat) && this->ICreateD3dDevice(createFormat) && this->CGxDevice::DeviceSetFormat(format)) {
-        this->intF64 = 1;
-        this->m_hwCursorNeedsUpdate = 1;
-
-        if (this->m_format.window == 0) {
-            RECT windowRect;
-            GetWindowRect(this->m_hwnd, &windowRect);
-            ClipCursor(&windowRect);
-        }
-
+        this->ICursorClip(1);
         return 1;
     } else {
         CGxDevice::Log("CGxDeviceD3d::DeviceSetFormat(): unable to set format!");
@@ -1015,6 +1007,20 @@ bool CGxDeviceD3d::ICreateWindow(CGxFormat& format) {
     return this->m_hwnd != nullptr;
 }
 
+void CGxDeviceD3d::ICursorClip(int32_t a1) {
+    this->intF64 = a1;
+
+    if (a1) {
+        this->m_hwCursorNeedsUpdate = 1;
+
+        if (this->m_format.window) {
+            RECT windowRect;
+            GetWindowRect(this->m_hwnd, &windowRect);
+            ClipCursor(&windowRect);
+        }
+    }
+}
+
 void CGxDeviceD3d::IDestroyD3d() {
     this->IDestroyD3dDevice();
     CGxDeviceD3d::IUnloadD3dLib(this->m_d3dLib, this->m_d3d);
@@ -1220,7 +1226,7 @@ void CGxDeviceD3d::IRsSendToHw(EGxRenderState which) {
 void CGxDeviceD3d::ICursorCreate(const CGxFormat& format) {
     CGxDevice::ICursorCreate(format);
 
-    if (this->m_hardwareCursor && this->m_hwCursorTexture == nullptr) {
+    if (this->m_hwCursor && this->m_hwCursorTexture == nullptr) {
         this->m_d3dDevice->CreateTexture(
             32,
             32,
@@ -1257,7 +1263,7 @@ void CGxDeviceD3d::ICursorDestroy() {
 void CGxDeviceD3d::CursorSetVisible(int32_t visible) {
     CGxDevice::CursorSetVisible(visible);
 
-    if (this->m_hardwareCursor && this->m_context) {
+    if (this->m_hwCursor && this->m_context) {
         POINT point;
         RECT rect;
         GetCursorPos(&point);
@@ -1276,15 +1282,15 @@ void CGxDeviceD3d::CursorUnlock(uint32_t x, uint32_t y) {
 }
 
 void CGxDeviceD3d::ICursorDraw() {
-    if (!this->m_hardwareCursor) {
+    if (!this->m_hwCursor) {
         this->ISceneBegin();
     }
 
     CGxDevice::ICursorDraw();
 
-    if (!this->m_hardwareCursor) {
+    if (!this->m_hwCursor) {
         this->ISceneEnd();
-        if (!this->m_hardwareCursor) {
+        if (!this->m_hwCursor) {
             return;
         }
     }
@@ -1312,16 +1318,19 @@ void CGxDeviceD3d::ICursorDraw() {
 
 void CGxDeviceD3d::ISceneBegin() {
     if (!this->m_context) {
-        auto result = this->m_d3dDevice->TestCooperativeLevel();
-        if (result == D3DERR_DEVICENOTRESET) {
-            this->IReleaseD3dResources(0);
+        if (this->m_d3dDevice->TestCooperativeLevel() == D3DERR_DEVICENOTRESET) {
             D3DPRESENT_PARAMETERS d3dpp;
+            this->IReleaseD3dResources(0);
             this->ISetPresentParms(d3dpp, this->m_format);
-            result = this->m_d3dDevice->Reset(&d3dpp);
-            if (result == D3D_OK) {
+            if (this->m_d3dDevice->Reset(&d3dpp) == D3D_OK) {
                 this->IStateSetD3dDefaults();
-                // TODO: CGxDeviceD3d::ICursorClip
-                // TODO: this->NotifyOnDeviceRestored()
+                this->ICursorClip(1);
+                this->m_context = 1;
+                // TODO
+                // this->intF5C = 0;
+                // this->unk3ACC = 1;
+
+                // this->NotifyOnDeviceRestored();
             }
         }
     }
@@ -1427,7 +1436,7 @@ void CGxDeviceD3d::ISetCaps(const CGxFormat& format) {
 
     // Detect hardware cursor
 
-    this->m_caps.m_hardwareCursor = this->m_d3dCaps.CursorCaps & D3DCURSORCAPS_COLOR;
+    this->m_caps.m_hwCursor = this->m_d3dCaps.CursorCaps & D3DCURSORCAPS_COLOR;
 
     // Texture formats
 
@@ -2191,8 +2200,9 @@ void CGxDeviceD3d::ShaderCreate(CGxShader* shaders[], EGxShTarget target, const 
 }
 
 int32_t CGxDeviceD3d::StereoEnabled() {
-    // TODO
-    return 0;
+    CGxDevice::CursorUnlock(x, y);
+    this->m_hwCursorNeedsUpdate = 1;
+
 }
 
 void CGxDeviceD3d::XformSetProjection(const C44Matrix& matrix) {

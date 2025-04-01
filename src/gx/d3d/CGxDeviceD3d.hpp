@@ -252,7 +252,6 @@ class CGxDeviceD3d : public CGxDevice {
     virtual void ICursorDestroy();
     virtual void ICursorDraw();
     virtual void CursorSetVisible(int32_t visible);
-    virtual void CursorUnlock(uint32_t x, uint32_t y);
     virtual int32_t DeviceCreate(int32_t (*windowProc)(void* window, uint32_t message, uintptr_t wparam, intptr_t lparam), const CGxFormat& format);
     virtual int32_t DeviceSetFormat(const CGxFormat& format);
     virtual void* DeviceWindow();
@@ -270,6 +269,7 @@ class CGxDeviceD3d : public CGxDevice {
     virtual void IShaderCreate(CGxShader* shader);
     virtual void ShaderCreate(CGxShader* shaders[], EGxShTarget target, const char* a4, const char* a5, int32_t permutations);
     virtual int32_t StereoEnabled();
+    virtual void CursorUnlock(uint32_t x, uint32_t y);
 
     // Member functions
     CGxDeviceD3d();
@@ -283,6 +283,7 @@ class CGxDeviceD3d : public CGxDevice {
     LPDIRECT3DVERTEXBUFFER9 ICreateD3dVB(EGxPoolUsage usage, uint32_t size);
     LPDIRECT3DVERTEXDECLARATION9 ICreateD3dVertexDecl(D3DVERTEXELEMENT9 elements[], uint32_t count);
     bool ICreateWindow(CGxFormat& format);
+    void ICursorClip(int32_t a1);
     void ISetPresentParms(D3DPRESENT_PARAMETERS& d3dpp, const CGxFormat& format);
     void IDestroyD3d();
     void IDestroyD3dDevice();
