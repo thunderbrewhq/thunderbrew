@@ -1,4 +1,5 @@
 #include "gx/CGxDevice.hpp"
+#include "gx/CGxMonitorMode.hpp"
 #include "gx/Gx.hpp"
 #include "gx/Shader.hpp"
 #include "gx/texture/CGxTex.hpp"
@@ -13,7 +14,6 @@
 #include <cstdio>
 #include <cmath>
 #include <limits>
-#include <new>
 #include <storm/Error.hpp>
 #include <bc/Memory.hpp>
 
@@ -168,6 +168,93 @@ void CGxDevice::ICursorUpdate(EGxTexCommand command, uint32_t width, uint32_t he
     }
 }
 
+
+#if defined(WHOA_SYSTEM_WIN)
+
+// TODO: replace this invented name
+int32_t FindDisplayDevice(PDISPLAY_DEVICE device, uint32_t flag) {
+    DWORD i = 0;
+    device->cb = sizeof(DISPLAY_DEVICE);
+    while (EnumDisplayDevices(nullptr, i, device, 0)) {
+        if ((device->StateFlags & flag) == flag) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+bool CGxDevice::AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
+    modes.SetCount(0);
+
+    DISPLAY_DEVICE device;
+    if (!FindDisplayDevice(&device, DISPLAY_DEVICE_PRIMARY_DEVICE)) {
+        return false;
+    }
+
+    DEVMODE dm;
+    dm.dmSize = sizeof(DEVMODE);
+
+    DWORD i = 0;
+    while (EnumDisplaySettings(&device, i, &dm)) {
+        if ((dm.dmPelsWidth >= 640 && dm.dmPelsHeight >= 480)
+          && dm.dmBitsPerPel >= 16) {
+            auto mode = modes.New();
+
+            mode->size.x = dm.dmPelsWidth;
+            mode->size.y = dm.dmPelsHeight;
+            mode->bpp = dm.dmBitsPerPel;
+            mode->refreshRate = dm.dmDisplayFrequency;
+        }
+
+        i++;
+    }
+
+    qsort(modes.Ptr(), modes.Count(), sizeof(CGxMonitorMode), CGxMonitorModeSort);
+
+    return modes.Count() != 0;
+}
+
+#elif (WHOA_SYSTEM_MAC)
+
+bool CGxDevice::AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
+    // TODO: Mac support
+    return false;
+}
+
+#elif (WHOA_BUILD_GLSDL)
+
+bool CGxDevice::AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
+    auto primaryDisplay = SDL_GetPrimaryDisplay();
+    if (!primaryDisplay) {
+        return false;
+    }
+
+    int32_t displayModeCount;
+    auto displayModes = SDL_GetFullscreenDisplayModes(primaryDisplay, &displayModeCount);
+    if (displayModes == nullptr) {
+        return false;
+    }
+
+    modes.SetCount(displayModeCount);
+    for (auto i = 0; i < displayModeCount; i++) {
+        auto displayMode = displayModes[i];
+        CGxMonitorMode& mode = modes[i];
+        mode.size.x = displayMode->w;
+        mode.size.y = displayMode->h;
+        mode.bpp = displayMode->format.BitsPerPixel;
+        mode.refreshRate = static_cast<uint32_t>(displayMode->format.refresh_rate);
+    }
+
+    SDL_free(displayModes);
+
+    qsort(modes.Ptr(), modes.Count(), sizeof(CGxMonitorMode), CGxMonitorModeSort);
+
+    return true;
+}
+
+#endif
+
 CGxDevice::CGxDevice() {
     // TODO
     // - implement rest of constructor
@@ -287,9 +374,9 @@ const CRect& CGxDevice::DeviceDefWindow() {
 }
 
 void CGxDevice::ICursorCreate(const CGxFormat& format) {
-    int32_t hardwareCursor = format.hwCursor && this->m_caps.m_hardwareCursor;
+    int32_t hardwareCursor = format.hwCursor && this->m_caps.m_hwCursor;
 
-    this->m_hardwareCursor = hardwareCursor;
+    this->m_hwCursor = hardwareCursor;
 
     // If hardware cursor is disabled, and there is no cursor texture yet, create one
     if (!hardwareCursor && this->m_cursorTexture == nullptr) {
@@ -321,7 +408,7 @@ void CGxDevice::ICursorDraw() {
         return;
     }
 
-    if (this->m_hardwareCursor) {
+    if (this->m_hwCursor) {
         return;
     }
 
