@@ -111,7 +111,7 @@ class CGxDevice {
         TSFixedArray<CGxStateBom> m_hwRenderStates;
         uint32_t m_baseMipLevel = 0; // TODO placeholder
         int32_t m_cursorVisible = 0;
-        int32_t m_hardwareCursor = 0;
+        int32_t m_hwCursor = 0;
         uint32_t m_cursorHotspotX = 0;
         uint32_t m_cursorHotspotY = 0;
         uint32_t m_cursor[CURSOR_IMAGE_SIZE] = { 0 };

@@ -21,6 +21,7 @@
 #include "util/Filesystem.hpp"
 #include <bc/Debug.hpp>
 #include <common/Prop.hpp>
+#include <common/Time.hpp>
 #include <storm/Error.hpp>
 #include <storm/Log.hpp>
 #include <bc/os/Path.hpp>
@@ -468,6 +469,7 @@ int32_t InitializeGlobal() {
     // );
 
     // sub_86D430(v8->m_intValue);
+    OsTimeStartup(SystemMethod2);
 
     // ConsoleCommandRegister("timingInfo", (int)sub_4032A0, 0, 0);
 

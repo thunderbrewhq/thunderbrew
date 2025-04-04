@@ -11,6 +11,7 @@
 #include <storm/Array.hpp>
 #include <storm/String.hpp>
 #include <tempest/Vector.hpp>
+#include <common/Time.hpp>
 
 const char* g_glueScriptEvents[41];
 const char* g_scriptEvents[722];
@@ -96,12 +97,6 @@ str.replace = strreplace)";
 
 const char* FrameScript_EventObject::GetName() {
     return this->m_key.m_str;
-}
-
-int64_t OsGetAsyncClocksPerSecond() {
-    // TODO
-
-    return 1000.0;
 }
 
 int32_t FrameScript_CompileFunction(const char* name, const char* wrapper, const char* body, CStatus* status) {

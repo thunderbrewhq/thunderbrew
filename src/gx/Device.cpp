@@ -116,7 +116,3 @@ bool GxApiSupported(EGxApi api) {
 bool GxAdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
     return CGxDevice::AdapterMonitorModes(modes);
 }
-
-void GxLogOpen() {
-    CGxDevice::LogOpen();
-}

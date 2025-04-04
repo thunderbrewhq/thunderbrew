@@ -199,20 +199,6 @@ int32_t CCGxRestart(const char*, const char*) {
     return 1;
 }
 
-EGxApi GxApiDefault() {
-#if defined(WHOA_SYSTEM_WIN)
-    return GxApi_D3d9;
-#endif
-
-#if defined(WHOA_SYSTEM_MAC)
-    return GxApi_GLL;
-#endif
-
-#if defined(WHOA_SYSTEM_LINUX)
-    return GxApi_GLSDL;
-#endif
-}
-
 void RegisterGxCVars() {
     const auto& format = s_defaults.format;
 
@@ -331,7 +317,7 @@ void ConsoleDeviceInitialize(const char* title) {
     // TODO: sub_76BA30(&unk_CABB38, &byte_CABCBD); << ConsoleDetect
     // TODO: byte_CABCBC = 1;
 
-    if (CmdLineGetBool(WOWCMD_HW_DETECT) || s_cvHwDetect->GetInt() != 0) {
+    if (CmdLineGetBool(CMD_HW_DETECT) || s_cvHwDetect->GetInt() != 0) {
         s_hwDetect = true;
         s_cvHwDetect->Set("0", true, false, false, true);
     } else {
@@ -339,7 +325,7 @@ void ConsoleDeviceInitialize(const char* title) {
     }
 
 
-    ConsoleAccessSetEnabled(CmdLineGetBool(WOWCMD_CONSOLE));
+    ConsoleAccessSetEnabled(CmdLineGetBool(CMD_CONSOLE));
 
     // TODO: sub_76B520(&unk_CABAF0, &unk_CABB38);
 
@@ -365,19 +351,19 @@ void ConsoleDeviceInitialize(const char* title) {
 
     GxLog("ConsoleDeviceInitialize(): hwDetect = %d, hwChanged = %d", s_hwDetect, s_hwChanged);
 
-    if (CmdLineGetBool(WOWCMD_RES_800x600)) {
+    if (CmdLineGetBool(CMD_RES_800x600)) {
         s_requestedFormat.size.x = 800;
         s_requestedFormat.size.y = 600;
-    } else if (CmdLineGetBool(WOWCMD_RES_1024x768)) {
+    } else if (CmdLineGetBool(CMD_RES_1024x768)) {
         s_requestedFormat.size.x = 1024;
         s_requestedFormat.size.y = 768;
-    } else if (CmdLineGetBool(WOWCMD_RES_1280x960)) {
+    } else if (CmdLineGetBool(CMD_RES_1280x960)) {
         s_requestedFormat.size.x = 1280;
         s_requestedFormat.size.y = 960;
-    } else if (CmdLineGetBool(WOWCMD_RES_1280x1024)) {
+    } else if (CmdLineGetBool(CMD_RES_1280x1024)) {
         s_requestedFormat.size.x = 1280;
         s_requestedFormat.size.y = 1024;
-    } else if (CmdLineGetBool(WOWCMD_RES_1600x1200)) {
+    } else if (CmdLineGetBool(CMD_RES_1600x1200)) {
         s_requestedFormat.size.x = 1600;
         s_requestedFormat.size.y = 1200;
     }
@@ -406,7 +392,7 @@ void ConsoleDeviceInitialize(const char* title) {
 
     auto gxApiName = s_cvGxApi->GetString();
 
-    auto gxOverride = CmdLineGetString(WOWCMD_GX_OVERRIDE);
+    auto gxOverride = CmdLineGetString(CMD_GX_OVERRIDE);
     if (*gxOverride != '\0') {
         gxApiName = gxOverride;
     } else if (CmdLineGetBool(CMD_OPENGL)) {
@@ -432,7 +418,7 @@ void ConsoleDeviceInitialize(const char* title) {
     bool windowed = s_cvGxWindow->GetInt() != 0;
     if (CmdLineGetBool(CMD_FULL_SCREEN)) {
         windowed = false;
-    } else if (CmdLineGetBool(WOWCMD_WINDOWED)) {
+    } else if (CmdLineGetBool(CMD_WINDOWED)) {
         windowed = true;
     }
 

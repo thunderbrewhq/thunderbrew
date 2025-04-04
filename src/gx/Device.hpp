@@ -17,4 +17,6 @@ void* GxDevWindow();
 
 int32_t GxMasterEnable(EGxMasterEnables state);
 
+EGxApi GxApiDefault();
+
 #endif

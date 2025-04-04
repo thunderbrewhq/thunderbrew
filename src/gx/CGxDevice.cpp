@@ -196,7 +196,7 @@ bool CGxDevice::AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
     dm.dmSize = sizeof(DEVMODE);
 
     DWORD i = 0;
-    while (EnumDisplaySettings(&device, i, &dm)) {
+    while (EnumDisplaySettings(device.DeviceName, i, &dm)) {
         if ((dm.dmPelsWidth >= 640 && dm.dmPelsHeight >= 480)
           && dm.dmBitsPerPel >= 16) {
             auto mode = modes.New();
@@ -1366,7 +1366,7 @@ void CGxDevice::XformSetViewport(float minX, float maxX, float minY, float maxY,
         return;
     }
 
-    this->intF6C = 1;
+    this->m_needsReset = 1;
 
     this->m_viewport.x.l = minX;
     this->m_viewport.x.h = maxX;
