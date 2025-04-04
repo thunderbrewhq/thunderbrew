@@ -73,7 +73,13 @@ void ClientServices::GetRealmList() {
 }
 
 void ClientServices::GetCharacterList() {
+    STORM_ASSERT(ClientServices::s_currentConnection);
     ClientServices::s_currentConnection->GetCharacterList();
+}
+
+void ClientServices::EnumerateCharacters(ENUMERATE_CHARACTERS_CALLBACK fcn, void* param) {
+    STORM_ASSERT(ClientServices::s_currentConnection);
+    ClientServices::s_currentConnection->EnumerateCharacters(fcn, param);
 }
 
 void ClientServices::CharacterLogin(uint64_t id, const C3Vector& position) {

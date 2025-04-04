@@ -19,7 +19,7 @@ int32_t Script_SetCharSelectModelFrame(lua_State* L) {
     auto frame = CScriptObject::GetScriptObjectByName(name, type);
 
     if (frame) {
-        CCharacterSelection::s_modelFrame = static_cast<CSimpleModelFFX*>(frame);
+        CCharacterSelection::m_modelFrame = static_cast<CSimpleModelFFX*>(frame);
     }
 
     return 0;
@@ -54,7 +54,7 @@ int32_t Script_GetCharacterInfo(lua_State* L) {
         luaL_error(L, "Usage: GetCharacterInfo(index)");
     }
 
-    int index = static_cast<int>(lua_tonumber(L, 1)) - 1;
+    int32_t index = static_cast<int32_t>(lua_tonumber(L, 1)) - 1;
     if (index < 0 || index > CCharacterSelection::GetNumCharacters()) {
         lua_pushnil(L); // name
         lua_pushnil(L); // race
@@ -108,7 +108,19 @@ int32_t Script_GetCharacterInfo(lua_State* L) {
 }
 
 int32_t Script_SelectCharacter(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1)) {
+        luaL_error(L, "Usage: SelectCharacter(index)");
+    }
+
+    int32_t index = static_cast<int32_t>(lua_tonumber(L, 1)) - 1;
+    if (index < 1 || index >= CCharacterSelection::GetNumCharacters()) {
+        index = 0;
+    }
+
+    CCharacterSelection::m_selectionIndex = index;
+    CCharacterSelection::ShowCharacter();
+    FrameScript_SignalEvent(8u, "%d", CCharacterSelection::m_selectionIndex + 1);
+    return 0;
 }
 
 int32_t Script_DeleteCharacter(lua_State* L) {
@@ -131,7 +143,7 @@ int32_t Script_UpdateSelectionCustomizationScene(lua_State* L) {
 
 int32_t Script_GetCharacterSelectFacing(lua_State* L) {
     // Radian to Degree
-    lua_pushnumber(L, CCharacterSelection::s_charFacing * 57.29578f);
+    lua_pushnumber(L, CCharacterSelection::m_charFacing * 57.29578f);
     return 1;
 }
 

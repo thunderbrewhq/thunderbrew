@@ -1285,5 +1285,7 @@ struct CHARACTER_INFO {
     uint8_t firstLogin;
 };
 
+typedef void (*ENUMERATE_CHARACTERS_CALLBACK)(CHARACTER_INFO&, void*);
+
 
 #endif

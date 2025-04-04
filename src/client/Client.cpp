@@ -33,6 +33,7 @@ CVar* Client::g_accountUsesTokenVar;
 CVar* Client::g_movieVar;
 CVar* Client::g_expansionMovieVar;
 CVar* Client::g_movieSubtitleVar;
+CVar* Client::g_lastCharacterIndex;
 
 
 HEVENTCONTEXT Client::g_clientEventContext;
@@ -83,6 +84,7 @@ void ClientRegisterConsoleCommands() {
     Client::g_movieVar = CVar::Register("movie", "Show movie on startup", 0, "1", nullptr, game);
     Client::g_expansionMovieVar = CVar::Register("expansionMovie", "Show expansion movie on startup", 0, "1", nullptr, game);
     Client::g_movieSubtitleVar = CVar::Register("movieSubtitle", "Show movie subtitles", 0, "0", nullptr, game);
+    Client::g_lastCharacterIndex = CVar::Register("lastCharacterIndex", "Last character selected", 0, "0", nullptr, game);
 
     // TODO
 }

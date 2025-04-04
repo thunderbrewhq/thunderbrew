@@ -14,6 +14,7 @@ namespace Client {
     extern CVar* g_movieVar;
     extern CVar* g_expansionMovieVar;
     extern CVar* g_movieSubtitleVar;
+    extern CVar* g_lastCharacterIndex;
     extern HEVENTCONTEXT g_clientEventContext;
     extern char g_currentLocaleName[5];
 }

@@ -38,6 +38,7 @@ class ClientServices : public LoginResponse {
         static void SetMessageHandler(NETMESSAGE msgId, MESSAGE_HANDLER handler, void* param);
         static void GetRealmList();
         static void GetCharacterList();
+        static void EnumerateCharacters(ENUMERATE_CHARACTERS_CALLBACK fcn, void* param);
         static void CharacterLogin(uint64_t id, const C3Vector& position);
         static REALM_INFO* GetRealmInfoByIndex(int32_t index);
         static const char* GetSelectedRealmName();

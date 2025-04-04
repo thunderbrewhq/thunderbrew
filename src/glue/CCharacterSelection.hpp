@@ -13,13 +13,27 @@ struct CharacterSelectionDisplay {
 class CCharacterSelection {
     public:
         // Static variables
+        static CSimpleModelFFX* m_modelFrame;
+        static uint32_t m_characterCount;
+        static float m_charFacing;
+        static uint32_t m_restrictHuman;
+        static uint32_t m_restrictDwarf;
+        static uint32_t m_restrictGnome;
+        static uint32_t m_restrictNightElf;
+        static uint32_t m_restrictDraenei;
+        static uint32_t m_restrictOrc;
+        static uint32_t m_restrictTroll;
+        static uint32_t m_restrictTauren;
+        static uint32_t m_restrictUndead;
+        static uint32_t m_restrictBloodElf;
         static TSGrowableArray<CharacterSelectionDisplay> s_characterList;
-        static CSimpleModelFFX* s_modelFrame;
-        static float s_charFacing;
+        static int32_t m_selectionIndex;
 
         // Static functions
         static void RenderPrep();
         static void SetBackgroundModel(const char* modelPath);
+        static void EnumerateCharactersCallback(CHARACTER_INFO& info, void* param);
+        static void ShowCharacter();
         static void SetCharFacing(float facing);
         static void ClearCharacterList();
         static void UpdateCharacterList();

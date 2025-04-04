@@ -141,6 +141,13 @@ void ClientConnection::GetCharacterList() {
     }
 }
 
+void ClientConnection::EnumerateCharacters(ENUMERATE_CHARACTERS_CALLBACK fcn, void* param) {
+    STORM_ASSERT(fcn);
+    for (uint32_t i = 0; i < this->m_characterList.Count(); ++i) {
+        fcn(this->m_characterList[i], param);
+    }
+}
+
 void ClientConnection::CharacterLogin(uint64_t id) {
     this->Initiate(COP_LOGIN_CHARACTER, 76, nullptr);
     if (this->m_connected) {
