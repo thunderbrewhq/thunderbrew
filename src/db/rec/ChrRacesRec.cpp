@@ -115,9 +115,9 @@ bool ChrRacesRec::Read(SFile* f, const char* stringBuffer) {
     if (stringBuffer) {
         this->m_clientPrefix = &stringBuffer[clientPrefixOfs];
         this->m_clientFileString = &stringBuffer[clientFileStringOfs];
-        this->m_name = &stringBuffer[nameOfs[0]];
-        this->m_nameFemale = &stringBuffer[nameFemaleOfs[0]];
-        this->m_nameMale = &stringBuffer[nameMaleOfs[0]];
+        this->m_name = &stringBuffer[nameOfs[CURRENT_LANGUAGE]];
+        this->m_nameFemale = &stringBuffer[nameFemaleOfs[CURRENT_LANGUAGE]];
+        this->m_nameMale = &stringBuffer[nameMaleOfs[CURRENT_LANGUAGE]];
         this->m_facialHairCustomization[0] = &stringBuffer[facialHairCustomizationOfs[0]];
         this->m_facialHairCustomization[1] = &stringBuffer[facialHairCustomizationOfs[1]];
         this->m_hairCustomization = &stringBuffer[hairCustomizationOfs];

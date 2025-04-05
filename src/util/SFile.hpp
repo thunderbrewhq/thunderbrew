@@ -13,6 +13,10 @@ class StreamRecord;
 };
 };
 
+enum {
+    CURRENT_LANGUAGE = 0
+};
+
 enum SFILE_TYPE {
     SFILE_PLAIN = 0x0,
     SFILE_COMPRESSED = 0x1,
