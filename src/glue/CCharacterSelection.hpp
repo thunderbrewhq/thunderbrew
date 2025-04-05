@@ -5,9 +5,13 @@
 #include "net/Types.hpp"
 
 class CSimpleModelFFX;
+class CM2Model;
 
 struct CharacterSelectionDisplay {
+    CharacterSelectionDisplay();
+
     CHARACTER_INFO m_characterInfo;
+    CM2Model* m_characterModel;
 };
 
 class CCharacterSelection {

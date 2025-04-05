@@ -1,10 +1,13 @@
 #include "glue/CCharacterSelection.hpp"
+#include "model/CM2Model.hpp"
 #include "model/CM2Shared.hpp"
 #include "ui/CSimpleModelFFX.hpp"
 #include "client/ClientServices.hpp"
 #include "client/Client.hpp"
 #include "console/CVar.hpp"
 #include "net/Connection.hpp"
+#include "clientobject/Player_C.hpp"
+#include "db/Db.hpp"
 
 CSimpleModelFFX* CCharacterSelection::m_modelFrame = nullptr;
 uint32_t CCharacterSelection::m_characterCount = 0;
@@ -21,6 +24,11 @@ uint32_t CCharacterSelection::m_restrictUndead = 0;
 uint32_t CCharacterSelection::m_restrictBloodElf = 0;
 TSGrowableArray<CharacterSelectionDisplay> CCharacterSelection::s_characterList;
 int32_t CCharacterSelection::m_selectionIndex = 0;
+
+
+CharacterSelectionDisplay::CharacterSelectionDisplay()
+    : m_characterModel(nullptr) {
+}
 
 
 void CCharacterSelection::RenderPrep() {
@@ -59,11 +67,41 @@ void CCharacterSelection::EnumerateCharactersCallback(CHARACTER_INFO& info, void
 }
 
 void CCharacterSelection::ShowCharacter() {
+    auto index = CCharacterSelection::m_selectionIndex;
+    if (index < 0 || index >= CCharacterSelection::GetNumCharacters()) {
+        return;
+    }
     // TODO
+
+    CCharacterSelection::m_charFacing = 0.0;
+
+    auto& character = CCharacterSelection::s_characterList[index];
+
+    if (character.m_characterModel) {
+        // TODO
+        return;
+    }
+
+    auto rec = Player_C_GetModelName(character.m_characterInfo.raceID, character.m_characterInfo.sexID);
+    STORM_ASSERT(rec);
+    if (!rec->m_modelName) {
+        // TODO
+        return;
+    }
+
+    auto scene = CCharacterSelection::m_modelFrame->GetScene();
+    character.m_characterModel = scene->CreateModel(rec->m_modelName, 0);
 }
 
 void CCharacterSelection::SetCharFacing(float facing) {
-    // TODO
+    if (!CCharacterSelection::m_characterCount || !CCharacterSelection::GetNumCharacters()) {
+        return;
+    }
+
+    auto character = CCharacterSelection::s_characterList[CCharacterSelection::m_selectionIndex];
+    if (character.m_characterModel) {
+        character.m_characterModel->SetWorldTransform(C3Vector(), facing, 1.0);
+    }
 }
 
 void CCharacterSelection::ClearCharacterList() {
@@ -112,5 +150,5 @@ void CCharacterSelection::UpdateCharacterList() {
 }
 
 uint32_t CCharacterSelection::GetNumCharacters() {
-    return s_characterList.Count();
+    return CCharacterSelection::s_characterList.Count();
 }
