@@ -27,45 +27,45 @@ void ItemRandomPropertiesRec::SetID(int32_t id) {
 }
 
 bool ItemRandomPropertiesRec::Read(SFile* f, const char* stringBuffer) {
-    uint32_t internalNameOfs;
-    uint32_t nameOfs[16];
-    uint32_t nameMask;
+    uint32_t nameOfs;
+    uint32_t name_langOfs[16];
+    uint32_t name_langMask;
 
     if (
         !SFile::Read(f, &this->m_ID, sizeof(this->m_ID), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &internalNameOfs, sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &nameOfs, sizeof(uint32_t), nullptr, nullptr, nullptr)
         || !SFile::Read(f, &this->m_enchantment[0], sizeof(m_enchantment[0]), nullptr, nullptr, nullptr)
         || !SFile::Read(f, &this->m_enchantment[1], sizeof(m_enchantment[0]), nullptr, nullptr, nullptr)
         || !SFile::Read(f, &this->m_enchantment[2], sizeof(m_enchantment[0]), nullptr, nullptr, nullptr)
         || !SFile::Read(f, &this->m_enchantment[3], sizeof(m_enchantment[0]), nullptr, nullptr, nullptr)
         || !SFile::Read(f, &this->m_enchantment[4], sizeof(m_enchantment[0]), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[0], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[1], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[2], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[3], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[4], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[5], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[6], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[7], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[8], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[9], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[10], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[11], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[12], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[13], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[14], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameOfs[15], sizeof(uint32_t), nullptr, nullptr, nullptr)
-        || !SFile::Read(f, &nameMask, sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[0], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[1], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[2], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[3], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[4], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[5], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[6], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[7], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[8], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[9], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[10], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[11], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[12], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[13], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[14], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langOfs[15], sizeof(uint32_t), nullptr, nullptr, nullptr)
+        || !SFile::Read(f, &name_langMask, sizeof(uint32_t), nullptr, nullptr, nullptr)
     ) {
         return false;
     }
 
     if (stringBuffer) {
-        this->m_internalName = &stringBuffer[internalNameOfs];
-        this->m_name = &stringBuffer[nameOfs[CURRENT_LANGUAGE]];
+        this->m_name = &stringBuffer[nameOfs];
+        this->m_name_lang = &stringBuffer[name_langOfs[CURRENT_LANGUAGE]];
     } else {
-        this->m_internalName = "";
         this->m_name = "";
+        this->m_name_lang = "";
     }
 
     return true;

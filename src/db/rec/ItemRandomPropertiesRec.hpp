@@ -9,9 +9,9 @@ class SFile;
 class ItemRandomPropertiesRec {
     public:
         int32_t m_ID;
-        const char* m_internalName;
-        int32_t m_enchantment[5];
         const char* m_name;
+        int32_t m_enchantment[5];
+        const char* m_name_lang;
 
         static const char* GetFilename();
         static uint32_t GetNumColumns();
