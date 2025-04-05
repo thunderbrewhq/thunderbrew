@@ -234,7 +234,7 @@ float CSimpleFontString::GetHeight() {
     float v9 = v2 == 0.0f ? this->GetStringHeight() : v2;
 
     float v3 = 1.0f / (CoordinateGetAspectCompensation() * 1024.0f);
-    float v4 = NDCToDDCWidth(v3);
+    float v4 = NDCToDDCHeight(v3);
 
     return v9 <= v4 ? v4 : v9;
 }
