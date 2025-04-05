@@ -75,16 +75,14 @@ int32_t Script_GetCharacterInfo(lua_State* L) {
     auto raceName = CGUnit_C::GetDisplayRaceNameFromRecord(g_chrRacesDB.GetRecord(character.raceID), character.sexID);
     lua_pushstring(L, raceName ? raceName : "");
 
-    // TODO: auto className = CGUnit_C::GetDisplayClassNameFromRecord(g_chrClassesDB.GetRecord(character.classID), character.sexID);
-    auto className = "Warrior";
+    auto className = CGUnit_C::GetDisplayClassNameFromRecord(g_chrClassesDB.GetRecord(character.classID), character.sexID);
     lua_pushstring(L, className ? className : "");
 
     lua_pushnumber(L, character.experienceLevel);
 
-    // TODO: auto areaRecord = g_areaTableDB.GetRecord(character.zoneID);
-    void* areaRecord = nullptr;
+    auto areaRecord = g_areaTableDB.GetRecord(character.zoneID);
     if (areaRecord) {
-        // TODO: lua_pushstring(L, areaRecord->name)
+        lua_pushstring(L, areaRecord->m_areaName);
     } else {
         lua_pushnil(L);
     }
