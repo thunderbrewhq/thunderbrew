@@ -345,10 +345,10 @@ void StaticDBLoadAll(void (*loadFn)(WowClientDB_Base*, const char*, int32_t)) {
     loadFn(&g_chrRacesDB, __FILE__, __LINE__);
     //loadFn(&g_cinematicCameraDB, __FILE__, __LINE__);
     //loadFn(&g_cinematicSequencesDB, __FILE__, __LINE__);
-    //loadFn(&g_creatureDisplayInfoDB, __FILE__, __LINE__);
+    loadFn(&g_creatureDisplayInfoDB, __FILE__, __LINE__);
     //loadFn(&g_creatureDisplayInfoExtraDB, __FILE__, __LINE__);
     //loadFn(&g_creatureFamilyDB, __FILE__, __LINE__);
-    //loadFn(&g_creatureModelDataDB, __FILE__, __LINE__);
+    loadFn(&g_creatureModelDataDB, __FILE__, __LINE__);
     //loadFn(&g_creatureMovementInfoDB, __FILE__, __LINE__);
     //loadFn(&g_creatureSoundDataDB, __FILE__, __LINE__);
     //loadFn(&g_creatureSpellDataDB, __FILE__, __LINE__);
