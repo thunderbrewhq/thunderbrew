@@ -32,6 +32,7 @@ class ClientServices : public LoginResponse {
         static CVar* s_patchListVar;
 
         // Static functions
+        static const char* GetErrorToken(uint32_t token);
         static void ConnectToSelectedServer();
         static ClientConnection* Connection();
         static ClientServices* GetInstance();
@@ -43,6 +44,7 @@ class ClientServices : public LoginResponse {
         static REALM_INFO* GetRealmInfoByIndex(int32_t index);
         static const char* GetSelectedRealmName();
         static const REALM_INFO* GetSelectedRealm();
+        static void CharacterDelete(uint64_t guid);
         static void Initialize();
         static Login* LoginConnection();
         static void Logon(const char* accountName, const char* password);

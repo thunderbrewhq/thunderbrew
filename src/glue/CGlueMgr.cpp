@@ -302,6 +302,11 @@ int32_t CGlueMgr::Idle(const void* a1, void* a2) {
         break;
     }
 
+    case IDLE_DELETE_CHARACTER: {
+        CGlueMgr::PollDeleteCharacter(errorCode, msg, complete, result, op);
+        break;
+    }
+
     case IDLE_ENTER_WORLD: {
         CGlueMgr::PollEnterWorld();
         break;
@@ -624,6 +629,29 @@ void CGlueMgr::PollCharacterList(int32_t errorCode, const char* msg, int32_t com
     CGlueMgr::m_accountMsgAvailable = 0;
 }
 
+void CGlueMgr::PollDeleteCharacter(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op) {
+    FrameScript_SignalEvent(4, "%s", msg);
+
+    if (CGlueMgr::HandleBattlenetDisconnect()) {
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+    }
+
+    if (!complete) {
+        return;
+    }
+
+    if (result) {
+        FrameScript_SignalEvent(13, 0);
+        CGlueMgr::GetCharacterList();
+        return;
+    }
+
+    FrameScript_SignalEvent(3, "%s%s", "OKAY", msg);
+    CGlueMgr::m_idleState = IDLE_NONE;
+    CGlueMgr::m_showedDisconnect = 0;
+}
+
 void CGlueMgr::PollUserSurvey() {
     if (CGlueMgr::m_surveyDownload && false /* virtual call */) {
         if (CGlueMgr::m_executedSurvey) {
@@ -918,6 +946,20 @@ void CGlueMgr::UpdateCurrentScreen(const char* screen) {
 
 bool CGlueMgr::HandleBattlenetDisconnect() {
     return false;
+}
+
+void CGlueMgr::DeleteCharacter(uint64_t guid) {
+    if (!guid) {
+        return;
+    }
+
+    CGlueMgr::m_idleState = IDLE_DELETE_CHARACTER;
+    CGlueMgr::m_showedDisconnect = 0;
+
+    auto errorText = ClientServices::GetErrorToken(70);
+    auto text = FrameScript_GetText(errorText, -1, GENDER_NOT_APPLICABLE);
+    FrameScript_SignalEvent(3u, "%s%s", "CANCEL", text);
+    ClientServices::CharacterDelete(guid);
 }
 
 void CGlueMgr::PollEnterWorld() {

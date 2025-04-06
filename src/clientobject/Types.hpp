@@ -1,0 +1,14 @@
+#ifndef CLIENTOBJECT_TYPES_HPP
+#define CLIENTOBJECT_TYPES_HPP
+
+
+enum UNIT_SEX {
+    UNITSEX_MALE = 0x0,
+    UNITSEX_FEMALE = 0x1,
+    UNITSEX_NONE = 0x2,
+    UNITSEX_LAST = 0x3,
+    UNITSEX_BOTH = 0x3,
+};
+
+
+#endif

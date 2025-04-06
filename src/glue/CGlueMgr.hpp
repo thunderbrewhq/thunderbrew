@@ -87,6 +87,7 @@ class CGlueMgr {
         static void PollAccountLogin(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
         static void PollLoginServerLogin();
         static void PollCharacterList(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
+        static void PollDeleteCharacter(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
         static void PollUserSurvey();
         static void Resume();
         static void SetCurrentAccount(const char* accountName);
@@ -97,6 +98,7 @@ class CGlueMgr {
         static void Suspend();
         static void UpdateCurrentScreen(const char* screen);
         static bool HandleBattlenetDisconnect();
+        static void DeleteCharacter(uint64_t guid);
 
         static void PollEnterWorld();
 
