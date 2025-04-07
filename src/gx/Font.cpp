@@ -10,11 +10,13 @@
 #include "gx/Shader.hpp"
 #include <algorithm>
 #include <cstring>
+#include <cstdlib>
 #include <bc/Memory.hpp>
 #include <storm/Error.hpp>
 #include <storm/String.hpp>
 #include <storm/Unicode.hpp>
 #include <tempest/Math.hpp>
+#include <common/Unicode.hpp>
 
 CGxShader* g_fontPixelShader[1];
 CGxShader* g_fontVertexShader[2];
@@ -177,7 +179,18 @@ uint32_t GetScreenPixelWidth() {
 }
 
 QUOTEDCODE GxuDetermineQuotedCode(const char* text, int32_t& advance, CImVector* color, uint32_t flags, uint32_t& wide) {
-    wide = SUniSGetUTF8(reinterpret_cast<const uint8_t*>(text), &advance);
+    STORM_ASSERT(text);
+    STORM_ASSERT(*text);
+
+    bool ignoreColorCodes = flags & 0x100;
+    bool ignoreNewlines = flags & 0x200;
+    bool ignoreHyperlinks = flags & 0x400;
+    bool ignorePipes = flags & 0x800;
+    bool ignoreTextures = flags & 0x1000;
+
+    auto utext = reinterpret_cast<const uint8_t*>(text);
+
+    wide = sgetu8(utext, &advance);
 
     switch (wide) {
         case 0x0:
@@ -185,7 +198,7 @@ QUOTEDCODE GxuDetermineQuotedCode(const char* text, int32_t& advance, CImVector*
             return CODE_INVALIDCODE;
 
         case '\r':
-            advance = 2 - (SUniSGetUTF8(reinterpret_cast<const uint8_t*>(text + 1), &advance) != '\n');
+            advance = 2 - (sgetu8(utext + 1, &advance) != '\n');
             return CODE_NEWLINE;
 
         case '\n':
@@ -193,7 +206,7 @@ QUOTEDCODE GxuDetermineQuotedCode(const char* text, int32_t& advance, CImVector*
             return CODE_NEWLINE;
     }
 
-    if (wide != '|' || flags & 0x800) {
+    if (wide != '|' || ignorePipes) {
         return CODE_INVALIDCODE;
     }
 
@@ -203,18 +216,98 @@ QUOTEDCODE GxuDetermineQuotedCode(const char* text, int32_t& advance, CImVector*
         return CODE_INVALIDCODE;
     }
 
+    int32_t firstCharAdvance = advance;
+
     switch (quotedCode) {
-        case 'N':
-        case 'n': {
-            if (flags & 0x200) {
+        case 'C':
+        case 'c': {
+            if (ignoreColorCodes) {
                 return CODE_INVALIDCODE;
             }
+            size_t offset = advance + 1;
 
+            uint8_t comps[4];
+
+            for (size_t j = 0; j < 4; ++j) {
+                if (!text[offset] || !text[offset + 1]) {
+                    return CODE_INVALIDCODE;
+                }
+
+                char hex[3] = { text[offset], text[offset + 1], '\0' };
+                offset += 2;
+                char* error = nullptr;
+                comps[j] = static_cast<uint8_t>(strtol(hex, &error, 16));
+                if (error && *error) {
+                    return CODE_INVALIDCODE;
+                }
+            }
+
+            if (color) {
+                color->value = CImVector::MakeARGB(255, comps[1], comps[2], comps[3]);
+            }
+
+            advance = 10;
+            return CODE_COLORON;
+        }
+
+        case 'H': {
+            if (ignoreHyperlinks) {
+                return CODE_INVALIDCODE;
+            }
+            // TODO
+            break;
+        }
+
+        case 'N':
+        case 'n': {
+            if (ignoreNewlines) {
+                return CODE_INVALIDCODE;
+            }
             advance = 2;
             return CODE_NEWLINE;
         }
 
-        // TODO handle other control codes
+        case 'R':
+        case 'r': {
+            if (ignoreColorCodes) {
+                return CODE_INVALIDCODE;
+            }
+            advance = 2;
+            return CODE_COLORRESTORE;
+        }
+
+        case 'T': {
+            if (ignoreTextures) {
+                return CODE_INVALIDCODE;
+            }
+            // TODO
+            break;
+        }
+
+        case 'h': {
+            if (ignoreHyperlinks) {
+                return CODE_INVALIDCODE;
+            }
+            advance = 2;
+            return CODE_HYPERLINKSTOP;
+        }
+
+        case 't': {
+            if (ignoreTextures) {
+                return CODE_INVALIDCODE;
+            }
+            advance = 2;
+            return CODE_TEXTURESTOP;
+        }
+
+        case '|': {
+            advance = 2;
+            return CODE_PIPE;
+        }
+
+        default: {
+            return CODE_INVALIDCODE;
+        }
     }
 
     // TODO remainder of function
