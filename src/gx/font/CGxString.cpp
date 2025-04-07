@@ -348,7 +348,7 @@ int32_t CGxString::Initialize(float fontHeight, const C3Vector& position, float 
 
     face->m_strings.LinkToTail(this);
 
-    float requestedFontHeight = this->m_flags & 0x4 && !(this->m_flags & 0x80)
+    float requestedFontHeight = ((this->m_flags & 0x4) && !(this->m_flags & 0x80))
         ? GxuFontGetOneToOneHeight(face)
         : fontHeight;
     this->m_requestedFontHeight = requestedFontHeight;
@@ -382,7 +382,7 @@ void CGxString::InitializeTextLine(const char* currentText, uint32_t numBytes, C
     float stepGlyph = 0.0f;
     float stepScreen = 0.0f;
     uint32_t prevCode = 0;
-    CImVector color;
+    CImVector color = this->m_fontColor;
 
     while (numBytes && *currentText) {
         int32_t advance;

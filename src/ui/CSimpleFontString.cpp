@@ -876,9 +876,17 @@ void CSimpleFontString::UpdateString() {
         uint32_t styleFlags = this->m_styleFlags;
 
         if (!(this->m_styleFlags & 0x400)) {
-            // TODO
-
-            styleFlags |= 0x400;
+            // Set FixedColor flag if the text does not contain color tags
+            bool found = false;
+            for (size_t i = 0; displayText && displayText[i]; ++i) {
+                if (displayText[i] == '|' && (displayText[i + 1] == 'C' || displayText[i + 1] == 'c')) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                styleFlags |= 0x400u;
+            }
         }
 
         CImVector color = { 0xFF, 0xFF, 0xFF, 0xFF };
