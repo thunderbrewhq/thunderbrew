@@ -668,6 +668,12 @@ void CGlueMgr::PollUserSurvey() {
     }
 }
 
+void CGlueMgr::CancelLogin() {
+    if (CGlueMgr::m_idleState == IDLE_LOGIN_SERVER_LOGIN) {
+        CGlueMgr::StatusDialogClick();
+    }
+}
+
 void CGlueMgr::InitCursor() {
     uint32_t width;
     uint32_t height;

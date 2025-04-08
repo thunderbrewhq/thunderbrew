@@ -511,7 +511,8 @@ int32_t Script_RequestRealmSplitInfo(lua_State* L) {
 }
 
 int32_t Script_CancelLogin(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    CGlueMgr::CancelLogin();
+    return 0;
 }
 
 int32_t Script_GetCVar(lua_State* L) {

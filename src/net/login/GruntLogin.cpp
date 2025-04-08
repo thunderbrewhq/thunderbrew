@@ -113,7 +113,9 @@ void GruntLogin::Init(LoginResponse* loginResponse) {
 }
 
 void GruntLogin::Logoff() {
-    // TODO
+    if (this->m_loggedOn) {
+        this->m_clientLink->Disconnect();
+    }
 }
 
 void GruntLogin::Logon(const char* a2, const char* a3) {
