@@ -43,6 +43,7 @@ class NETEVENTQUEUE {
             {};
         void AddEvent(EVENTID eventId, void* conn, NetClient* client, const void* data, uint32_t bytes);
         void Poll();
+        void Clear();
 };
 
 class NetClient : public WowConnectionResponse {
@@ -62,6 +63,7 @@ class NetClient : public WowConnectionResponse {
         void AddRef();
         void AuthChallengeHandler(WowConnection* conn, CDataStore* msg);
         void Connect(const char* addrStr);
+        void Disconnect();
         int32_t ConnectInternal(const char* host, uint16_t port);
         void DelRef();
         void EnableEncryption(WowConnection* conn, uint8_t* seed, uint8_t seedLen);

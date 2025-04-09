@@ -55,7 +55,7 @@ int32_t Script_GetCharacterInfo(lua_State* L) {
     }
 
     int32_t index = static_cast<int32_t>(lua_tonumber(L, 1)) - 1;
-    if (index < 0 || index > CCharacterSelection::GetNumCharacters()) {
+    if (index < 0 || index >= CCharacterSelection::GetNumCharacters()) {
         lua_pushnil(L); // name
         lua_pushnil(L); // race
         lua_pushnil(L); // class

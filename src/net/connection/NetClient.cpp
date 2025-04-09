@@ -98,6 +98,12 @@ void NETEVENTQUEUE::Poll() {
     this->m_critSect.Leave();
 }
 
+void NETEVENTQUEUE::Clear() {
+    this->m_critSect.Enter();
+    this->m_eventQueue.Clear();
+    this->m_critSect.Leave();
+}
+
 void NetClient::AddRef() {
     SInterlockedIncrement(&this->m_refCount);
 }
@@ -142,6 +148,34 @@ void NetClient::Connect(const char* addrStr) {
     this->m_serverConnection->SetEncryption(false);
     this->m_netState = NS_INITIALIZED;
     this->ConnectInternal(host, port);
+}
+
+void NetClient::Disconnect() {
+    if (this->m_redirectConnection) {
+        // TODO: this->m_redirectConnection->SetResponse(0, 0);
+        this->m_redirectConnection->Disconnect();
+        this->m_redirectConnection->Release();
+    }
+
+    if (this->m_netState == NS_CONNECTED) {
+        this->m_netState = NS_DISCONNECTING;
+        this->m_serverConnection->Disconnect();
+    } else {
+        // TODO: this->m_serverConnection->SetResponse(0, 0);
+        this->m_serverConnection->Disconnect();
+        this->m_netEventQueue->Clear();
+        this->m_serverConnection->Release();
+
+        auto connectionMem = SMemAlloc(sizeof(WowConnection), __FILE__, __LINE__, 0x0);
+        if (connectionMem) {
+            auto connection = new (connectionMem) WowConnection(this, nullptr);
+            this->m_serverConnection = connection;
+        } else {
+            this->m_serverConnection = nullptr;
+        }
+
+        this->m_netState = NS_INITIALIZED;
+    }
 }
 
 int32_t NetClient::ConnectInternal(const char* host, uint16_t port) {

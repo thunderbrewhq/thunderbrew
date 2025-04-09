@@ -100,7 +100,9 @@ void ClientConnection::Connect() {
 }
 
 int32_t ClientConnection::Disconnect() {
-    // TODO
+    this->NetClient::Disconnect();
+    this->m_connected = 0;
+    // TODO: WardenClient_Destroy();
     return 0;
 }
 
