@@ -33,6 +33,7 @@ class ClientServices : public LoginResponse {
 
         // Static functions
         static const char* GetErrorToken(uint32_t token);
+        static bool ValidDisconnect(const void* client);
         static void ConnectToSelectedServer();
         static ClientConnection* Connection();
         static ClientServices* GetInstance();

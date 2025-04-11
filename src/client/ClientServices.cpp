@@ -142,6 +142,12 @@ const char* ClientServices::GetErrorToken(uint32_t token) {
     }
 }
 
+bool ClientServices::ValidDisconnect(const void* client) {
+    STORM_ASSERT(client);
+    STORM_ASSERT(ClientServices::s_currentConnection);
+    return client == ClientServices::s_currentConnection;
+}
+
 void ClientServices::ConnectToSelectedServer() {
     if (!ClientServices::s_selectRealmInfoValid && !ClientServices::SetSelectedRealmInfo(0)) {
         ClientServices::Connection()->Complete(0, 39);

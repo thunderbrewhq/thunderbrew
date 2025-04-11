@@ -11,6 +11,7 @@
 
 void ConsoleWrite(const char* str, COLOR_T color);
 void ConsoleWriteA(const char* str, COLOR_T color, ...);
+void ConsolePrintf(char const* str, ...);
 
 void PasteInInputLine(char* characters);
 

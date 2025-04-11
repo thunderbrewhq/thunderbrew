@@ -1,6 +1,7 @@
 #include "glue/CGlueMgr.hpp"
 #include "glue/CRealmList.hpp"
 #include "glue/CCharacterSelection.hpp"
+#include "console/Console.hpp"
 #include "client/Client.hpp"
 #include "client/ClientServices.hpp"
 #include "gx/Coordinate.hpp"
@@ -67,6 +68,7 @@ int32_t CGlueMgr::m_reload;
 int32_t CGlueMgr::m_scandllOkayToLogIn = 1; // TODO
 float CGlueMgr::m_screenHeight;
 float CGlueMgr::m_screenWidth;
+int32_t CGlueMgr::m_clientKickReason;
 int32_t CGlueMgr::m_showedDisconnect;
 CSimpleTop* CGlueMgr::m_simpleTop;
 int32_t CGlueMgr::m_suspended;
@@ -227,6 +229,63 @@ void CGlueMgr::GetCharacterList() {
         FrameScript_SignalEvent(3, "%s%s", "CANCEL", text);
         ClientServices::GetCharacterList();
     }
+}
+
+int32_t CGlueMgr::NetDisconnectHandler(const void* eventData, void*) {
+    bool v11 = CGlueMgr::m_idleState != IDLE_ACCOUNT_LOGIN;
+
+    CGlueMgr::m_idleState = IDLE_NONE;
+    CGlueMgr::m_showedDisconnect = 0;
+
+    if (CGlueMgr::m_disconnectPending) {
+        ConsolePrintf("CGlueMgr::NetDisconnectHandler: Disconnect pending");
+        CGlueMgr::m_disconnectPending = 0;
+
+        if (CGlueMgr::m_reconnect) {
+            CGlueMgr::m_reconnect = 0;
+            CGlueMgr::m_idleState = IDLE_ACCOUNT_LOGIN;
+            CGlueMgr::m_showedDisconnect = 0;
+            auto text = FrameScript_GetText("GAME_SERVER_LOGIN", -1, GENDER_NOT_APPLICABLE);
+            FrameScript_SignalEvent(3u, "%s%s", "CANCEL", text);
+            ClientServices::Connection()->Connect();
+            return 1;
+        }
+        return 1;
+    }
+    if (!ClientServices::ValidDisconnect(eventData)) {
+        ConsolePrintf("CGlueMgr::NetDisconnectHandler: Invalid disconnect");
+        return 1;
+    }
+    // TODO: ClientDestroyGame(0, 1, 0);
+    // TODO: EventSetMouseMode(0, 0);
+
+    if (CGlueMgr::m_suspended) {
+        CGlueMgr::Resume();
+    }
+
+    if (v11) {
+        ConsolePrintf("CGlueMgr::NetDisconnectHandler: Displaying script");
+LABEL_14:
+        FrameScript_SignalEvent(2u, "%d", CGlueMgr::m_clientKickReason);
+        goto LABEL_15;
+    }
+    ConsolePrintf("CGlueMgr::NetDisconnectHandler: NOT displaying script");
+
+    WOWCS_OPS op;
+    const char* msg;
+    int32_t result;
+    int32_t errorCode;
+    int32_t complete = ClientServices::Connection()->PollStatus(op, &msg, result, errorCode);
+
+    if (!complete || result) {
+        ClientServices::SelectRealm("");
+        goto LABEL_14;
+    }
+    FrameScript_SignalEvent(3u, "%s%s", "OKAY", msg);
+
+LABEL_15:
+    ClientServices::LoginConnection()->Logoff();
+    return 1;
 }
 
 // TODO a1: const EVENT_DATA_IDLE*

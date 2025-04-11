@@ -171,6 +171,19 @@ void ConsoleWriteA(const char* str, COLOR_T color, ...) {
     }
 }
 
+void ConsolePrintf(char const* str, ...) {
+    char buffer[4096] = { 0 };
+
+    if (str != nullptr && str[0] != '\0') {
+        va_list list;
+        va_start(list, str);
+        vsnprintf(buffer, sizeof(buffer), str, list);
+        va_end(list);
+
+        ConsoleWrite(buffer, DEFAULT_COLOR);
+    }
+}
+
 void MoveLinePtr(int32_t direction, int32_t modifier) {
     CONSOLELINE* lineptr = s_currlineptr;
 
