@@ -13,7 +13,8 @@
 
 HPROPCONTEXT s_propContext;
 
-int32_t NetClient::s_clientCount;
+CLIENT_NETSTATS NetClient::s_stats = {};
+int32_t NetClient::s_clientCount = 0;
 
 void InitializePropContext() {
     if (PropGetSelectedContext() != s_propContext) {
@@ -228,6 +229,30 @@ NETSTATE NetClient::GetState() {
     return this->m_netState;
 }
 
+void NetClient::Ping() {
+    if (!this->m_serverConnection->m_encrypt) {
+        return;
+    }
+
+    this->m_pingLock.Enter();
+    this->m_pingSent = OsGetAsyncTimeMsPrecise();
+
+    CDataStore msg;
+    msg.Put(static_cast<uint32_t>(CMSG_PING));
+    msg.Put(++this->m_pingSequence);
+    if (this->m_netState == NS_CONNECTED) {
+        if (this->m_latencyEnd) {
+            msg.Put(this->m_latency[this->m_latencyEnd]);
+        } else {
+            msg.Put(static_cast<uint32_t>(0));
+        }
+    }
+    msg.Finalize();
+
+    this->m_pingLock.Leave();
+    this->Send(&msg);
+}
+
 int32_t NetClient::HandleCantConnect() {
     // TODO
     return 1;
@@ -273,7 +298,14 @@ int32_t NetClient::HandleDisconnect() {
 }
 
 void NetClient::HandleIdle() {
-    // TODO;
+    s_stats.unk1 = s_stats.bytesSent;
+    s_stats.unk2 = s_stats.bytesReceived;
+    s_stats.unk3 = s_stats.messagesSent;
+    s_stats.unk4 = s_stats.messagesReceived;
+
+    if (OsGetAsyncTimeMsPrecise() - this->m_pingSent >= 30000) {
+        this->Ping();
+    }
 }
 
 int32_t NetClient::Initialize() {
@@ -310,7 +342,32 @@ void NetClient::PollEventQueue() {
 }
 
 void NetClient::PongHandler(WowConnection* conn, CDataStore* msg) {
-    // TODO
+    if (conn != this->m_serverConnection || this->m_suspended) {
+        conn->Disconnect();
+        return;
+    }
+
+    this->m_pingLock.Enter();
+
+    uint32_t sequence;
+    msg->Get(sequence);
+
+    if (sequence == this->m_pingSequence) {
+        this->m_latency[this->m_latencyEnd++] = OsGetAsyncTimeMsPrecise() - this->m_pingSent;
+
+        if (this->m_latencyEnd >= 16) {
+            this->m_latencyEnd = 0;
+        }
+
+        if (this->m_latencyEnd == this->m_latencyStart) {
+            ++this->m_latencyStart;
+            if (this->m_latencyStart >= 16)
+                this->m_latencyStart = 0;
+        }
+    } else {
+        ConsolePrintf("Received pong with old sequence");
+    }
+    this->m_pingLock.Leave();
 }
 
 void NetClient::ProcessMessage(uint32_t timeReceived, CDataStore* msg, int32_t a4) {
@@ -427,7 +484,11 @@ void NetClient::SetMessageHandler(NETMESSAGE msgId, MESSAGE_HANDLER handler, voi
 }
 
 void NetClient::WCCantConnect(WowConnection* conn, uint32_t timeStamp, NETCONNADDR* addr) {
-    // TODO
+    if (conn == this->m_redirectConnection) {
+        // TODO
+    } else if (conn == this->m_serverConnection) {
+        this->m_netEventQueue->AddEvent(EVENT_ID_NET_CANTCONNECT, conn, this, nullptr, 0);
+    }
 }
 
 void NetClient::WCConnected(WowConnection* conn, WowConnection* inbound, uint32_t timeStamp, const NETCONNADDR* addr) {

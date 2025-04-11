@@ -1286,6 +1286,21 @@ struct CHARACTER_INFO {
     uint8_t firstLogin;
 };
 
+struct CLIENT_NETSTATS {
+    uint32_t bytesSent;
+    uint32_t messagesSent;
+    uint32_t sendTimestamp;
+    uint32_t bytesReceived;
+    uint32_t messagesReceived;
+    uint32_t receivTimestamp;
+    uint32_t logTimestamp;
+    uint32_t unk1;
+    uint32_t unk2;
+    uint32_t unk3;
+    uint32_t unk4;
+};
+
+
 typedef void (*ENUMERATE_CHARACTERS_CALLBACK)(CHARACTER_INFO&, void*);
 
 

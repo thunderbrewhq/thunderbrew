@@ -70,6 +70,7 @@ class NetClient : public WowConnectionResponse {
         bool GetDelete();
         const LoginData& GetLoginData();
         NETSTATE GetState();
+        void Ping();
         void HandleIdle();
         int32_t Initialize();
         void PollEventQueue();
@@ -86,6 +87,7 @@ class NetClient : public WowConnectionResponse {
 
     private:
         // Static variables
+        static CLIENT_NETSTATS s_stats;
         static int32_t s_clientCount;
 
         // Member variables
