@@ -34,7 +34,7 @@ void WowConnectionNet::Delete(WowConnection* connection) {
     this->m_connectionsLock.Enter();
 
     if (connection->m_refCount == 0) {
-        delete connection;
+        DEL(connection);
     }
 
     this->m_connectionsLock.Leave();

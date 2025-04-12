@@ -41,6 +41,7 @@ class NETEVENTQUEUE {
         NETEVENTQUEUE(NetClient* client)
             : m_client(client)
             {};
+        ~NETEVENTQUEUE();
         void AddEvent(EVENTID eventId, void* conn, NetClient* client, const void* data, uint32_t bytes);
         void Poll();
         void Clear();
@@ -48,6 +49,8 @@ class NETEVENTQUEUE {
 
 class NetClient : public WowConnectionResponse {
     public:
+        static void LogStats();
+
         // Virtual member functions
         virtual void WCMessageReady(WowConnection* conn, uint32_t timeStamp, CDataStore* msg);
         virtual void WCConnected(WowConnection* conn, WowConnection* inbound, uint32_t timeStamp, const NETCONNADDR* addr);
@@ -58,6 +61,7 @@ class NetClient : public WowConnectionResponse {
         virtual int32_t HandleConnect();
         virtual int32_t HandleDisconnect();
         virtual int32_t HandleCantConnect();
+        virtual int32_t ValidateMessageId(uint32_t msgId);
 
         // Member functions
         void AddRef();
@@ -73,6 +77,7 @@ class NetClient : public WowConnectionResponse {
         void Ping();
         void HandleIdle();
         int32_t Initialize();
+        void Destroy();
         void PollEventQueue();
         void PongHandler(WowConnection* conn, CDataStore* msg);
         void ProcessMessage(uint32_t timeReceived, CDataStore* msg, int32_t a4);

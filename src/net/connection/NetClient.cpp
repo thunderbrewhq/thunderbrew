@@ -22,6 +22,11 @@ void InitializePropContext() {
     }
 }
 
+
+NETEVENTQUEUE::~NETEVENTQUEUE() {
+    this->Clear();
+}
+
 void NETEVENTQUEUE::AddEvent(EVENTID eventId, void* conn, NetClient* client, const void* data, uint32_t bytes) {
     this->m_critSect.Enter();
 
@@ -107,12 +112,27 @@ void NETEVENTQUEUE::Clear() {
     this->m_critSect.Leave();
 }
 
+
+void NetClient::LogStats() {
+    char message[128];
+
+    uint32_t time = OsGetAsyncTimeMs();
+    SStrPrintf(
+        message,
+        sizeof(message),
+        "Client net stats: %Lu bytes sent, %Lu bytes received, %Lu msec elapsed",
+        NetClient::s_stats.bytesSent,
+        NetClient::s_stats.bytesReceived,
+        time - s_stats.logTimestamp);
+    ConsoleWrite(message, DEFAULT_COLOR);
+}
+
 void NetClient::AddRef() {
     SInterlockedIncrement(&this->m_refCount);
 }
 
 void NetClient::AuthChallengeHandler(WowConnection* conn, CDataStore* msg) {
-    auto challenge = static_cast<AuthenticationChallenge*>(SMemAlloc(sizeof(AuthenticationChallenge), __FILE__, __LINE__, 0x0));
+    auto challenge = NEW(AuthenticationChallenge);
 
     uint32_t v14;
     msg->Get(v14);
@@ -129,7 +149,7 @@ void NetClient::AuthChallengeHandler(WowConnection* conn, CDataStore* msg) {
         conn->Disconnect();
     }
 
-    delete challenge;
+    DEL(challenge);
 }
 
 void NetClient::Connect(const char* addrStr) {
@@ -155,7 +175,7 @@ void NetClient::Connect(const char* addrStr) {
 
 void NetClient::Disconnect() {
     if (this->m_redirectConnection) {
-        // TODO: this->m_redirectConnection->SetResponse(0, 0);
+        this->m_redirectConnection->SetResponse(nullptr, false);
         this->m_redirectConnection->Disconnect();
         this->m_redirectConnection->Release();
     }
@@ -164,7 +184,7 @@ void NetClient::Disconnect() {
         this->m_netState = NS_DISCONNECTING;
         this->m_serverConnection->Disconnect();
     } else {
-        // TODO: this->m_serverConnection->SetResponse(0, 0);
+        this->m_serverConnection->SetResponse(nullptr, false);
         this->m_serverConnection->Disconnect();
         this->m_netEventQueue->Clear();
         this->m_serverConnection->Release();
@@ -189,7 +209,12 @@ int32_t NetClient::ConnectInternal(const char* host, uint16_t port) {
     this->m_netState = NS_CONNECTING;
     this->m_serverConnection->Connect(host, port, -1);
 
-    // TODO
+    if (this->m_redirectConnection) {
+        this->m_redirectConnection->SetResponse(nullptr, false);
+        this->m_redirectConnection->Disconnect();
+        this->m_redirectConnection->Release();
+        this->m_redirectConnection = nullptr;
+    }
 
     return 1;
 }
@@ -254,8 +279,19 @@ void NetClient::Ping() {
 }
 
 int32_t NetClient::HandleCantConnect() {
-    // TODO
+    this->PushObjMgr();
+
+    STORM_ASSERT(m_netState == NS_CONNECTING);
+    this->m_netState = NS_INITIALIZED;
+
+    this->PopObjMgr();
+
     return 1;
+}
+
+int32_t NetClient::ValidateMessageId(uint32_t msgId) {
+    // This method does nothing
+    return 0;
 }
 
 int32_t NetClient::HandleConnect() {
@@ -271,13 +307,17 @@ int32_t NetClient::HandleConnect() {
 int32_t NetClient::HandleData(uint32_t timeReceived, void* data, int32_t size) {
     this->PushObjMgr();
 
-    CDataStore msg;
-    msg.m_data = static_cast<uint8_t*>(data);
-    msg.m_size = size;
-    msg.m_alloc = -1;
-    msg.m_read = 0;
+    NetClient::s_stats.bytesReceived += size + 2;
 
-    this->ProcessMessage(timeReceived, &msg, 0);
+    if (this->m_netState == NS_CONNECTED) {
+        CDataStore msg;
+        msg.m_data = static_cast<uint8_t*>(data);
+        msg.m_size = size;
+        msg.m_alloc = -1;
+        msg.m_read = 0;
+
+        this->ProcessMessage(timeReceived, &msg, 0);
+    }
 
     this->PopObjMgr();
 
@@ -337,6 +377,37 @@ int32_t NetClient::Initialize() {
     return 1;
 }
 
+void NetClient::Destroy() {
+    if (this->m_netState == NS_UNINITIALIZED) {
+        return;
+    }
+
+    this->Disconnect();
+
+    this->m_serverConnection->SetResponse(nullptr, false);
+    this->m_serverConnection->Release();
+    this->m_serverConnection = nullptr;
+
+    memset(this->m_handlers, 0, sizeof(this->m_handlers));
+    memset(this->m_handlerParams, 0, sizeof(this->m_handlerParams));
+
+    if (this->m_netEventQueue) {
+        DEL(this->m_netEventQueue);
+    }
+    this->m_netEventQueue = nullptr;
+
+    if (--NetClient::s_clientCount == 0) {
+        OsSleep(1);
+        // TODO: WowConnection::DestroyOsNet();
+    }
+
+    this->m_netState = NS_UNINITIALIZED;
+
+    if (NetClient::s_clientCount == 0) {
+        NetClient::LogStats();
+    }
+}
+
 void NetClient::PollEventQueue() {
     this->m_netEventQueue->Poll();
 }
@@ -371,12 +442,12 @@ void NetClient::PongHandler(WowConnection* conn, CDataStore* msg) {
 }
 
 void NetClient::ProcessMessage(uint32_t timeReceived, CDataStore* msg, int32_t a4) {
-    // TODO s_stats.messagesReceived++
+    ++NetClient::s_stats.messagesReceived;
 
     uint16_t msgId;
     msg->Get(msgId);
 
-    // TODO virtual function call on NetClient
+    this->ValidateMessageId(msgId);
 
     if (msgId >= NUM_MSG_TYPES || !this->m_handlers[msgId]) {
         msg->Reset();
