@@ -1,6 +1,7 @@
 #include "glue/CGlueMgr.hpp"
 #include "glue/CRealmList.hpp"
 #include "glue/CCharacterSelection.hpp"
+#include "glue/CCharacterCreation.hpp"
 #include "console/Console.hpp"
 #include "client/Client.hpp"
 #include "client/ClientServices.hpp"
@@ -867,6 +868,9 @@ void CGlueMgr::Resume() {
     FrameScript_CreateEvents(g_glueScriptEvents, NUM_GLUE_SCRIPT_EVENTS);
 
     OsCreateDirectory("Logs", 0);
+
+    CCharacterSelection::Initialize();
+    CCharacterCreation::Initialize();
 
     CWOWClientStatus status;
 

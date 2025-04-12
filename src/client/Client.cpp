@@ -471,7 +471,7 @@ int32_t InitializeGlobal() {
     // );
 
     // sub_86D430(v8->m_intValue);
-    OsTimeStartup(SystemMethod2);
+    OsTimeStartup(Timing_QueryPerformanceCounter);
 
     // ConsoleCommandRegister("timingInfo", (int)sub_4032A0, 0, 0);
 

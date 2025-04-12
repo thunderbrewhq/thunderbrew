@@ -2,6 +2,9 @@
 #include "ui/Types.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
+#include "db/Db.hpp"
+#include "clientobject/Unit_C.hpp"
+#include "glue/CCharacterCreation.hpp"
 #include <cstdint>
 
 int32_t Script_SetCharCustomizeFrame(lua_State* L) {
@@ -17,7 +20,19 @@ int32_t Script_ResetCharCustomize(lua_State* L) {
 }
 
 int32_t Script_GetNameForRace(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto raceID = CCharacterCreation::m_character.m_characterInfo.raceID;
+    auto sexID = CCharacterCreation::m_character.m_characterInfo.sexID;
+    auto record = g_chrRacesDB.GetRecord(raceID);
+    auto raceName = CGUnit_C::GetDisplayRaceNameFromRecord(record, sexID);
+    if (record && raceName) {
+        lua_pushstring(L, raceName);
+        lua_pushstring(L, record->m_clientFileString);
+    } else {
+        lua_pushnil(L);
+        lua_pushnil(L);
+    }
+
+    return 2;
 }
 
 int32_t Script_GetFactionForRace(lua_State* L) {

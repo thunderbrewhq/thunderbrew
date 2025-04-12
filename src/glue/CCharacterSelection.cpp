@@ -31,6 +31,10 @@ CharacterSelectionDisplay::CharacterSelectionDisplay()
 }
 
 
+void CCharacterSelection::Initialize() {
+    // Empty method
+}
+
 void CCharacterSelection::RenderPrep() {
     // TODO
 }

@@ -1286,6 +1286,12 @@ struct CHARACTER_INFO {
     uint8_t firstLogin;
 };
 
+struct CHARACTER_CREATE_INFO {
+    uint8_t unk[24];
+    uint32_t raceID;
+    uint32_t sexID;
+};
+
 struct CLIENT_NETSTATS {
     uint32_t bytesSent;
     uint32_t messagesSent;

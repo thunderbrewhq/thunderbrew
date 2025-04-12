@@ -34,6 +34,7 @@ class CCharacterSelection {
         static int32_t m_selectionIndex;
 
         // Static functions
+        static void Initialize();
         static void RenderPrep();
         static void SetBackgroundModel(const char* modelPath);
         static void EnumerateCharactersCallback(CHARACTER_INFO& info, void* param);
