@@ -366,6 +366,11 @@ int32_t CGlueMgr::Idle(const void* a1, void* a2) {
             break;
         }
 
+        case IDLE_CREATE_CHARACTER: {
+            CGlueMgr::PollCreateCharacter(errorCode, msg, complete, result, op);
+            break;
+        }
+
         case IDLE_DELETE_CHARACTER: {
             CGlueMgr::PollDeleteCharacter(errorCode, msg, complete, result, op);
             break;
@@ -373,6 +378,11 @@ int32_t CGlueMgr::Idle(const void* a1, void* a2) {
 
         case IDLE_ENTER_WORLD: {
             CGlueMgr::PollEnterWorld();
+            break;
+        }
+
+        case IDLE_WORLD_LOGIN: {
+            FrameScript_SignalEvent(3u, "%s%s", "OKAY", msg);
             break;
         }
 
@@ -713,6 +723,30 @@ void CGlueMgr::PollRealmList(int32_t errorCode, const char* msg, int32_t complet
             return;
         FrameScript_SignalEvent(34u, nullptr);
         CGlueMgr::m_accountMsgAvailable = 0;
+    } else {
+        FrameScript_SignalEvent(3u, "%s%s", "OKAY", msg);
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+    }
+}
+void CGlueMgr::PollCreateCharacter(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op) {
+    FrameScript_SignalEvent(4u, "%s", msg);
+
+    if (CGlueMgr::HandleBattlenetDisconnect()) {
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+    }
+
+    if (!complete) {
+        return;
+    }
+
+    if (result) {
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+        FrameScript_SignalEvent(5u, 0);
+        FrameScript_SignalEvent(0xCu, 0);
+        CGlueMgr::SetScreen("charselect");
     } else {
         FrameScript_SignalEvent(3u, "%s%s", "OKAY", msg);
         CGlueMgr::m_idleState = IDLE_NONE;

@@ -90,6 +90,7 @@ class CGlueMgr {
         static void PollLoginServerLogin();
         static void PollCharacterList(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
         static void PollRealmList(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
+        static void PollCreateCharacter(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
         static void PollDeleteCharacter(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
         static void PollUserSurvey();
         static void CancelLogin();
