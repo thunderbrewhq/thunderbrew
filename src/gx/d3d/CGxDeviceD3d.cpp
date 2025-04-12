@@ -530,7 +530,7 @@ void CGxDeviceD3d::DeviceWM(EGxWM wm, uintptr_t param1, uintptr_t param2) {
 
                     // TODO
 
-                    this->intF6C = 1;
+                    this->m_needsReset = 1;
 
                     return;
                 } else {
@@ -538,7 +538,7 @@ void CGxDeviceD3d::DeviceWM(EGxWM wm, uintptr_t param1, uintptr_t param2) {
                 }
             }
 
-            this->intF6C = 1;
+            this->m_needsReset = 1;
         }
 
         break;
@@ -1746,7 +1746,7 @@ void CGxDeviceD3d::IStateSync() {
 
     // TODO
 
-    if (this->intF6C) {
+    if (this->m_needsReset) {
         this->IXformSetViewport();
     }
 }
@@ -2124,7 +2124,7 @@ void CGxDeviceD3d::IXformSetViewport() {
 
     this->m_d3dDevice->SetViewport(&d3dViewport);
 
-    this->intF6C = 0;
+    this->m_needsReset = 0;
 }
 
 void CGxDeviceD3d::IXformSetWorld() {
@@ -2159,7 +2159,7 @@ void CGxDeviceD3d::SceneClear(uint32_t mask, CImVector color) {
         flags |= 0x2;
     }
 
-    if (this->intF6C) {
+    if (this->m_needsReset) {
         this->IXformSetViewport();
     }
 
@@ -2200,12 +2200,8 @@ void CGxDeviceD3d::ShaderCreate(CGxShader* shaders[], EGxShTarget target, const 
 }
 
 int32_t CGxDeviceD3d::StereoEnabled() {
-    return this->m_d3dStereoEnabled == 1;
-}
-
-void CGxDeviceD3d::CursorUnlock() {
-    CGxDevice::CursorUnlock(x, y);
-    this->m_hwCursorNeedsUpdate = 1;
+    // return this->m_d3dStereoEnabled == 1;
+    return 0;
 }
 
 void CGxDeviceD3d::XformSetProjection(const C44Matrix& matrix) {

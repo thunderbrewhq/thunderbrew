@@ -22,8 +22,6 @@ class CGxFormat {
         CGxFormat();
         CGxFormat(bool p_window, const C2iVector& p_size, Format p_colorFormat, Format p_depthFormat, uint32_t p_refreshRate, uint32_t p_vsync, bool p_hwTnl, bool p_fixLag, bool p_hwCursor, bool p_aspect, bool p_maximize);
 
-        static const char* formatToColorBitsString[Formats_Last];
-
         // Member variables
         uint32_t apiSpecificModeID;
         bool hwTnL;
@@ -41,12 +39,12 @@ class CGxFormat {
         uint32_t refreshRate;
         uint32_t vsync;
         bool stereoEnabled;
-        uint32_t unk1;
-        uint32_t unk2;
-        uint32_t unk3;
-        uint32_t unk4;
-        uint32_t unk5;
-        uint32_t unk6;
+        uint32_t unk38;
+        uint32_t unk3C;
+        uint32_t unk40;
+        uint32_t unk44;
+        uint32_t unk48;
+        uint32_t unk4C;
         C2iVector pos;
 };
 

@@ -2,7 +2,7 @@
 #define GX_GL_SDL_GL_SDL_WINDOW_HPP
 
 #include <cstdint>
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 #include "gx/glsdl/GLTypes.hpp"
 

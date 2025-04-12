@@ -1,4 +1,4 @@
-#include "event/mac/Event.h"
+#include "event/mac/Event.hpp"
 #include "event/Event.hpp"
 #include <AppKit/AppKit.h>
 

@@ -3,6 +3,7 @@
 #include "event/EvtContext.hpp"
 #include "event/Queue.hpp"
 #include "gx/Window.hpp"
+#include "os/Input.hpp"
 #include <common/Time.hpp>
 #include <storm/String.hpp>
 #include <storm/Unicode.hpp>
@@ -19,7 +20,6 @@
 
 namespace Input {
     CRect s_boundingRect;
-    OSEVENT s_queue[32];
 
     MOUSEBUTTON s_buttonConversion[16] = {
         MOUSE_BUTTON_NONE,
@@ -46,22 +46,8 @@ uint32_t Input::s_buttonState;
 C2iVector Input::s_currentMouse;
 uint32_t Input::s_mouseHoldButton;
 MOUSEMODE Input::s_mouseMode;
-int32_t Input::s_numlockState;
-uint32_t Input::s_osButtonState;
-OS_MOUSE_MODE Input::s_osMouseMode;
 int32_t Input::s_simulatedRightButtonClick;
 uint32_t Input::s_metaKeyState;
-int32_t Input::s_queueHead;
-int32_t Input::s_queueTail;
-int32_t Input::s_windowFocused;
-
-#if defined(WHOA_SYSTEM_WIN)
-    int32_t Input::s_savedMouseSpeed;
-#endif
-
-#if defined(WHOA_SYSTEM_MAC)
-    double Input::s_savedMouseSpeed;
-#endif
 
 void PostChar(EvtContext* context, int32_t ch, int32_t repeat) {
     EVENT_DATA_CHAR data;
@@ -632,95 +618,3 @@ const char* KeyCodeToString(KEY key) {
     return "UNKNOWN";
 }
 
-void OsInputInitialize() {
-    #if defined(WHOA_SYSTEM_WIN)
-        Input::s_numlockState = GetAsyncKeyState(144);
-        int32_t mouseSpeed = 10;
-        SystemParametersInfoA(SPI_GETMOUSESPEED, 0, &mouseSpeed, 0);
-        Input::s_savedMouseSpeed = mouseSpeed;
-    #endif
-
-    #if defined(WHOA_SYSTEM_MAC)
-        // Legacy Carbon input handling
-        // if (!byte_143EFE0) {
-        //     Carbon_OsInputRegisterHICommandHandler(0x71756974, sub_A4F230);
-        // }
-
-        MacClient::SetMouseCoalescingEnabled(true);
-        Input::s_savedMouseSpeed = MacClient::GetMouseSpeed();
-    #endif
-}
-
-bool OsInputIsUsingCocoaEventLoop() {
-    // TODO
-
-    return true;
-}
-
-void OsInputPostEvent(OSINPUT id, int32_t param0, int32_t param1, int32_t param2, int32_t param3) {
-    // TODO
-}
-
-int32_t OsQueueGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* param2, int32_t* param3) {
-    if (Input::s_queueTail == Input::s_queueHead) {
-        return 0;
-    }
-
-    OSEVENT event = Input::s_queue[Input::s_queueTail];
-
-    *id = event.id;
-    *param0 = event.param[0];
-    *param1 = event.param[1];
-    *param2 = event.param[2];
-    *param3 = event.param[3];
-
-    if (Input::s_queueTail == OS_QUEUE_SIZE - 1) {
-        Input:: s_queueTail = 0;
-    } else {
-        ++Input::s_queueTail;
-    }
-
-    return 1;
-}
-
-void OsQueuePut(OSINPUT id, int32_t param0, int32_t param1, int32_t param2, int32_t param3) {
-    int32_t nextTail = 0;
-    int32_t nextHead = 0;
-
-    if (Input::s_queueHead != OS_QUEUE_SIZE - 1) {
-        nextHead = Input::s_queueHead + 1;
-    }
-
-    if (nextHead == Input::s_queueTail) {
-        if (nextHead != OS_QUEUE_SIZE - 1) {
-            nextTail = nextHead + 1;
-        }
-
-        Input::s_queueTail = nextTail;
-    }
-
-    OSEVENT* event = &Input::s_queue[Input::s_queueHead];
-
-    event->id = id;
-    event->param[0] = param0;
-    event->param[1] = param1;
-    event->param[2] = param2;
-    event->param[3] = param3;
-
-    Input::s_queueHead = nextHead;
-}
-
-void OsQueueSetParam(int32_t index, int32_t param) {
-    int32_t pos = Input::s_queueTail;
-
-    while (pos != Input::s_queueHead) {
-        OSEVENT* event = &Input::s_queue[pos];
-        event->param[index] = param;
-
-        if (pos == OS_QUEUE_SIZE - 1) {
-            pos = 0;
-        } else {
-            ++pos;
-        }
-    }
-}

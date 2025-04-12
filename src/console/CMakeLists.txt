@@ -1,6 +1,7 @@
 file(GLOB PRIVATE_SOURCES
     "*.cpp"
     "command/*/*.cpp"
+    "cvar/*.cpp"
 )
 
 add_library(console STATIC
@@ -14,7 +15,6 @@ target_include_directories(console
 
 target_link_libraries(console
     PUBLIC
-        bc
         common
         gx
         storm

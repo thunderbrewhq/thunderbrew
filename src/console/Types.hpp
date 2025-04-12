@@ -2,7 +2,6 @@
 #define CONSOLE_TYPES_HPP
 
 #include "gx/Font.hpp"
-
 #include <storm/Hash.hpp>
 #include <storm/List.hpp>
 
@@ -49,33 +48,5 @@ enum CONSOLERESIZESTATE {
 };
 
 typedef int32_t (*COMMANDHANDLER)(const char*, const char*);
-
-class CONSOLECOMMAND : public TSHashObject<CONSOLECOMMAND, HASHKEY_STRI> {
-    public:
-        COMMANDHANDLER m_handler;
-        const char*    m_helpText;
-        CATEGORY       m_category;
-};
-
-class CONSOLELINE : public TSLinkedNode<CONSOLELINE> {
-    public:
-        char*      buffer;
-        uint32_t   chars;
-        uint32_t   charsalloc;
-        uint32_t   inputpos;
-        uint32_t   inputstart;
-        COLOR_T    colorType;
-        CGxString* fontPointer;
-
-        ~CONSOLELINE();
-};
-
-class ConsoleCommandList {
-    public:
-        const char*    m_command;
-        COMMANDHANDLER m_handler;
-        const char*    m_helpText;
-};
-
 
 #endif

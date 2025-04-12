@@ -1,7 +1,7 @@
-#include "console/Command.hpp"
 #include "console/Console.hpp"
+#include "console/command/Commands.hpp"
 
-int32_t ConsoleCommand_ClearConsole(const char* command, const char* arguments) {
+DECLARE_COMMAND(ClearConsole) {
     ConsoleClear();
     return 1;
 }

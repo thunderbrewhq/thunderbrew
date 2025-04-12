@@ -141,11 +141,13 @@ void CBLPFile::DecompPalARGB8888(uint8_t* data, void* tempbuffer, uint32_t color
     auto pixels = data;
     auto bytes = reinterpret_cast<uint8_t*>(tempbuffer);
 
-    for (auto i = colorSize; i; i--) {
+    auto i = colorSize;
+    while (i != 0) {
         *reinterpret_cast<BlpPalPixel*>(pixels) = this->m_header.extended.palette[*bytes];
         pixels[3] = 0xFF;
         pixels += 4;
         bytes++;
+        i--;
     }
 
     auto alphaBits = this->AlphaBits();

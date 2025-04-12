@@ -4,27 +4,59 @@
 #include "console/Types.hpp"
 
 #include <storm/List.hpp>
+#include <storm/Thread.hpp>
 
 #define CONSOLE_LINES_MAX 256
 #define CONSOLE_LINE_LENGTH 1024
-#define CONSOLE_LINE_PREALLOC 16
+#define CONSOLE_LINE_EXTRA_BYTES 16
 
-void ConsoleWrite(const char* str, COLOR_T color);
-void ConsoleWriteA(const char* str, COLOR_T color, ...);
+class CONSOLELINE : public TSLinkedNode<CONSOLELINE> {
+    public:
+        char*      buffer      = nullptr;
+        uint32_t   chars       = 0;
+        uint32_t   charsalloc  = 0;
+        uint32_t   inputpos    = 0;
+        uint32_t   inputstart  = 0;
+        COLOR_T    colorType   = DEFAULT_COLOR;
+        CGxString* fontPointer = nullptr;
 
-void PasteInInputLine(char* characters);
+        void Up();
+        void Down();
+        void Delete();
+        void Backspace();
+        ~CONSOLELINE();
+};
+
+extern int32_t s_historyIndex;
+extern STORM_LIST(CONSOLELINE) s_linelist;
+extern CONSOLELINE* s_currlineptr;
+extern uint32_t s_NumLines;
+extern SCritSect s_critsect;
+
+void GenerateNodeString(CONSOLELINE* node);
+
+void SetInputString(const char* buffer);
+
+void ReserveInputSpace(CONSOLELINE* lineptr, uint32_t len);
 
 void MoveLinePtr(int32_t direction, int32_t modifier);
 
-void BackspaceLine(CONSOLELINE* line);
-
-void ReserveInputSpace(CONSOLELINE* line, size_t len);
+void MakeCommandCurrent(CONSOLELINE* lineptr, const char* command);
 
 CONSOLELINE* GetInputLine();
-CONSOLELINE* GetCurrentLine();
 
 CONSOLELINE* GetLineAtMousePosition(float y);
 
-void ConsoleClear();
+void PasteInInputLine(const char* characters);
+
+void PasteClipboardInInputLine();
+
+// void BackspaceLine(CONSOLELINE* line);
+
+// CONSOLELINE* GetCurrentLine();
+
+// CONSOLELINE* GetLineAtMousePosition(float y);
+
+// void ConsoleClear();
 
 #endif

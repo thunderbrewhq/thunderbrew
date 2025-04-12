@@ -1,12 +1,17 @@
 #include <unordered_map>
 
-#include "event/sdl/Input.hpp"
-#include "client/Gui.hpp"
+#include "event/Types.hpp"
+#include "os/internal/Input.hpp"
+#include "os/internal/Queue.hpp"
+#include "os/sdl/Input.hpp"
+#include "os/Input.hpp"
+#include "os/Queue.hpp"
+#include "os/Gui.hpp"
 #include "gx/Device.hpp"
 #include "gx/Window.hpp"
 
 #include <storm/Unicode.hpp>
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 static const std::unordered_map<SDL_Scancode, KEY> s_keyConversion = {
     { SDL_SCANCODE_LSHIFT,       KEY_LSHIFT },
@@ -138,15 +143,23 @@ static MOUSEBUTTON s_buttonConversion[16] = {
     MOUSE_BUTTON_XBUTTON12
 };
 
-bool SDLInputActive() {
+bool OsSDLInputActive() {
     return OsGuiGetWindow(0) != nullptr && GxDevApi() == GxApi_GLSDL;
 }
 
-void SDLInputGetMousePosition(int32_t* x, int32_t *y) {
-    int mouseX;
-    int mouseY;
+void OsSDLInputSetWindowResizeLock(int32_t resizeLock) {
+    s_WindowResizeLock = resizeLock;
+    auto window = static_cast<SDL_Window*>(OsGuiGetWindow(0));
+    if (window) {
+        SDL_SetWindowResizable(window, !resizeLock);
+    }
+}
 
-    if (Input::s_osMouseMode == OS_MOUSE_MODE_RELATIVE) {
+void OsSDLInputGetMousePosition(int32_t* x, int32_t *y) {
+    float mouseX;
+    float mouseY;
+
+    if (s_osMouseMode == OS_MOUSE_MODE_RELATIVE) {
         SDL_GetMouseState(&mouseX, &mouseY);
     } else {
         SDL_GetGlobalMouseState(&mouseX, &mouseY);
@@ -174,10 +187,10 @@ bool ConvertScancode(SDL_Scancode scancode, KEY& key) {
     return false;
 }
 
-int32_t SDLInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* param2, int32_t* param3) {
+int32_t OsSDLInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* param2, int32_t* param3) {
     *id = static_cast<OSINPUT>(-1);
 
-    if (Input::s_queueTail != Input::s_queueHead) {
+    if (s_queueTail != s_queueHead) {
         OsQueueGet(id, param0, param1, param2, param3);
         return 1;
     }
@@ -190,21 +203,21 @@ int32_t SDLInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* para
 
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
-        case SDL_KEYDOWN:
-        case SDL_KEYUP: {
+        case SDL_EVENT_KEY_DOWN:
+        case SDL_EVENT_KEY_UP: {
             KEY key;
-            if (ConvertScancode(event.key.keysym.scancode, key)) {
-                *id = event.type == SDL_KEYUP ? OS_INPUT_KEY_UP : OS_INPUT_KEY_DOWN;
+            if (ConvertScancode(event.key.scancode, key)) {
+                *id = event.type == SDL_EVENT_KEY_UP ? OS_INPUT_KEY_UP : OS_INPUT_KEY_DOWN;
                 *param0 = key;
                 return 1;
             }
 
             break;
         }
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP: {
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        case SDL_EVENT_MOUSE_BUTTON_UP: {
             // Is this an up or down mouse click?
-            *id = event.type == SDL_MOUSEBUTTONUP ? OS_INPUT_MOUSE_UP : OS_INPUT_MOUSE_DOWN;
+            *id = event.type == SDL_EVENT_MOUSE_BUTTON_UP ? OS_INPUT_MOUSE_UP : OS_INPUT_MOUSE_DOWN;
 
             // XY click coordinates
             auto x = static_cast<int32_t>(event.button.x);
@@ -225,7 +238,7 @@ int32_t SDLInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* para
 
             return 1;
         }
-        case SDL_MOUSEMOTION: {
+        case SDL_EVENT_MOUSE_MOTION: {
             auto x = static_cast<int32_t>(event.motion.x);
             auto y = static_cast<int32_t>(event.motion.y);
 
@@ -236,7 +249,7 @@ int32_t SDLInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* para
             *param3 = 0;
             return 1;
         }
-        case SDL_TEXTINPUT: {
+        case SDL_EVENT_TEXT_INPUT: {
             // text input string holding one or more UTF-8 characters
             auto text = reinterpret_cast<const uint8_t*>(event.text.text);
 
@@ -261,7 +274,7 @@ int32_t SDLInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* para
             }
 
             // deque first character if any
-            if (Input::s_queueTail != Input::s_queueHead) {
+            if (s_queueTail != s_queueHead) {
                 OsQueueGet(id, param0, param1, param2, param3);
                 return 1;
             }
@@ -270,7 +283,7 @@ int32_t SDLInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* para
 
             break;
         }
-        case SDL_WINDOWEVENT_RESIZED: {
+        case SDL_EVENT_WINDOW_RESIZED: {
             auto width = static_cast<int32_t>(event.window.data1);
             auto height = static_cast<int32_t>(event.window.data2);
 
@@ -291,7 +304,7 @@ int32_t SDLInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* para
 
             break;
         }
-        case SDL_QUIT: {
+        case SDL_EVENT_QUIT: {
             *id = OS_INPUT_CLOSE;
             return 1;
         }

@@ -8,26 +8,35 @@
 #include "gx/Transform.hpp"
 #include "gx/Draw.hpp"
 #include "util/SFile.hpp"
-#include "event/Input.hpp"
+#include "os/Input.hpp"
+#include <storm/Error.hpp>
+#include <bc/Memory.hpp>
+#include <bc/os/File.hpp>
 #include <algorithm>
 #include <cstring>
 #include <cstdio>
 #include <cmath>
 #include <limits>
-#include <storm/Error.hpp>
-#include <bc/Memory.hpp>
 
 #if defined(WHOA_SYSTEM_WIN)
-    #include "gx/d3d/CGxDeviceD3d.hpp"
+
+#include "gx/d3d/CGxDeviceD3d.hpp"
+
 #endif
 
 #if defined(WHOA_BUILD_GLSDL)
-    #include "gx/glsdl/CGxDeviceGLSDL.hpp"
+
+#include <SDL3/SDL.h>
+#include "gx/glsdl/CGxDeviceGLSDL.hpp"
+
 #endif
 
 #if defined(WHOA_SYSTEM_MAC)
     #include "gx/gll/CGxDeviceGLL.hpp"
 #endif
+
+HSLOG CGxDevice::m_log;
+uint32_t CGxDevice::m_logBytes;
 
 uint32_t CGxDevice::s_alphaRef[] = {
     0,      // GxBlend_Opaque
@@ -106,23 +115,331 @@ uint32_t CGxDevice::s_texFormatBytesPerBlock[] = {
 CGxShader* CGxDevice::s_uiVertexShader = nullptr;
 CGxShader* CGxDevice::s_uiPixelShader = nullptr;
 
-void CGxDevice::LogOpen() {
+#if defined(WHOA_SYSTEM_WIN)
+
+uint16_t HToI(const char* h, uint32_t count) {
+    uint32_t i = 0;
+    while (count) {
+      auto cur = *h;
+      --count;
+      i *= 16;
+      ++h;
+      if (isxdigit(cur)) {
+        if (isdigit(cur)) {
+            i += cur - '0';
+        } else {
+            i += toupper(cur) - '7';
+        }
+      }
+    }
+    return i;
+}
+
+int32_t CGxDevice::AdapterID(uint16_t& vendorID, uint16_t& deviceID, uint32_t& driverVersionHi, uint32_t& driverVersionLow) {
+    int32_t result = 0;
+    vendorID = 0xFFFF;
+    deviceID = 0xFFFF;
+
+    driverVersionHi = 0;
+    driverVersionLow = 0;
+
+    DISPLAY_DEVICE dd;
+    memset(&dd, 0, sizeof(dd));
+    dd.cb = sizeof(DISPLAY_DEVICE);
+
+    DWORD device = 0;
+
+    while (EnumDisplayDevices(0, device, &dd, 0)) {
+        if (dd.StateFlags & 4) {
+            break;
+        }
+
+        device++;
+    }
+
+    uint16_t vI;
+    uint16_t dI;
+    if (strlen(dd.DeviceID) > 20 && (vI = HToI(&dd.DeviceID[8], 4)) && (dI = HToI(&dd.DeviceID[17], 4))) {
+        vendorID = vI;
+        deviceID = dI;
+        result = true;
+    } else {
+        HINSTANCE d3dLib = nullptr;
+        LPDIRECT3D9 d3d = nullptr;
+
+        if (CGxDeviceD3d::ILoadD3dLib(d3dLib, d3d)) {
+            D3DADAPTER_IDENTIFIER9 d3dadapterid;
+            if (d3d->GetAdapterIdentifier(0, 0, &d3dadapterid) >= D3D_OK) {
+                vendorID = d3dadapterid.VendorId;
+                deviceID = d3dadapterid.DeviceId;
+                driverVersionLow = d3dadapterid.DriverVersion.LowPart;
+                driverVersionHi = d3dadapterid.DriverVersion.HighPart;
+                result = true;
+            }
+            CGxDeviceD3d::IUnloadD3dLib(d3dLib, d3d);
+        }
+    }
+
+    // NOTE: this doesn't appear to be a typo on our part
+    Log("CGxDevice::DeviceAdapterID(): RET: %d, VID: %x, DID: %x, DVER: %x.%x", result, vendorID, deviceID, driverVersionHi, driverVersionLow);
+    return result;
+}
+
+int32_t CGxDevice::AdapterInfer(uint16_t& deviceID) {
+    HINSTANCE d3dLib;
+    LPDIRECT3D9 d3d;
+    D3DCAPS9 d3dcaps;
+
+    int32_t result = 0;
+
+    if (!CGxDeviceD3d::ILoadD3dLib(d3dLib, d3d)) {
+        return result;
+    }
+
+    if (d3d->GetDeviceCaps(0, D3DDEVTYPE_HAL, &d3dcaps) == D3D_OK) {
+        if ((d3dcaps.DevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) != 0 && d3dcaps.MaxSimultaneousTextures > 2 && d3dcaps.PixelShaderVersion >= 0x200) {
+            deviceID = 3;
+            result = 1;
+        } else if ((d3dcaps.DevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) != 0) {
+            if (d3dcaps.MaxSimultaneousTextures > 2 && d3dcaps.PixelShaderVersion >= 0x101) {
+                deviceID = 2;
+                result = 1;
+            } else if (d3dcaps.MaxSimultaneousTextures >= 2) {
+                deviceID = 1;
+                result = 1;
+            }
+        } else {
+            deviceID = 0;
+            result = 1;
+        }
+    }
+
+    CGxDeviceD3d::IUnloadD3dLib(d3dLib, d3d);
+    Log("CGxDevice::DeviceAdapterInfer(): RET: %d, DID: %x", result, deviceID);
+    return result;
+}
+
+// TODO: replace this invented name
+int32_t FindDisplayDevice(PDISPLAY_DEVICE device, uint32_t flag) {
+    DWORD i = 0;
+    device->cb = sizeof(DISPLAY_DEVICE);
+    while (EnumDisplayDevices(nullptr, i, device, 0)) {
+        if ((device->StateFlags & flag) == flag) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int32_t CGxDevice::AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
+    modes.SetCount(0);
+
+    DISPLAY_DEVICE device;
+    if (!FindDisplayDevice(&device, DISPLAY_DEVICE_PRIMARY_DEVICE)) {
+        return 0;
+    }
+
+    DEVMODE dm;
+    dm.dmSize = sizeof(DEVMODE);
+
+    DWORD i = 0;
+    while (EnumDisplaySettings(device.DeviceName, i, &dm)) {
+        if ((dm.dmPelsWidth >= 640 && dm.dmPelsHeight >= 480)
+          && dm.dmBitsPerPel >= 16) {
+            auto mode = modes.New();
+
+            mode->size.x = dm.dmPelsWidth;
+            mode->size.y = dm.dmPelsHeight;
+            mode->bpp = dm.dmBitsPerPel;
+            mode->refreshRate = dm.dmDisplayFrequency;
+        }
+
+        i++;
+    }
+
+    qsort(modes.Ptr(), modes.Count(), sizeof(CGxMonitorMode), CGxMonitorModeSort);
+
+    return modes.Count() != 0;
+}
+
+int32_t CGxDevice::AdapterDesktopMode(CGxMonitorMode& mode) {
+    DISPLAY_DEVICE device;
+    if (!FindDisplayDevice(&device, DISPLAY_DEVICE_ACTIVE|DISPLAY_DEVICE_PRIMARY_DEVICE)) {
+        return 0;
+    }
+
+    DEVMODE dm;
+    dm.dmSize = sizeof(DEVMODE);
+    if (!EnumDisplaySettings(device.DeviceName, ENUM_CURRENT_SETTINGS, &dm)) {
+        return 0;
+    }
+
+    mode.size.x      = dm.dmPelsWidth;
+    mode.size.y      = dm.dmPelsHeight;
+    mode.refreshRate = dm.dmDisplayFrequency;
+    mode.bpp         = dm.dmBitsPerPel;
+    return 1;
+}
+
+#elif (WHOA_SYSTEM_MAC)
+
+int32_t CGxDevice::AdapterID(uint16_t& vendorID, uint16_t& deviceID, uint32_t& driverVersionHi, uint32_t& driverVersionLow) {
+    // TODO: proper implementation
+    vendorID = 0xFFFF;
+    deviceID = 3;
+    driverVersionHi = 0;
+    driverVersionLow = 0;
+    return 1;
+}
+
+int32_t CGxDevice::AdapterInfer(uint16_t& deviceID) {
     // TODO
+    deviceID = 3;
+    return 1;
+}
+
+int32_t CGxDevice::AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
+    // TODO: Mac support
+    return 0;
+}
+
+int32_t CGxDevice::AdapterDesktopMode(CGxMonitorMode& mode) {
+    // TODO: Mac support
+    return 0;
+}
+
+#elif (WHOA_BUILD_GLSDL)
+
+int32_t CGxDevice::AdapterID(uint16_t& vendorID, uint16_t& deviceID, uint32_t& driverVersionHi, uint32_t& driverVersionLow) {
+    // TODO
+    vendorID = 0xFFFF;
+    deviceID = 3;
+    driverVersionHi = 0;
+    driverVersionLow = 0;
+    return 1;
+}
+
+int32_t CGxDevice::AdapterInfer(uint16_t& deviceID) {
+    // TODO
+    deviceID = 3;
+    return 1;
+}
+
+int32_t CGxDevice::AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
+    auto primaryDisplay = SDL_GetPrimaryDisplay();
+    if (!primaryDisplay) {
+        return false;
+    }
+
+    int32_t displayModeCount;
+    auto displayModes = SDL_GetFullscreenDisplayModes(primaryDisplay, &displayModeCount);
+    if (displayModes == nullptr) {
+        return false;
+    }
+
+    modes.SetCount(displayModeCount);
+    for (auto i = 0; i < displayModeCount; i++) {
+        auto displayMode = displayModes[i];
+        CGxMonitorMode& mode = modes[i];
+        mode.size.x = displayMode->w;
+        mode.size.y = displayMode->h;
+        mode.bpp = SDL_BITSPERPIXEL(displayMode->format);
+        mode.refreshRate = static_cast<uint32_t>(displayMode->refresh_rate_numerator / displayMode->refresh_rate_denominator);
+    }
+
+    SDL_free(displayModes);
+
+    qsort(modes.Ptr(), modes.Count(), sizeof(CGxMonitorMode), CGxMonitorModeSort);
+
+    return true;
+}
+
+int32_t CGxDevice::AdapterDesktopMode(CGxMonitorMode& mode) {
+    auto primaryDisplay = SDL_GetPrimaryDisplay();
+    if (!primaryDisplay) {
+        return 0;
+    }
+
+    auto displayMode = SDL_GetDesktopDisplayMode(primaryDisplay);
+    if (!displayMode) {
+        return 0;
+    }
+
+    mode.size.x = displayMode->w;
+    mode.size.y = displayMode->h;
+    mode.bpp = SDL_BITSPERPIXEL(displayMode->format);
+    mode.refreshRate = static_cast<uint32_t>(displayMode->refresh_rate_numerator / displayMode->refresh_rate_denominator);
+
+    return 1;
+}
+
+#endif
+
+void CGxDevice::LogOpen() {
+    if (!m_log) {
+        OsCreateDirectory("Logs", 0);
+        SLogCreate("Logs\\gx.log", 0, &m_log);
+        m_logBytes = 0;
+    }
 }
 
 void CGxDevice::LogClose() {
-    // TODO
+    if (m_log) {
+        SLogClose(m_log);
+        m_log = nullptr;
+    }
+}
+
+void CGxDevice::VLog(const char* format, va_list args) {
+    char buffer[2048];
+    if (m_log) {
+        vsnprintf(buffer, sizeof(buffer), format, args);
+        if (m_logBytes < 0x200000) {
+            SLogWrite(m_log, "%s", buffer);
+            m_logBytes += strlen(buffer);
+        }
+    }
 }
 
 void CGxDevice::Log(const char* format, ...) {
-    // TODO
+    va_list args;
+    va_start(args, format);
+    if (m_log) {
+        VLog(format, args);
+    }
 }
 
 void CGxDevice::Log(const CGxFormat& format) {
-    // TODO
+    static const char* s_formatToString[] = {
+        "Rgb565",
+        "ArgbX888",
+        "Argb2101010",
+        "Ds160",
+        "Ds24X",
+        "Ds248",
+        "Ds320"
+    };
+
+    if (format.window) {
+        Log("\tFormat: %d x %d Window, %s, multisample %d",
+            format.size.x,
+            format.size.y,
+            s_formatToString[format.depthFormat],
+            format.sampleCount);
+    } else {
+        Log("\tFormat %d x %d @ %d Fullscreen, %s, %s, multisample %d",
+            format.size.x,
+            format.size.y,
+            format.refreshRate,
+            s_formatToString[format.colorFormat],
+            s_formatToString[format.depthFormat],
+            format.sampleCount);
+    }
 }
 
 #if defined(WHOA_SYSTEM_WIN)
+
 CGxDevice* CGxDevice::NewD3d() {
     return NEW(CGxDeviceD3d);
 }
@@ -131,12 +448,15 @@ CGxDevice* CGxDevice::NewD3d9Ex() {
     // TODO
     return nullptr;
 }
+
 #endif
 
 #if defined(WHOA_SYSTEM_MAC)
+
 CGxDevice* CGxDevice::NewGLL() {
     return NEW(CGxDeviceGLL);
 }
+
 #endif
 
 CGxDevice* CGxDevice::NewOpenGl() {
@@ -144,9 +464,11 @@ CGxDevice* CGxDevice::NewOpenGl() {
 }
 
 #if defined(WHOA_BUILD_GLSDL)
+
 CGxDevice* CGxDevice::NewGLSDL() {
     return NEW(CGxDeviceGLSDL);
 }
+
 #endif
 
 uint32_t CGxDevice::PrimCalcCount(EGxPrim primType, uint32_t count) {
@@ -167,93 +489,6 @@ void CGxDevice::ICursorUpdate(EGxTexCommand command, uint32_t width, uint32_t he
         texels = device->m_cursor;
     }
 }
-
-
-#if defined(WHOA_SYSTEM_WIN)
-
-// TODO: replace this invented name
-int32_t FindDisplayDevice(PDISPLAY_DEVICE device, uint32_t flag) {
-    DWORD i = 0;
-    device->cb = sizeof(DISPLAY_DEVICE);
-    while (EnumDisplayDevices(nullptr, i, device, 0)) {
-        if ((device->StateFlags & flag) == flag) {
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-bool CGxDevice::AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
-    modes.SetCount(0);
-
-    DISPLAY_DEVICE device;
-    if (!FindDisplayDevice(&device, DISPLAY_DEVICE_PRIMARY_DEVICE)) {
-        return false;
-    }
-
-    DEVMODE dm;
-    dm.dmSize = sizeof(DEVMODE);
-
-    DWORD i = 0;
-    while (EnumDisplaySettings(&device, i, &dm)) {
-        if ((dm.dmPelsWidth >= 640 && dm.dmPelsHeight >= 480)
-          && dm.dmBitsPerPel >= 16) {
-            auto mode = modes.New();
-
-            mode->size.x = dm.dmPelsWidth;
-            mode->size.y = dm.dmPelsHeight;
-            mode->bpp = dm.dmBitsPerPel;
-            mode->refreshRate = dm.dmDisplayFrequency;
-        }
-
-        i++;
-    }
-
-    qsort(modes.Ptr(), modes.Count(), sizeof(CGxMonitorMode), CGxMonitorModeSort);
-
-    return modes.Count() != 0;
-}
-
-#elif (WHOA_SYSTEM_MAC)
-
-bool CGxDevice::AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
-    // TODO: Mac support
-    return false;
-}
-
-#elif (WHOA_BUILD_GLSDL)
-
-bool CGxDevice::AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
-    auto primaryDisplay = SDL_GetPrimaryDisplay();
-    if (!primaryDisplay) {
-        return false;
-    }
-
-    int32_t displayModeCount;
-    auto displayModes = SDL_GetFullscreenDisplayModes(primaryDisplay, &displayModeCount);
-    if (displayModes == nullptr) {
-        return false;
-    }
-
-    modes.SetCount(displayModeCount);
-    for (auto i = 0; i < displayModeCount; i++) {
-        auto displayMode = displayModes[i];
-        CGxMonitorMode& mode = modes[i];
-        mode.size.x = displayMode->w;
-        mode.size.y = displayMode->h;
-        mode.bpp = displayMode->format.BitsPerPixel;
-        mode.refreshRate = static_cast<uint32_t>(displayMode->format.refresh_rate);
-    }
-
-    SDL_free(displayModes);
-
-    qsort(modes.Ptr(), modes.Count(), sizeof(CGxMonitorMode), CGxMonitorModeSort);
-
-    return true;
-}
-
-#endif
 
 CGxDevice::CGxDevice() {
     // TODO
@@ -319,6 +554,10 @@ void CGxDevice::BufData(CGxBuf* buf, const void* data, size_t size, uintptr_t of
 
 const CGxCaps& CGxDevice::Caps() const {
     return this->m_caps;
+}
+
+EGxApi CGxDevice::DeviceApi() {
+    return this->m_api;
 }
 
 int32_t CGxDevice::DeviceCreate(int32_t (*windowProc)(void* window, uint32_t message, uintptr_t wparam, intptr_t lparam), const CGxFormat& format) {
@@ -1366,7 +1605,7 @@ void CGxDevice::XformSetViewport(float minX, float maxX, float minY, float maxY,
         return;
     }
 
-    this->intF6C = 1;
+    this->m_needsReset = 1;
 
     this->m_viewport.x.l = minX;
     this->m_viewport.x.h = maxX;

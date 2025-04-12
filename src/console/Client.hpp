@@ -9,4 +9,6 @@ void ConsoleInitializeClientCVar(const char* a1);
 
 int32_t ConsoleLoadClientCVar(const char* a1);
 
+void ConsoleDestroyClientCommand();
+
 #endif

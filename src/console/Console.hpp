@@ -1,7 +1,6 @@
 #ifndef CONSOLE_CONSOLE_HPP
 #define CONSOLE_CONSOLE_HPP
 
-#include "console/Line.hpp"
 #include "console/Types.hpp"
 #include "event/Types.hpp"
 #include <cstdint>
@@ -12,24 +11,28 @@ void ConsoleAccessSetEnabled(int32_t enable);
 
 int32_t ConsoleGetActive();
 
-float ConsoleGetFontHeight();
-
-float ConsoleGetLines();
-
-float ConsoleGetHeight();
-
 KEY ConsoleGetHotKey();
-
-CONSOLERESIZESTATE ConsoleGetResizeState();
 
 void ConsoleSetActive(int32_t active);
 
 void ConsoleSetHotKey(KEY hotkey);
 
-void ConsoleSetHeight(float height);
+void ConsoleCommandDestroy();
 
-void ConsoleSetResizeState(CONSOLERESIZESTATE state);
+int32_t ConsoleCommandRegister(const char* command, COMMANDHANDLER handler, CATEGORY category, const char* helpText);
+
+void ConsoleCommandUnregister(const char* command);
+
+void ConsoleCommandExecute(const char* commandLine, int32_t addToHistory);
 
 void ConsolePostClose();
 
-#endif  // ifndef CONSOLE_CONSOLE_HPP
+void ConsoleWrite(const char* str, COLOR_T color);
+
+void ConsolePrintf(const char* str, ...);
+
+void ConsoleWriteA(const char* str, COLOR_T color, ...);
+
+void ConsoleClear();
+
+#endif

@@ -1,32 +1,26 @@
-#ifndef CONSOLE_C_VAR_HPP
-#define CONSOLE_C_VAR_HPP
+#ifndef CONSOLE_CVAR_HPP
+#define CONSOLE_CVAR_HPP
 
 #include <cstdint>
 #include <common/String.hpp>
 #include <storm/Hash.hpp>
 #include <bc/os/File.hpp>
 
-#include "console/Types.hpp"
+#define CONSOLE_CVAR_MAX_LINE 2048
+
 
 class CVar : public TSHashObject<CVar, HASHKEY_STRI> {
     public:
+        typedef bool (*HANDLER_FUNC)(CVar*, const char*, const char*, void*);
+
         // Static variables
         static TSHashTable<CVar, HASHKEY_STRI> s_registeredCVars;
         static bool m_needsSave;
 
         // Static functions
         static CVar* Lookup(const char* name);
-        static CVar* Register(
-            const char* name,
-            const char* help,
-            uint32_t flags,
-            const char* value,
-            bool (*fcn)(CVar*, const char*, const char*, void*) = nullptr,
-            uint32_t category = CATEGORY::DEFAULT,
-            bool setCommand = false,
-            void* arg = nullptr,
-            bool a9 = false
-        );
+        static CVar* LookupRegistered(const char* name);
+        static CVar* Register(const char* name, const char* help, uint32_t flags, const char* value, HANDLER_FUNC fcn, uint32_t category, bool a7, void* arg, bool a9);
         static void  Initialize(const char* filename);
         static int32_t Load(const char* filename);
         static int32_t Load(HOSFILE fileHandle);
@@ -49,7 +43,8 @@ class CVar : public TSHashObject<CVar, HASHKEY_STRI> {
         int32_t GetInt();
         const char* GetString(void);
         void InternalSet(const char*, bool, bool, bool, bool);
-        bool Set(const char* value, bool setValue, bool setReset, bool setDefault, bool a6);
+        bool Set(const char*, bool, bool, bool, bool);
+        void SetReadOnly(bool readonly);
         bool Reset();
         bool Default();
         int32_t Update();

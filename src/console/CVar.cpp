@@ -1,7 +1,6 @@
 #include "console/CVar.hpp"
-#include "console/Command.hpp"
 #include "console/Types.hpp"
-#include "console/Line.hpp"
+#include "console/Console.hpp"
 #include "util/SFile.hpp"
 
 #include <bc/os/File.hpp>
@@ -17,68 +16,85 @@ CVar* CVar::Lookup(const char* name) {
         : nullptr;
 }
 
-CVar* CVar::Register(const char* name, const char* help, uint32_t flags, const char* value, bool (*fcn)(CVar*, const char*, const char*, void*), uint32_t category, bool setCommand, void* arg, bool a9) {
-    CVar* var = CVar::s_registeredCVars.Ptr(name);
+CVar* CVar::LookupRegistered(const char* name) {
+    if (!name) {
+        return nullptr;
+    }
+    auto cv = s_registeredCVars.Ptr(name);
+    if (!cv) {
+        return nullptr;
+    }
+    if (cv->m_flags & 0x80000000) {
+        return cv;
+    }
+    if (cv->m_flags & 0x80) {
+        return cv;
+    }
+    return nullptr;
+}
 
-    if (var) {
-        bool setReset = var->m_resetValue.GetString() == nullptr;
-        bool setDefault = var->m_defaultValue.GetString() == nullptr;
+CVar* CVar::Register(const char* name, const char* help, uint32_t flags, const char* value, HANDLER_FUNC fcn, uint32_t category, bool a7, void* arg, bool a9) {
+    auto cv = s_registeredCVars.Ptr(name);
 
-        var->m_flags |= (var->m_flags & 0xFFFFFFCF);
+    if (cv) {
+        bool setReset = cv->m_resetValue.GetString() == nullptr;
+        bool setDefault = cv->m_defaultValue.GetString() == nullptr;
 
-        var->m_callback = fcn;
-        var->m_arg = arg;
+        cv->m_flags |= (cv->m_flags & 0xFFFFFFCF);
+
+        cv->m_callback = fcn;
+        cv->m_arg = arg;
 
         bool setValue = false;
-        if (fcn && !fcn(var, var->GetString(), var->GetString(), arg)) {
+        if (fcn && !fcn(cv, cv->GetString(), cv->GetString(), arg)) {
             setValue = true;
         }
 
-        var->Set(value, setValue, setReset, setDefault, false);
+        cv->Set(value, setValue, setReset, setDefault, false);
 
-        if (!setCommand) {
-            var->m_flags |= 0x80000000;
+        if (!a7) {
+            cv->m_flags |= 0x80000000;
         }
 
-        if (a9 && var->m_flags) {
-            var->m_flags |= 0x80;
+        if (a9 && cv->m_flags) {
+            cv->m_flags |= 0x80;
         }
     } else {
-        var = CVar::s_registeredCVars.New(name, 0, 0);
+        cv = s_registeredCVars.New(name, 0, 0);
 
-        var->m_stringValue.Copy(nullptr);
-        var->m_floatValue = 0.0f;
-        var->m_intValue = 0;
-        var->m_modified = 0;
-        var->m_category = category;
-        var->m_defaultValue.Copy(nullptr);
-        var->m_resetValue.Copy(nullptr);
-        var->m_latchedValue.Copy(nullptr);
-        var->m_callback = fcn;
-        var->m_flags = 0;
-        var->m_arg = arg;
-        var->m_help.Copy(help);
+        cv->m_stringValue.Copy(nullptr);
+        cv->m_floatValue = 0.0f;
+        cv->m_intValue = 0;
+        cv->m_modified = 0;
+        cv->m_category = category;
+        cv->m_defaultValue.Copy(nullptr);
+        cv->m_resetValue.Copy(nullptr);
+        cv->m_latchedValue.Copy(nullptr);
+        cv->m_callback = fcn;
+        cv->m_flags = 0;
+        cv->m_arg = arg;
+        cv->m_help.Copy(help);
 
-        if (setCommand) {
-            var->Set(value, true, true, false, false);
+        if (a7) {
+            cv->Set(value, true, true, false, false);
         } else {
-            var->Set(value, true, false, true, false);
+            cv->Set(value, true, false, true, false);
         }
 
-        var->m_flags = flags | 0x1;
+        cv->m_flags = flags | 0x1;
 
-        if (!setCommand) {
-            var->m_flags |= 0x8000000;
+        if (!a7) {
+            cv->m_flags |= 0x8000000;
         }
 
-        if (a9 && var->m_flags) {
-            var->m_flags |= 0x80;
+        if (a9 && cv->m_flags) {
+            cv->m_flags |= 0x80;
         }
 
         ConsoleCommandRegister(name, CvarCommandHandler, CATEGORY(category), help);
     }
 
-    return var;
+    return cv;
 }
 
 CVar::CVar() : TSHashObject<CVar, HASHKEY_STRI>() {
@@ -153,6 +169,14 @@ bool CVar::Set(const char* value, bool setValue, bool setReset, bool setDefault,
     return true;
 }
 
+void CVar::SetReadOnly(bool readonly) {
+    if (readonly) {
+        this->m_flags |= 0x4;
+    } else {
+        this->m_flags &= ~(0x4);
+    }
+}
+
 bool CVar::Reset() {
     auto value = this->m_resetValue;
     if (value.GetString() == nullptr) {
@@ -193,53 +217,44 @@ static int32_t s_CreatePathDirectories(const char* szPath) {
 }
 
 int32_t CVar::Load(HOSFILE file) {
-    char fastData[2048] = {0};
-    char line[2048] = {0};
+    char fastData[CONSOLE_CVAR_MAX_LINE];
+    char line[CONSOLE_CVAR_MAX_LINE];
+    uint32_t bytesRead;
 
     auto size = OsGetFileSize(file);
-
-    char* data = nullptr;
-
-    if (0x1fff < size) {
-        data = reinterpret_cast<char*>(SMemAlloc(size + 1, __FILE__, __LINE__, 0));
-    } else {
-        data = fastData;
-    }
-
-    auto grown = 0x1fff < size;
-
-    int32_t result    = 0;
-    uint32_t bytesRead = 0;
-
-    if (OsReadFile(file, data, size, &bytesRead) == 0) {
-        result = 0;
-    } else {
-        data[size] = '\0';
-        const char* curr = data;
-
-        // Skip over UTF-8 byte order mark
-        if ((((data != nullptr) && (2 < bytesRead)) && (data[0] == 0xef)) && ((data[1] == 0xbb && (data[2] == 0xbf)))) {
-            curr = data + 3;
+    auto data = size >= CONSOLE_CVAR_MAX_LINE ? reinterpret_cast<char*>(ALLOC(size + 1)) : fastData;
+    if (!OsReadFile(file, data, size, &bytesRead)) {
+        if (fastData != data) {
+            FREE(data);
         }
-
-        do {
-            SStrTokenize(&curr, line, 0x800, "\r\n", 0);
-
-            // Do not execute commands other than "set ..."
-            if (SStrCmpI(line, "SET ", 4) == 0) {
-                // Execute without adding to history
-                ConsoleCommandExecute(line, 0);
-            }
-
-            result = 1;
-        } while ((curr != nullptr) && (*curr != '\0'));
+        return 0;
     }
 
-    if (grown) {
-        SMemFree(data, __FILE__, __LINE__, 0);
+    const char* curr = data;
+
+    data[size] = '\0';
+    // Skip over UTF-8 byte order mark
+    if (data && bytesRead >= 3) {
+        if (data[0] == '\xEF' && data[1] == '\xBB' && data[2] == '\xBF') {
+            curr += 3;
+        }
     }
 
-    return result;
+    do {
+        SStrTokenize(&curr, line, CONSOLE_CVAR_MAX_LINE, "\r\n", 0);
+
+        // Do not execute commands other than "set ..."
+        if (SStrCmpI(line, "SET ", 4) == 0) {
+            // Execute without adding to history
+            ConsoleCommandExecute(line, 0);
+        }
+    } while (curr && *curr);
+
+    if (fastData != data) {
+        FREE(data);
+    }
+
+    return 1;
 }
 
 int32_t CVar::Load(const char* filename) {
@@ -273,14 +288,10 @@ void CVar::Initialize(const char* filename) {
 
     s_CreatePathDirectories(path);
 
-    static ConsoleCommandList baseCommands[] = {
-        { "set",          SetCommandHandler,         "Set the value of a CVar"                             },
-        { "cvar_reset",   CvarResetCommandHandler,   "Set the value of a CVar to it's startup value"       },
-        { "cvar_default", CvarDefaultCommandHandler, "Set the value of a CVar to it's coded default value" },
-        { "cvarlist",     CvarListCommandHandler,    "List cvars"                                          }
-    };
-
-    CONSOLE_REGISTER_LIST(DEFAULT, baseCommands);
+    ConsoleCommandRegister("set",          SetCommandHandler,         DEFAULT, "Set the value of a CVar");
+    ConsoleCommandRegister("cvar_reset",   CvarResetCommandHandler,   DEFAULT, "Set the value of a CVar to it's startup value");
+    ConsoleCommandRegister("cvar_default", CvarDefaultCommandHandler, DEFAULT, "Set the value of a CVar to it's coded default value");
+    ConsoleCommandRegister("cvarlist",     CvarListCommandHandler,    DEFAULT, "List cvars");
 
     CVar::Load(s_filename);
 }

@@ -1,5 +1,5 @@
 #include "gx/glsdl/CGxDeviceGLSDL.hpp"
-#include "event/Input.hpp"
+#include "os/Input.hpp"
 #include "gx/Blit.hpp"
 #include "gx/CGxBatch.hpp"
 #include "gx/Shader.hpp"
@@ -681,9 +681,13 @@ void CGxDeviceGLSDL::ISetCaps(const CGxFormat& format) {
     this->m_caps.m_texMaxSize[GxTex_Rectangle] = 4096;
     this->m_caps.m_texMaxSize[GxTex_NonPow2] = 4096;
 
-    this->m_caps.m_hardwareCursor = 0;
+    this->m_caps.m_hwCursor = 0;
 
     // TODO
+
+    // TODO: proper implementation
+    this->m_caps.m_numTmus = 2;
+    this->m_caps.m_numStreams = 1;
 }
 
 void CGxDeviceGLSDL::IShaderBindPixel(CGxShader* sh) {

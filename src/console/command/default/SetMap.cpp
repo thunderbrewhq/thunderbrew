@@ -1,5 +1,7 @@
 #include "console/Command.hpp"
+#include "console/command/Commands.hpp"
+#include "util/Unimplemented.hpp"
 
-int32_t ConsoleCommand_SetMap(const char* command, const char* arguments) {
-    return 1;
+DECLARE_COMMAND(SetMap) {
+    WHOA_UNIMPLEMENTED(1);
 }

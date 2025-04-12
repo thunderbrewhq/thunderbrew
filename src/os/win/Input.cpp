@@ -1,11 +1,15 @@
-#include "event/Input.hpp"
-#include "client/Gui.hpp"
+#include "os/Input.hpp"
+#include "os/Queue.hpp"
+#include "os/Gui.hpp"
+#include "os/internal/Input.hpp"
+#include "os/internal/Queue.hpp"
+#include "event/Types.hpp"
 #include <storm/Error.hpp>
 #include <tempest/Vector.hpp>
 #include <windows.h>
 
 #if defined(WHOA_BUILD_GLSDL)
-#include "event/sdl/Input.hpp"
+#include "os/sdl/Input.hpp"
 #endif
 
 static const uint32_t s_latin5lookup[256] = {
@@ -142,7 +146,6 @@ static const uint32_t s_thailookup[256] = {
     0x0E53, 0x0E54, 0x0E55, 0x0E56, 0x0E57, 0x0E58, 0x0E59, 0x0E5A, 0x0E5B,
     0x20,   0x20,   0x20,   0x20
 };
-
 
 static RECT s_defaultWindowRect;
 static int32_t s_savedResize;
@@ -414,7 +417,7 @@ int32_t ConvertKeyCode(uint32_t vkey, KEY* key) {
 bool ProcessMouseEvent(MOUSEBUTTON button, uint32_t message, HWND hwnd, OSINPUT id) {
     POINT mousePos;
 
-    if (Input::s_osMouseMode == OS_MOUSE_MODE_RELATIVE) {
+    if (s_osMouseMode == OS_MOUSE_MODE_RELATIVE) {
         // TODO
     } else {
         GetCursorPos(&mousePos);
@@ -435,11 +438,11 @@ int32_t HandleMouseDown(uint32_t message, uintptr_t wparam, bool* xbutton, HWND 
         return 0;
     }
 
-    if (Input::s_osButtonState == 0) {
+    if (s_osButtonState == 0) {
         SetCapture(hwnd);
     }
 
-    Input::s_osButtonState |= button;
+    s_osButtonState |= button;
 
     auto xb = ProcessMouseEvent(button, message, hwnd, OS_INPUT_MOUSE_DOWN);
 
@@ -456,9 +459,9 @@ int32_t HandleMouseUp(uint32_t message, uintptr_t wparam, bool* xbutton, HWND hw
         return 0;
     }
 
-    Input::s_osButtonState &= ~button;
+    s_osButtonState &= ~button;
 
-    if (Input::s_osButtonState == 0) {
+    if (s_osButtonState == 0) {
         // TODO
         ReleaseCapture();
         // TODO
@@ -473,11 +476,27 @@ int32_t HandleMouseUp(uint32_t message, uintptr_t wparam, bool* xbutton, HWND hw
     return 1;
 }
 
+void OsInputSetWindowResizeLock(int32_t resizeLock) {
+#if defined(WHOA_BUILD_GLSDL)
+    if (OsSDLInputActive()) {
+        OsSDLInputSetWindowResizeLock(resizeLock);
+    }
+#endif
+    s_WindowResizeLock = resizeLock;
+}
+
+void OsInputInitialize() {
+    s_numlockState = GetAsyncKeyState(144);
+    int32_t mouseSpeed = 10;
+    SystemParametersInfoA(SPI_GETMOUSESPEED, 0, &mouseSpeed, 0);
+    s_savedMouseSpeed = mouseSpeed;
+}
+
 int32_t OsInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* param2, int32_t* param3) {
 #if defined(WHOA_BUILD_GLSDL)
-    if (SDLInputActive()) {
+    if (OsSDLInputActive()) {
         // SDL handles input events for us
-        return SDLInputGet(id, param0, param1, param2, param3);
+        return OsSDLInputGet(id, param0, param1, param2, param3);
     }
 #endif
 
@@ -516,7 +535,7 @@ int32_t OsInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* param
         }
     }
 
-    if (Input::s_queueTail != Input::s_queueHead) {
+    if (s_queueTail != s_queueHead) {
         OsQueueGet(id, param0, param1, param2, param3);
         return 1;
     }
@@ -527,7 +546,7 @@ int32_t OsInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* param
         MSG msg;
         auto peekResult = PeekMessage(&msg, nullptr, 0, 0, PM_NOREMOVE);
 
-        if (Input::s_queueTail != Input::s_queueHead) {
+        if (s_queueTail != s_queueHead) {
             break;
         }
 
@@ -544,14 +563,14 @@ int32_t OsInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* param
             break;
         }
 
-        if (Input::s_queueTail != Input::s_queueHead) {
+        if (s_queueTail != s_queueHead) {
             break;
         }
 
         TranslateMessage(&msg);
         DispatchMessage(&msg);
 
-        if (Input::s_queueTail != Input::s_queueHead) {
+        if (s_queueTail != s_queueHead) {
             break;
         }
     }
@@ -565,22 +584,22 @@ void OsInputSetMouseMode(OS_MOUSE_MODE mode) {
     STORM_VALIDATE(mode < OS_MOUSE_MODES);
     STORM_VALIDATE_END_VOID;
 
-    if (Input::s_osMouseMode == mode) {
+    if (s_osMouseMode == mode) {
         return;
     }
 
     if (mode == OS_MOUSE_MODE_NORMAL) {
-        Input::s_osMouseMode = mode;
+        s_osMouseMode = mode;
         RestoreMouse();
     } else if (mode == OS_MOUSE_MODE_RELATIVE) {
-        Input::s_osMouseMode = mode;
+        s_osMouseMode = mode;
         CenterMouse();
     }
 }
 
 void OsInputGetMousePosition(int32_t* x, int32_t* y) {
 #if defined(WHOA_BUILD_GLSDL)
-    if (SDLInputActive()) {
+    if (OsSDLInputActive()) {
         SDLInputGetMousePosition(x, y);
         return;
     }
@@ -593,7 +612,7 @@ void OsInputGetMousePosition(int32_t* x, int32_t* y) {
     GetCursorPos(&pt);
     ScreenToClient(window, &pt);
 
-    if (Input::s_osMouseMode != OS_MOUSE_MODE_RELATIVE) {
+    if (s_osMouseMode != OS_MOUSE_MODE_RELATIVE) {
         SaveMouse(window, pt);
     }
 
@@ -629,13 +648,13 @@ int32_t OsWindowProc(void* window, uint32_t message, uintptr_t wparam, intptr_t 
     case WM_ACTIVATE: {
         auto isMinimized = IsIconic(hwnd);
         auto isActive = wparam != WA_INACTIVE;
-        Input::s_windowFocused = isActive && !isMinimized;
+        s_windowFocused = isActive && !isMinimized;
 
         // TODO capture
 
         // TODO mouse speed
 
-        OsQueuePut(OS_INPUT_FOCUS, Input::s_windowFocused != 0, 0, 0, 0);
+        OsQueuePut(OS_INPUT_FOCUS, s_windowFocused != 0, 0, 0, 0);
 
         break;
     }
@@ -744,7 +763,7 @@ int32_t OsWindowProc(void* window, uint32_t message, uintptr_t wparam, intptr_t 
     case WM_MOUSEMOVE: {
         // TODO
 
-        if (Input::s_osMouseMode == OS_MOUSE_MODE_RELATIVE) {
+        if (s_osMouseMode == OS_MOUSE_MODE_RELATIVE) {
             // TODO
         } else {
             POINT mousePos;

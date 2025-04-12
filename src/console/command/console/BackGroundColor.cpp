@@ -1,6 +1,6 @@
-#include "console/Command.hpp"
+#include "console/command/Commands.hpp"
+#include "util/Unimplemented.hpp"
 
-int32_t ConsoleCommand_BackGroundColor(const char* command, const char* arguments) {
-    // TODO
-    return 1;
+DECLARE_COMMAND(BackGroundColor) {
+    WHOA_UNIMPLEMENTED(1);
 }

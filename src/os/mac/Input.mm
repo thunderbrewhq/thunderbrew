@@ -1,6 +1,8 @@
-#include "event/Input.hpp"
+#include "os/Input.hpp"
 #include <common/Time.hpp>
 #include <tempest/Vector.hpp>
+
+double Input::s_savedMouseSpeed;
 
 static C2iVector s_mousePos;
 
@@ -31,6 +33,26 @@ int32_t OsInputGet(OSINPUT* id, int32_t* param0, int32_t* param1, int32_t* param
     }
 
     return queue_result;
+}
+
+void OsInputSetWindowResizeLock(int32_t resizeLock) {
+    s_WindowResizeLock = resizeLock;
+}
+
+void OsInputInitialize() {
+    // Legacy Carbon input handling
+    // if (!byte_143EFE0) {
+    //     Carbon_OsInputRegisterHICommandHandler(0x71756974, sub_A4F230);
+    // }
+
+    MacClient::SetMouseCoalescingEnabled(true);
+    Input::s_savedMouseSpeed = MacClient::GetMouseSpeed();
+}
+
+bool OsInputIsUsingCocoaEventLoop() {
+    // TODO
+
+    return true;
 }
 
 void OsInputSetMouseMode(OS_MOUSE_MODE mode) {

@@ -11,6 +11,6 @@ class CGxMonitorMode {
         uint32_t refreshRate;
 };
 
-int32_t CGxMonitorModeSort(const void* i, const void* j);
+int32_t CGxMonitorModeSort(const void* a, const void* b);
 
 #endif

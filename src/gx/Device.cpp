@@ -59,8 +59,7 @@ CGxDevice* GxDevCreate(EGxApi api, int32_t (*windowProc)(void* window, uint32_t 
     }
 
     if (!device) {
-        SErrPrepareAppFatal(__FILE__, __LINE__);
-        SErrDisplayAppFatal("GxDevCreate: failed to create graphics device %d", api);
+        SErrPrepareAppFatal(__FILE__, __LINE__); SErrDisplayAppFatal("GxDevCreate: failed to create graphics device %d", api);
     }
 
     // STORM_ASSERT(device != nullptr);
@@ -78,13 +77,17 @@ CGxDevice* GxDevCreate(EGxApi api, int32_t (*windowProc)(void* window, uint32_t 
     }
 }
 
-
-int32_t GxDevExists() {
-    return g_theGxDevicePtr != nullptr;
+void GxDevDestroy(CGxDevice* device) {
+    // TODO
+    // device->DeviceDestroy();
 }
 
 EGxApi GxDevApi() {
     return g_theGxDevicePtr->m_api;
+}
+
+bool GxDevExists() {
+    return g_theGxDevicePtr != nullptr;
 }
 
 void* GxDevWindow() {
@@ -95,7 +98,12 @@ int32_t GxMasterEnable(EGxMasterEnables state) {
     return g_theGxDevicePtr->MasterEnable(state);
 }
 
-EGxApi GxApiDefault() {
+void GxDevOverride(EGxOverride override, uint32_t value) {
+    // TODO
+    // g_theGxDevicePtr->DeviceOverride(override, value);
+}
+
+EGxApi GxDefaultApi() {
 #if defined(WHOA_SYSTEM_WIN)
     return GxApi_D3d9;
 #endif
@@ -110,13 +118,69 @@ EGxApi GxApiDefault() {
 }
 
 bool GxApiSupported(EGxApi api) {
-    return (g_supportedApis & static_cast<uint32_t>(api)) != 0;
+    return (g_supportedApis & (1 << static_cast<uint32_t>(api))) != 0;
 }
 
-bool GxAdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
+int32_t GxAdapterID(uint16_t& vendorID, uint16_t& deviceID, uint32_t& driverVersionHi, uint32_t& driverVersionLo) {
+    return g_theGxDevicePtr->AdapterID(vendorID, deviceID, driverVersionHi, driverVersionLo);
+}
+
+int32_t GxAdapterInfer(uint16_t& deviceID) {
+    return g_theGxDevicePtr->AdapterInfer(deviceID);
+}
+
+int32_t GxAdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes) {
     return CGxDevice::AdapterMonitorModes(modes);
+}
+
+int32_t GxAdapterDesktopMode(CGxMonitorMode& mode) {
+    return CGxDevice::AdapterDesktopMode(mode);
 }
 
 void GxLogOpen() {
     CGxDevice::LogOpen();
+}
+
+void GxLog(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    CGxDevice::VLog(format, args);
+}
+
+void GxLogClose() {
+    CGxDevice::LogClose();
+}
+
+void GxAddStereoChangedCallback(CGxDevice::STEREO_CHANGED_CALLBACK callback) {
+    // TODO
+    // g_theGxDevicePtr->AddStereoChangedCallback(callback);
+}
+
+int32_t GxRemoveStereoChangedCallback(CGxDevice::STEREO_CHANGED_CALLBACK callback) {
+    // TODO
+    // return g_theGxDevicePtr->RemoveStereoChangedCallback(callback);
+    return 1;
+}
+
+void GxStereoSetConvergence(float value) {
+    // TODO
+    // return g_theGxDevicePtr->StereoSetConvergence(value);
+}
+
+void GxStereoSetSeparation(float value) {
+    // TODO
+    // return g_theGxDevicePtr->StereoSetSeparation(value);
+}
+
+const CGxCaps& GxCaps() {
+    return g_theGxDevicePtr->Caps();
+}
+
+bool GxCapsWindowHasFocus(int32_t a1) {
+    // TODO
+    return true;
+}
+
+void GxCapsWindowSize(CRect& rect) {
+    g_theGxDevicePtr->CapsWindowSize(rect);
 }

@@ -1,5 +1,5 @@
-#ifndef OS_COMPAT_MAC_HPP
-#define OS_COMPAT_MAC_HPP
+#ifndef OS_MAC_COMPAT_HPP
+#define OS_MAC_COMPAT_HPP
 
 #ifdef __OBJC__
     #include <AppKit/AppKit.h>

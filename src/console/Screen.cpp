@@ -2,7 +2,9 @@
 #include "console/Console.hpp"
 #include "console/Command.hpp"
 #include "console/Handlers.hpp"
+#include "console/Highlight.hpp"
 #include "console/Line.hpp"
+#include "console/Text.hpp"
 #include "console/Types.hpp"
 #include "gx/Buffer.hpp"
 #include "gx/Coordinate.hpp"
@@ -17,30 +19,15 @@
 #include <tempest/Rect.hpp>
 #include <algorithm>
 
-static CGxStringBatch* s_batch;
-static uint32_t s_baseTextFlags = 0x8;
-static int32_t s_caret = 0;
-static float s_caretpixwidth;
-static float s_caretpixheight;
-static float s_charSpacing = 0.0f;
-static CGxString* s_inputString = nullptr;
-
-static char s_fontName[STORM_MAX_PATH];
 static HLAYER s_layerBackground;
 static HLAYER s_layerText;
 static RECTF s_rect = { 0.0f, 1.0f, 1.0f, 1.0f };
-static HTEXTFONT s_textFont;
 
-static HIGHLIGHTSTATE s_highlightState = HS_NONE;
-static RECTF s_hRect = { 0.0f, 0.0f, 0.0f, 0.0f };
-static float s_highlightHStart = 0.0f;
-static float s_highlightHEnd = 0.0f;
-static uint32_t s_highlightLeftCharIndex = 0;
-static uint32_t s_highlightRightCharIndex = 0;
-static int32_t s_highlightInput = 0;
-static char s_copyText[HIGHLIGHT_COPY_SIZE] = { 0 };
+float s_consoleLines = 10.0f;
+float s_consoleHeight = s_consoleLines * s_fontHeight;
+CONSOLERESIZESTATE s_consoleResizeState = CS_NONE;
 
-static CImVector s_colorArray[] = {
+CImVector s_colorArray[NUM_COLORTYPES] = {
     { 0xFF, 0xFF, 0xFF, 0xFF }, // DEFAULT_COLOR
     { 0xFF, 0xFF, 0xFF, 0xFF }, // INPUT_COLOR
     { 0x80, 0x80, 0x80, 0xFF }, // ECHO_COLOR
@@ -116,7 +103,7 @@ void DrawCaret(C3Vector& caretpos) {
     float minY = caretpos.y;
 
     float maxX = caretpos.x + (s_caretpixwidth * 2);
-    float maxY = caretpos.y + ConsoleGetFontHeight();
+    float maxY = caretpos.y + s_fontHeight;
 
     C3Vector position[] = {
         { minX, minY, 0.0f },
@@ -153,107 +140,6 @@ void PaintBackground(void* param, const RECTF* rect, const RECTF* visible, float
     }
 }
 
-void SetInputString(char* buffer) {
-    // s_highlightState = HS_NONE;
-    // s_hRect = { 0.0f, 0.0f, 0.0f, 0.0f };
-    // s_highlightLeftCharIndex = 0;
-    // s_highlightRightCharIndex = 0;
-    // s_highlightInput = 0;
-
-    if (s_inputString) {
-        GxuFontDestroyString(s_inputString);
-    }
-
-    s_inputString = nullptr;
-
-    auto fontHeight = ConsoleGetFontHeight();
-
-    if (buffer && buffer[0] != '\0') {
-        C3Vector pos = { 0.0f, 0.0f, 1.0f };
-
-        auto font = TextBlockGetFontPtr(s_textFont);
-
-        GxuFontCreateString(font, buffer, fontHeight, pos, 1.0f, fontHeight, 0.0f, s_inputString, GxVJ_Middle, GxHJ_Left, s_baseTextFlags, s_colorArray[INPUT_COLOR], s_charSpacing, 1.0f);
-    }
-}
-
-void PasteInInputLine(char* characters) {
-    auto len = SStrLen(characters);
-
-    if (!len) {
-        return;
-    }
-
-    auto line = GetInputLine();
-
-    ReserveInputSpace(line, len);
-
-    if (line->inputpos < line->chars) {
-        if (len <= 1) {
-            memmove(&line->buffer[line->inputpos + 1], &line->buffer[line->inputpos], line->chars - (line->inputpos + 1));
-
-            line->buffer[line->inputpos] = *characters;
-
-            line->inputpos++;
-            line->chars++;
-        } else {
-            auto input = reinterpret_cast<char*>(SMemAlloc(line->charsalloc, __FILE__, __LINE__, 0x0));
-            SStrCopy(input, &line->buffer[line->inputpos], STORM_MAX_STR);
-
-            auto buffer = reinterpret_cast<char*>(SMemAlloc(line->charsalloc, __FILE__, __LINE__, 0x0));
-            SStrCopy(buffer, line->buffer, STORM_MAX_STR);
-            buffer[line->inputpos] = '\0';
-
-            SStrPack(buffer, characters, line->charsalloc);
-
-            auto len = SStrLen(buffer);
-
-            line->inputpos = len;
-
-            SStrPack(buffer, input, line->charsalloc);
-            SStrCopy(line->buffer, buffer, STORM_MAX_STR);
-
-            line->chars = SStrLen(line->buffer);
-
-            if (input) {
-                SMemFree(input, __FILE__, __LINE__, 0);
-            }
-
-            if (buffer) {
-                SMemFree(input, __FILE__, __LINE__, 0);
-            }
-        }
-    } else {
-        for (int32_t i = 0; i < len; i++) {
-            line->buffer[line->inputpos++] = characters[i];
-        }
-
-        line->buffer[line->inputpos] = '\0';
-        line->chars = line->inputpos;
-    }
-
-    SetInputString(line->buffer);
-}
-
-void GenerateNodeString(CONSOLELINE* node) {
-    auto font = TextBlockGetFontPtr(s_textFont);
-
-    if (font && node && node->buffer && node->buffer[0] != '\0') {
-        if (node->fontPointer) {
-            GxuFontDestroyString(node->fontPointer);
-        }
-
-        C3Vector pos = {
-            0.0f, 0.0f, 1.0f
-        };
-
-        auto fontHeight = ConsoleGetFontHeight();
-
-        GxuFontCreateString(font, node->buffer, fontHeight, pos, 1.0f, fontHeight, 0.0f, node->fontPointer, GxVJ_Middle, GxHJ_Left, s_baseTextFlags, s_colorArray[node->colorType], s_charSpacing, 1.0f);
-        BC_ASSERT(node->fontPointer);
-    }
-}
-
 void PaintText(void* param, const RECTF* rect, const RECTF* visible, float elapsedSec) {
     if (s_rect.bottom >= 1.0f) {
         return;
@@ -273,7 +159,7 @@ void PaintText(void* param, const RECTF* rect, const RECTF* visible, float elaps
 
     C3Vector pos = {
         s_rect.left,
-        (ConsoleGetFontHeight() * 0.75f) + s_rect.bottom,
+        (s_fontHeight * 0.75f) + s_rect.bottom,
         1.0f
     };
 
@@ -289,14 +175,14 @@ void PaintText(void* param, const RECTF* rect, const RECTF* visible, float elaps
     if (line->inputpos) {
         caretpos = pos;
 
-        GxuFontGetTextExtent(font, line->buffer, line->inputpos, ConsoleGetFontHeight(), &caretpos.x, 0.0f, 1.0f, s_charSpacing, s_baseTextFlags);
+        GxuFontGetTextExtent(font, line->buffer, line->inputpos, s_fontHeight, &caretpos.x, 0.0f, 1.0f, s_charSpacing, s_baseTextFlags);
 
         DrawCaret(caretpos);
     }
 
-    pos.y += ConsoleGetFontHeight();
+    pos.y += s_fontHeight;
 
-    for (auto lineptr = GetCurrentLine(); (lineptr && pos.y < 1.0); lineptr = lineptr->Next()) {
+    for (auto lineptr = s_currlineptr; (lineptr && pos.y < 1.0); lineptr = lineptr->Next()) {
         if (lineptr != line) {
             if (lineptr->fontPointer == nullptr) {
                 GenerateNodeString(lineptr);
@@ -304,101 +190,15 @@ void PaintText(void* param, const RECTF* rect, const RECTF* visible, float elaps
 
             GxuFontSetStringPosition(lineptr->fontPointer, pos);
             GxuFontAddToBatch(s_batch, lineptr->fontPointer);
-            pos.y += ConsoleGetFontHeight();
+            pos.y += s_fontHeight;
         }
     }
 
     GxuFontRenderBatch(s_batch);
 }
 
-void UpdateHighlight() {
-    auto font = TextBlockGetFontPtr(s_textFont);
-    BC_ASSERT(font);
-
-    auto len = SStrLen(s_copyText);
-
-    float left = std::min(s_highlightHStart, s_highlightHEnd);
-    float right = std::max(s_highlightHStart, s_highlightHEnd);
-
-    auto chars = GxuFontGetMaxCharsWithinWidth(font, s_copyText, ConsoleGetFontHeight(), left, len, &s_hRect.left, 0.0f, 1.0f, s_charSpacing, s_baseTextFlags);
-
-    s_highlightLeftCharIndex = chars;
-
-    if (chars) {
-        s_highlightRightCharIndex = chars - 1;
-    }
-
-    if (s_hRect.left < 0.015f) {
-        s_hRect.left = 0.0f;
-    }
-
-    s_highlightRightCharIndex = GxuFontGetMaxCharsWithinWidth(font, s_copyText, ConsoleGetFontHeight(), right, len, &s_hRect.right, 0.0f, 1.0f, s_charSpacing, s_baseTextFlags);
-}
-
-void ResetHighlight() {
-    s_highlightState = HS_NONE;
-    s_hRect = { 0.0f, 0.0f, 0.0f, 0.0f };
-}
-
-HIGHLIGHTSTATE GetHighlightState() {
-    return s_highlightState;
-}
-
-void SetHighlightState(HIGHLIGHTSTATE hs) {
-    s_highlightState = hs;
-}
-
-char* GetHighlightCopyText() {
-    return s_copyText;
-}
-
-void SetHighlightCopyText(char* text) {
-    SStrCopy(s_copyText, text, HIGHLIGHT_COPY_SIZE);
-}
-
-void ResetHighlightCopyText() {
-    s_copyText[0] = '\0';
-}
-
-RECTF& GetHighlightRect() {
-    return s_hRect;
-}
-
-void SetHighlightStart(float start) {
-    s_highlightHStart = start;
-}
-
-void SetHighlightEnd(float end) {
-    s_highlightHEnd = end;
-}
-
-void CutHighlightToClipboard() {
-    char buffer[HIGHLIGHT_COPY_SIZE];
-
-    if (s_copyText[0] != '\0') {
-        uint32_t size = s_highlightRightCharIndex - s_highlightLeftCharIndex;
-        uint32_t capsize = HIGHLIGHT_COPY_SIZE-1;
-        size = std::min(size, capsize);
-
-        SStrCopy(buffer, &s_copyText[s_highlightLeftCharIndex], size);
-
-        buffer[size] = '\0';
-
-        // OsClipboardPutString(buffer);
-    }
-
-    ResetHighlight();
-}
-
-void PasteClipboardToHighlight() {
-    // auto buffer = OsClipboardGetString();
-    // PasteInInputLine(buffer);
-    // SMemFree(buffer, __FILE__, __LINE__, 0);
-    // ResetHighlight();
-}
-
 void ConsoleScreenAnimate(float elapsedSec) {
-    auto finalPos = ConsoleGetActive() ? std::min(1.0f - ConsoleGetHeight(), 1.0f) : 1.0f;
+    auto finalPos = ConsoleGetActive() ? std::min(1.0f - s_consoleHeight, 1.0f) : 1.0f;
     finalPos = std::max(finalPos, 0.0f);
 
     if (s_rect.bottom == finalPos) {
@@ -407,7 +207,7 @@ void ConsoleScreenAnimate(float elapsedSec) {
 
     auto currentPos = finalPos;
 
-    if (ConsoleGetResizeState() == CS_NONE) {
+    if (s_consoleResizeState == CS_NONE) {
         auto direction = s_rect.bottom <= finalPos ? 1.0f : -1.0f;
 
         currentPos = s_rect.bottom + direction * elapsedSec * 5.0f;
@@ -430,7 +230,7 @@ void ConsoleScreenInitialize(const char* title) {
     s_caretpixheight = height == 0.0f ? 1.0f : 1.0f / height;
 
     SStrCopy(s_fontName, "Fonts\\ARIALN.ttf", sizeof(s_fontName));
-    s_textFont = TextBlockGenerateFont(s_fontName, 0, NDCToDDCHeight(ConsoleGetFontHeight()));
+    s_textFont = TextBlockGenerateFont(s_fontName, 0, NDCToDDCHeight(s_fontHeight));
 
     ScrnLayerCreate(&s_rect, 6.0f, 0x1 | 0x2, nullptr, PaintBackground, &s_layerBackground);
     ScrnLayerCreate(&s_rect, 7.0f, 0x1 | 0x2, nullptr, PaintText, &s_layerText);

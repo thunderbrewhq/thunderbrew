@@ -1,5 +1,5 @@
 #include "gx/texture/CGxTex.hpp"
-#include "gx/Gx.hpp"
+#include "gx/Device.hpp"
 #include <algorithm>
 
 CGxTexFlags::CGxTexFlags(EGxTexFilter filter, uint32_t wrapU, uint32_t wrapV, uint32_t force, uint32_t generateMipMaps, uint32_t renderTarget, uint32_t maxAnisotropy) {

@@ -1,5 +1,5 @@
 #include "model/CM2Cache.hpp"
-#include "gx/Gx.hpp"
+#include "gx/Device.hpp"
 #include "model/CM2Shared.hpp"
 #include "model/Model2.hpp"
 #include "util/Filesystem.hpp"
