@@ -346,49 +346,54 @@ int32_t CGlueMgr::Idle(const void* a1, void* a2) {
     int32_t complete = ClientServices::Connection()->PollStatus(op, &msg, result, errorCode);
 
     switch (CGlueMgr::m_idleState) {
-    case IDLE_LOGIN_SERVER_LOGIN: {
-        CGlueMgr::PollLoginServerLogin();
-        break;
-    }
-
-    case IDLE_ACCOUNT_LOGIN: {
-        CGlueMgr::PollAccountLogin(errorCode, msg, complete, result, op);
-        break;
-    }
-
-    case IDLE_CHARACTER_LIST: {
-        CGlueMgr::PollCharacterList(errorCode, msg, complete, result, op);
-        break;
-    }
-
-    case IDLE_DELETE_CHARACTER: {
-        CGlueMgr::PollDeleteCharacter(errorCode, msg, complete, result, op);
-        break;
-    }
-
-    case IDLE_ENTER_WORLD: {
-        CGlueMgr::PollEnterWorld();
-        break;
-    }
-
-    case IDLE_12: {
-        if (CGlueMgr::m_patchDownload) {
-            CGlueMgr::PatchDownloadIdle();
-        } else if (CGlueMgr::m_surveyDownload) {
-            CGlueMgr::SurveyDownloadIdle();
+        case IDLE_LOGIN_SERVER_LOGIN: {
+            CGlueMgr::PollLoginServerLogin();
+            break;
         }
-        break;
-    }
 
-    case IDLE_13: {
-        CGlueMgr::PollUserSurvey();
-        break;
-    }
+        case IDLE_ACCOUNT_LOGIN: {
+            CGlueMgr::PollAccountLogin(errorCode, msg, complete, result, op);
+            break;
+        }
 
-    // TODO other idle states
+        case IDLE_CHARACTER_LIST: {
+            CGlueMgr::PollCharacterList(errorCode, msg, complete, result, op);
+            break;
+        }
 
-    default:
-        break;
+        case IDLE_REALM_LIST: {
+            CGlueMgr::PollRealmList(errorCode, msg, complete, result, op);
+            break;
+        }
+
+        case IDLE_DELETE_CHARACTER: {
+            CGlueMgr::PollDeleteCharacter(errorCode, msg, complete, result, op);
+            break;
+        }
+
+        case IDLE_ENTER_WORLD: {
+            CGlueMgr::PollEnterWorld();
+            break;
+        }
+
+        case IDLE_12: {
+            if (CGlueMgr::m_patchDownload) {
+                CGlueMgr::PatchDownloadIdle();
+            } else if (CGlueMgr::m_surveyDownload) {
+                CGlueMgr::SurveyDownloadIdle();
+            }
+            break;
+        }
+
+        case IDLE_13: {
+            CGlueMgr::PollUserSurvey();
+            break;
+        }
+
+        // TODO other idle states
+
+        default:
+            break;
     }
 
     return 1;
@@ -686,6 +691,33 @@ void CGlueMgr::PollCharacterList(int32_t errorCode, const char* msg, int32_t com
 
     FrameScript_SignalEvent(34, 0);
     CGlueMgr::m_accountMsgAvailable = 0;
+}
+
+void CGlueMgr::PollRealmList(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op) {
+    FrameScript_SignalEvent(4u, "%s", msg);
+    if (CGlueMgr::HandleBattlenetDisconnect()) {
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+    }
+
+    if (!complete) {
+        return;
+    }
+
+    if (result) {
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+        FrameScript_SignalEvent(5u, nullptr);
+        CRealmList::UpdateList();
+        if (!CGlueMgr::m_accountMsgAvailable)
+            return;
+        FrameScript_SignalEvent(34u, nullptr);
+        CGlueMgr::m_accountMsgAvailable = 0;
+    } else {
+        FrameScript_SignalEvent(3u, "%s%s", "OKAY", msg);
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+    }
 }
 
 void CGlueMgr::PollDeleteCharacter(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op) {
