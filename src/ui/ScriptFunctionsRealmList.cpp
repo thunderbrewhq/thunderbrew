@@ -11,7 +11,8 @@
 #include <storm/String.hpp>
 
 int32_t Script_RequestRealmList(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    CGlueMgr::GetRealmList(StringToBOOL(L, 1, 0));
+    return 0;
 }
 
 int32_t Script_RealmListUpdateRate(lua_State* L) {

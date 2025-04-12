@@ -190,7 +190,13 @@ void ClientServices::SetMessageHandler(NETMESSAGE msgId, MESSAGE_HANDLER handler
 }
 
 void ClientServices::GetRealmList() {
-    // TODO
+    STORM_ASSERT(ClientServices::s_currentConnection);
+    ClientServices::s_currentConnection->Initiate(COP_GET_REALMS, 35, nullptr);
+    if (ClientServices::s_loginObj->IsLoggedOn()) {
+        ClientServices::s_loginObj->GetRealmList();
+    } else {
+        ClientServices::s_loginObj->Reconnect();
+    }
 }
 
 void ClientServices::GetCharacterList() {
@@ -367,6 +373,7 @@ void ClientServices::LoginServerStatus(LOGIN_STATE state, LOGIN_RESULT result, c
 
 void ClientServices::RealmEnumCallback(uint32_t a2) {
     auto connection = ClientServices::Connection();
+    STORM_ASSERT(connection);
 
     if (a2 == 1) {
         connection->Complete(0, 23);
@@ -378,7 +385,13 @@ void ClientServices::RealmEnumCallback(uint32_t a2) {
         return;
     }
 
-    // TODO statusCop checks
+    // TODO: Proper implementation 
+    if (connection->m_statusCop != COP_CONNECT) {
+        if (connection->m_statusCop == COP_GET_REALMS) {
+            connection->Complete(1, 36);
+        }
+        return;
+    }
 
     if (ClientServices::LoginConnection()->GetLoginServerType() == 1) {
         // TODO Battlenet logic
