@@ -8,7 +8,9 @@
 #include "console/Device.hpp"
 #include "console/Screen.hpp"
 #include "console/Command.hpp"
+#include "console/Console.hpp"
 #include "db/Db.hpp"
+#include "db/Startup_Strings.hpp"
 #include "glue/CGlueMgr.hpp"
 #include "gameui/CGGameUI.hpp"
 #include "gx/Screen.hpp"
@@ -21,10 +23,12 @@
 #include "util/Filesystem.hpp"
 #include <bc/Debug.hpp>
 #include <common/Prop.hpp>
+#include <common/Time.hpp>
 #include <storm/Error.hpp>
 #include <storm/Log.hpp>
 #include <bc/os/Path.hpp>
 #include <bc/File.hpp>
+#include <cstdio>
 
 CVar* Client::g_accountNameVar;
 CVar* Client::g_accountListVar;
@@ -38,13 +42,14 @@ HEVENTCONTEXT Client::g_clientEventContext;
 char Client::g_currentLocaleName[5] = {};
 
 
-static uint8_t s_expansionLevel = 0;
-static bool g_hasIsoLocale[12] = {};
-static char* s_localeArray[12] = {
+static uint8_t s_expansionLevel;
+static bool g_hasIsoLocale[12];
+static const char* s_localeArray[12] = {
     "deDE", "enGB", "enUS", "esES", "frFR", "koKR",
     "zhCN", "zhTW", "enCN", "enTW", "esMX", "ruRU"
 };
 
+static int32_t s_timeTestError;
 
 int32_t CCommand_ReloadUI(const char*, const char*) {
     CGlueMgr::m_reload = 1;
@@ -56,6 +61,21 @@ int32_t CCommand_Perf(const char*, const char*) {
     return 1;
 }
 
+#if defined(WHOA_SYSTEM_WIN)
+
+int32_t CCommand_TimingInfo(const char* command, const char* arguments) {
+    auto desiredTimingMethod = static_cast<TimingMethod>(CVar::LookupRegistered("timingMethod")->GetInt());
+    auto timingTestError = CVar::LookupRegistered("timingTestError")->GetInt();
+    auto selectedTimingMethod = OsTimeGetTimingMethod();
+
+    ConsolePrintf("Timing method desired: %d - %s", desiredTimingMethod, OsTimeGetTimingMethodName(desiredTimingMethod));
+    ConsolePrintf("Timing method selected: %d - %s", selectedTimingMethod, OsTimeGetTimingMethodName(selectedTimingMethod));
+
+    ConsolePrintf("Timing test error: %d", timingTestError);
+    return 1;
+}
+
+#endif
 
 void AsyncFileInitialize() {
     // TODO
@@ -71,17 +91,81 @@ void ClientMiscInitialize() {
 }
 
 void ClientRegisterConsoleCommands() {
-    ConsoleCommandRegister("reloadUI", &CCommand_ReloadUI, CATEGORY::GRAPHICS, nullptr);
-    ConsoleCommandRegister("perf", &CCommand_Perf, CATEGORY::DEBUG, nullptr);
+    ConsoleCommandRegister("reloadUI", CCommand_ReloadUI, GRAPHICS, nullptr);
+    ConsoleCommandRegister("perf",     CCommand_Perf,     DEBUG,    nullptr);
 
     const auto game = CATEGORY::GAME;
 
-    Client::g_accountNameVar = CVar::Register("accountName", "Saved account name", 64, "", nullptr, game);
-    Client::g_accountListVar = CVar::Register("accountList", "List of wow accounts for saved Blizzard account", 0, "", nullptr, game);
-    Client::g_accountUsesTokenVar = CVar::Register("g_accountUsesToken", "Saved whether uses authenticator", 0, "0", nullptr, game);
-    Client::g_movieVar = CVar::Register("movie", "Show movie on startup", 0, "1", nullptr, game);
-    Client::g_expansionMovieVar = CVar::Register("expansionMovie", "Show expansion movie on startup", 0, "1", nullptr, game);
-    Client::g_movieSubtitleVar = CVar::Register("movieSubtitle", "Show movie subtitles", 0, "0", nullptr, game);
+    Client::g_accountNameVar = CVar::Register(
+        "accountName",
+        "Saved account name",
+        64,
+        "",
+        nullptr,
+        GAME,
+        false,
+        nullptr,
+        false
+    );
+
+    Client::g_accountListVar = CVar::Register(
+        "accountList",
+        "List of wow accounts for saved Blizzard account",
+        0,
+        "",
+        nullptr,
+        GAME,
+        false,
+        nullptr,
+        false
+    );
+
+    Client::g_accountUsesTokenVar = CVar::Register(
+        "g_accountUsesToken",
+        "Saved whether uses authenticator",
+        0,
+        "0",
+        nullptr,
+        GAME,
+        false,
+        nullptr,
+        false
+    );
+
+    Client::g_movieVar = CVar::Register(
+        "movie",
+        "Show movie on startup",
+        0,
+        "1",
+        nullptr,
+        GAME,
+        false,
+        nullptr,
+        false
+    );
+
+    Client::g_expansionMovieVar = CVar::Register(
+        "expansionMovie",
+        "Show expansion movie on startup",
+        0,
+        "1",
+        nullptr,
+        GAME,
+        false,
+        nullptr,
+        false
+    );
+    Client::g_movieSubtitleVar = CVar::Register(
+        "movieSubtitle",
+        "Show movie subtitles",
+        0,
+        "0",
+        nullptr,
+        GAME,
+        false,
+        nullptr,
+        false
+    );
 
     // TODO
 }
@@ -315,6 +399,34 @@ bool LocaleChangedCallback(CVar*, const char*, const char* value, void*) {
     return true;
 }
 
+#if defined(WHOA_SYSTEM_WIN)
+
+bool TimingMethodCallback(CVar* h, const char* oldValue, const char* newValue, void* param) {
+    auto cv = static_cast<CVar*>(param);
+    auto newMethod = static_cast<TimingMethod>(atol(newValue));
+    if (newMethod < TimingMethods) {
+        if (oldValue) {
+            auto oldMethod = static_cast<TimingMethod>(atol(oldValue));
+            if ((newMethod != oldMethod) && cv->GetInt()) {
+                cv->SetReadOnly(false);
+                cv->Set("0", true, false, false, true);
+                cv->SetReadOnly(true);
+            }
+        }
+        return true;
+    }
+
+    ConsolePrintf("\'%s\' is not a valid timing method. Valid methods are:", newValue);
+    auto method = Timing_BestAvailable;
+    while (method < TimingMethods) {
+        ConsolePrintf("  %d - %s", method, OsTimeGetTimingMethodName(method));
+        method = static_cast<TimingMethod>(static_cast<int32_t>(method) + 1);
+    }
+    return false;
+}
+
+#endif
+
 int32_t InitializeGlobal() {
     ProcessCommandLine();
     SetPaths();
@@ -442,67 +554,55 @@ int32_t InitializeGlobal() {
 
     EventInitialize(1, 0);
 
-    // CVar* v6 = CVar::Register(
-    //     "timingTestError",
-    //     "Error reported by the timing validation system",
-    //     6,
-    //     "0",
-    //     0,
-    //     5,
-    //     0,
-    //     0,
-    //     0
-    // );
-    // v7 = v6;
+#if defined(WHOA_SYSTEM_WIN)
 
-    // CVar* v8 = CVar::Register(
-    //     "timingMethod",
-    //     "Desired method for game timing",
-    //     2,
-    //     "0",
-    //     &sub_403200,
-    //     5,
-    //     0,
-    //     v6,
-    //     0
-    // );
+    auto cvTimingTestError = CVar::Register(
+        "timingTestError",
+        "Error reported by the timing validation system",
+        0x2 | 0x4,
+        "0",
+        0,
+        DEFAULT,
+        false,
+        nullptr,
+        false
+    );
+    auto cvTimingMethod = CVar::Register(
+        "timingMethod",
+        "Desired method for game timing",
+        0x2,
+        "0",
+        TimingMethodCallback,
+        DEFAULT,
+        false,
+        cvTimingTestError,
+        false
+    );
+    OsTimeStartup(static_cast<TimingMethod>(cvTimingMethod->GetInt()));
+    ConsoleCommandRegister("timingInfo", CCommand_TimingInfo, DEBUG, nullptr);
+    s_timeTestError = OsTimeGetTestError();
+    if (s_timeTestError != cvTimingTestError->GetInt()) {
+        char value[16];
+        sprintf(value, "%d", s_timeTestError);
+        cvTimingTestError->SetReadOnly(false);
+        cvTimingTestError->Set(value, true, false, false, true);
+        cvTimingTestError->Update();
+        cvTimingTestError->SetReadOnly(true);
+        ConsolePrintf("Timing test error: %d", s_timeTestError);
+    }
 
-    // sub_86D430(v8->m_intValue);
+#else
 
-    // ConsoleCommandRegister("timingInfo", (int)sub_4032A0, 0, 0);
+    OsTimeStartup(Timing_BestAvailable);
 
-    // v9 = sub_86AD50();
+#endif
 
-    // v10 = v9 == v7->m_intValue;
+    g_Startup_StringsDB.Load(__FILE__, __LINE__);
 
-    // dword_B2F9D8 = v9;
-
-    // if (!v10) {
-    //     sprintf(&v17, "%d", v9);
-    //     CVar::SetReadOnly((int)v7, 0);
-    //     CVar::Set(v7, &v17, 1, 0, 0, 1);
-    //     CVar::Update((int)v7);
-    //     CVar::SetReadOnly((int)v7, 1);
-    //     ConsolePrintf("Timing test error: %d", (int)v7);
-    // }
-
-    // WowClientDB<Startup_StringsRec>::Load(&g_Startup_StringsDB, 0, ".\\Client.cpp", 0x12E3u);
-    // Startup_StringsRec* v11 = g_Startup_StringsDB.GetRecordByIndex(1);
-    // const char* v12;
-
-    // if (v11) {
-    //     v12 = v11->m_text;
-    // } else {
-    //     v12 = "World of Warcraft";
-    // }
-
-    // TODO
-    // - replace with above logic for loading from Startup_Strings.dbc
-    const char* v12 = "World of Warcraft";
-
+    auto titleRecord = g_Startup_StringsDB.GetRecord(MSG_TITLE_WOW);
+    auto title = titleRecord ? titleRecord->m_message : "World of Warcraft";
     char v15[260];
-
-    SStrCopy(v15, v12, 0x7FFFFFFF);
+    SStrCopy(v15, title, 0x7FFFFFFF);
 
     ConsoleDeviceInitialize(v15);
 
