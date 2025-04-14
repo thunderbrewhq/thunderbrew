@@ -380,11 +380,33 @@ int32_t SetCommandHandler(const char* command, const char* arguments) {
     SStrTokenize(&str, cvarName, sizeof(cvarName), " ,;\t\"\r\n", nullptr);
     SStrTokenize(&str, cvarValue, sizeof(cvarValue), " ,;\t\"\r\n", nullptr);
 
-    auto var = CVar::Lookup(cvarName);
-    if (var) {
-        var->Set(cvarValue, true, false, false, true);
-    } else {
+    auto cvar = CVar::s_registeredCVars.Ptr(cvarName);
+
+    if (!cvar) {
         CVar::Register(cvarName, "", 0, cvarValue, nullptr, DEFAULT, true, nullptr, false);
+        return 1;
+    }
+
+    if (cvar->m_callback) {
+        // FUN_0086b5a0(cv->m_callback);
+        if (!cvar->m_callback(cvar, cvar->GetString(), cvarValue, cvar->m_arg)) {
+            return 1;
+        }
+    }
+
+    cvar->m_modified++;
+    if (!(cvar->m_flags & 0x2)) {
+        cvar->m_latchedValue.Copy(cvarValue);
+        CVar::m_needsSave = true;
+    } else if (!(cvar->m_flags & 0x4)) {
+        if (cvar->GetString() && !SStrCmpI(cvarValue, cvar->GetString(), STORM_MAX_STR)) {
+            return 1;
+        }
+
+        cvar->m_stringValue.Copy(cvarValue);
+        cvar->m_intValue = SStrToInt(cvarValue);
+        cvar->m_floatValue = SStrToFloat(cvarValue);
+        CVar::m_needsSave = true;
     }
 
     return 1;
