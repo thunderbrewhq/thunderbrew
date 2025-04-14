@@ -10,8 +10,8 @@
 #include "event/Event.hpp"
 #include "event/Types.hpp"
 
-#define SHIFT_MODIFIER(data) ((data->metaKeyState & (1 << KEY_LSHIFT) | (1 << KEY_RSHIFT)) != 0)
-#define CTRL_MODIFIER(data) ((data->metaKeyState & (1 << KEY_LCONTROL) | (1 << KEY_RCONTROL)) != 0)
+#define SHIFT_MODIFIER(data) ((data->metaKeyState & ((1 << KEY_LSHIFT) | (1 << KEY_RSHIFT))) != 0)
+#define CTRL_MODIFIER(data) ((data->metaKeyState & ((1 << KEY_LCONTROL) | (1 << KEY_RCONTROL))) != 0)
 
 namespace {
 
