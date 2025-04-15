@@ -24,8 +24,11 @@
 #include <bc/Debug.hpp>
 #include <common/Prop.hpp>
 #include <common/Time.hpp>
+#include <common/Processor.hpp>
 #include <storm/Error.hpp>
 #include <storm/Log.hpp>
+#include <storm/Registry.hpp>
+#include <storm/Option.hpp>
 #include <bc/os/Path.hpp>
 #include <bc/File.hpp>
 #include <cstdio>
@@ -628,18 +631,25 @@ void CommonMain() {
     // TODO:
     // SErrCatchUnhandledExceptions();
     // OsSystemInitialize("Blizzard Entertainment World of Warcraft", 0);
-    // int option = 1;
-    // StormSetOption(10, &option, sizeof(option));
-    // StormSetOption(11, &option, sizeof(option));
-    // OsSystemEnableCpuLog();
+    int32_t option = 1;
+    StormSetOption(10, &option, sizeof(option));
+    StormSetOption(11, &option, sizeof(option));
+
+    // QoL: enable debug logs
+#if !defined(NDEBUG)
+    option = 1;
+    StormSetOption(5, &option, sizeof(option));
+#endif
+
+    OsSystemEnableCpuLog();
 
     // SetPaths() moved into InitializeGlobal()
 
-    // int sendErrorLogs = 1;
-    // if (!SRegLoadValue("World of Warcraft\\Client", "SendErrorLogs", 0, &sendErrorLogs)) {
-    //     sendErrorLogs = 1;
-    //     SRegSaveValue("World of Warcraft\\Client", "SendErrorLogs", 0, sendErrorLogs);
-    // }
+    uint32_t sendErrorLogs = 1;
+    if (!SRegLoadValue("World of Warcraft\\Client", "SendErrorLogs", 0, &sendErrorLogs)) {
+        sendErrorLogs = 1;
+        SRegSaveValue("World of Warcraft\\Client", "SendErrorLogs", 0, sendErrorLogs);
+    }
 
     // SErrSetLogTitleString("World of WarCraft (build 12340)");
     // SErrSetLogTitleCallback(WowLogHeader);
