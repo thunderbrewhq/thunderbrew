@@ -633,6 +633,12 @@ void DestroyGlobal() {
     // TODO
 }
 
+void StormDestroy() {
+    // TODO
+
+    SRegDestroy();
+}
+
 void CommonMain() {
     StormInitialize();
 
@@ -670,8 +676,9 @@ void CommonMain() {
         DestroyGlobal();
     }
 
+    StormDestroy();
+
     // TODO:
-    // StormDestroy();
     // Misc Cleanup
 }
 
