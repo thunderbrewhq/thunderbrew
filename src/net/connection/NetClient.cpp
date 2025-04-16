@@ -1,7 +1,7 @@
 #include "net/connection/NetClient.hpp"
 #include "net/connection/WowConnection.hpp"
 #include "glue/CGlueMgr.hpp"
-#include "console/Line.hpp"
+#include "console/Console.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <new>

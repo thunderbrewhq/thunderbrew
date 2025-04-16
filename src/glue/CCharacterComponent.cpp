@@ -1,1 +1,1 @@
-#include "glue/CCharacterComponent.cpp"
+#include "glue/CCharacterComponent.hpp"
