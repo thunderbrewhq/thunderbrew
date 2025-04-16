@@ -3,10 +3,18 @@
 
 #include "gx/CGxFormat.hpp"
 
-struct DefaultSettings {
-    CGxFormat format;
-};
+#include "console/Detect.hpp"
+
+extern DefaultSettings s_defaults;
+extern Hardware s_hardware;
+extern bool s_hwChanged;
+extern bool s_hwDetect;
+extern CGxFormat s_requestedFormat;
 
 void ConsoleDeviceInitialize(const char* title);
+
+bool ConsoleDeviceExists();
+
+void ConsoleDeviceDestroy();
 
 #endif

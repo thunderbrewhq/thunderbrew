@@ -1,6 +1,6 @@
 #ifndef GX_GL_SDL_GL_SDL_CONTEXT_HPP
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 #include "gx/glsdl/GLSDLWindow.hpp"
 #include "gx/glsdl/GLTypes.hpp"

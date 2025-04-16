@@ -27,7 +27,7 @@ void GLSDLContext::Create(GLSDLWindow* window) {
 void GLSDLContext::Destroy() {
     BC_ASSERT(this->m_sdlGLContext != nullptr);
 
-    SDL_GL_DeleteContext(this->m_sdlGLContext);
+    SDL_GL_DestroyContext(this->m_sdlGLContext);
     this->m_sdlGLContext = nullptr;
 }
 
@@ -37,7 +37,7 @@ bool GLSDLContext::IsCurrentContext() {
 
 void GLSDLContext::MakeCurrent(GLSDLWindow* window) {
     auto status = SDL_GL_MakeCurrent(window->m_sdlWindow, this->m_sdlGLContext);
-    BC_ASSERT(status == 0);
+    BC_ASSERT(status);
 }
 
 int32_t GLSDLContext::GetSampleCount() {

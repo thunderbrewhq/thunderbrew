@@ -1,5 +1,6 @@
+#include "console/Console.hpp"
 #include "console/Command.hpp"
-#include "console/Line.hpp"
+#include "console/command/Commands.hpp"
 
 struct CategoryTranslation {
     CATEGORY categoryValue;
@@ -7,18 +8,18 @@ struct CategoryTranslation {
 };
 
 CategoryTranslation s_translation[] = {
-    { DEBUG,    "debug"    },
+    { DEBUG,    "debug" },
     { GRAPHICS, "graphics" },
-    { CONSOLE,  "console"  },
-    { COMBAT,   "combat"   },
-    { GAME,     "game"     },
-    { DEFAULT,  "default"  },
-    { NET,      "net"      },
-    { SOUND,    "sound"    },
-    { GM,       "gm"       }
+    { CONSOLE,  "console" },
+    { COMBAT,   "combat" },
+    { GAME,     "game" },
+    { DEFAULT,  "default" },
+    { NET,      "net" },
+    { SOUND,    "sound" },
+    { GM,       "gm" }
 };
 
-int32_t ConsoleCommand_Help(const char* command, const char* arguments) {
+DECLARE_COMMAND(Help) {
     char buffer[128];
     bool showCategories = *arguments == '\0';
 
@@ -42,70 +43,72 @@ int32_t ConsoleCommand_Help(const char* command, const char* arguments) {
 
         ConsoleWrite(buffer, WARNING_COLOR);
         ConsoleWrite("For more information type 'help [command] or [category]'", WARNING_COLOR);
-    } else {
-        for (size_t i = 0; i < numTranslation; i++) {
-            auto& translation = s_translation[i];
 
-            if (SStrCmpI(translation.categoryString, arguments, STORM_MAX_STR) == 0) {
-                if (translation.categoryValue != NONE) {
-                    memset(buffer, 0, sizeof(buffer));
-                    SStrPrintf(buffer, sizeof(buffer), "Commands registered for the category %s:", arguments);
+        return 1;
+    }
 
-                    ConsoleWrite(buffer, WARNING_COLOR);
+    for (size_t i = 0; i < numTranslation; i++) {
+        auto& translation = s_translation[i];
 
-                    buffer[0] = '\0';
+        if (SStrCmpI(translation.categoryString, arguments, STORM_MAX_STR) == 0) {
+            if (translation.categoryValue != NONE) {
+                memset(buffer, 0, sizeof(buffer));
+                SStrPrintf(buffer, sizeof(buffer), "Commands registered for the category %s:", arguments);
 
-                    uint32_t counter = 0;
+                ConsoleWrite(buffer, WARNING_COLOR);
 
-                    for (auto cmd = g_consoleCommandHash.Head(); cmd; cmd = g_consoleCommandHash.Next(cmd)) {
-                        if (cmd->m_category == translation.categoryValue) {
-                            SStrPack(buffer, cmd->m_key.m_str, sizeof(buffer));
-                            SStrPack(buffer, ", ", sizeof(buffer));
+                buffer[0] = '\0';
 
-                            if (++counter == 8) {
-                                ConsoleWrite(buffer, DEFAULT_COLOR);
-                                buffer[0] = '\0';
-                                counter = 0;
-                            }
+                uint32_t counter = 0;
+
+                for (auto cmd = g_consoleCommandHash.Head(); cmd; cmd = g_consoleCommandHash.Next(cmd)) {
+                    if (cmd->m_category == translation.categoryValue) {
+                        SStrPack(buffer, cmd->m_key.m_str, sizeof(buffer));
+                        SStrPack(buffer, ", ", sizeof(buffer));
+
+                        if (++counter == 8) {
+                            ConsoleWrite(buffer, DEFAULT_COLOR);
+                            buffer[0] = '\0';
+                            counter = 0;
                         }
                     }
-
-                    const char* wr = nullptr;
-
-                    if (buffer[0]) {
-                        auto comma = reinterpret_cast<char*>(SStrChrR(buffer, ','));
-                        if (comma) {
-                            *comma = 0x00;
-                        }
-
-                        wr = buffer;
-                    } else {
-                        wr = "NONE";
-                    }
-
-                    ConsoleWrite(wr, DEFAULT_COLOR);
-                    break;
                 }
+
+                const char* wr = nullptr;
+
+                if (buffer[0]) {
+                    auto comma = reinterpret_cast<char*>(SStrChrR(buffer, ','));
+                    if (comma) {
+                        *comma = '\0';
+                    }
+
+                    wr = buffer;
+                } else {
+                    wr = "NONE";
+                }
+
+                ConsoleWrite(wr, DEFAULT_COLOR);
+                break;
             }
         }
-
-        auto cmd = g_consoleCommandHash.Ptr(arguments);
-
-        if (cmd == nullptr) {
-            return 1;
-        }
-
-        SStrPrintf(buffer, 0xa5, "Help for command %s:", arguments);
-        ConsoleWrite(buffer, WARNING_COLOR);
-
-        auto help = cmd->m_helpText;
-        if (help == nullptr) {
-            help = "No help yet";
-        }
-
-        SStrPrintf(buffer, 0xa5, "     %s %s", arguments, help);
-        ConsoleWrite(buffer, DEFAULT_COLOR);
     }
+
+    auto cmd = g_consoleCommandHash.Ptr(arguments);
+
+    if (cmd == nullptr) {
+        return 1;
+    }
+
+    SStrPrintf(buffer, 0xA5, "Help for command %s:", arguments);
+    ConsoleWrite(buffer, WARNING_COLOR);
+
+    auto help = cmd->m_helpText;
+    if (help == nullptr) {
+        help = "No help yet";
+    }
+
+    SStrPrintf(buffer, 0xA5, "     %s %s", arguments, help);
+    ConsoleWrite(buffer, DEFAULT_COLOR);
 
     return 1;
 }

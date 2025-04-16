@@ -10,19 +10,7 @@ class CRect;
 
 extern const char** g_gxShaderProfileNames[GxShTargets_Last];
 
-const CGxCaps& GxCaps();
-
-bool GxCapsWindowHasFocus(int32_t);
-
-void GxCapsWindowSize(CRect&);
-
 void GxFormatColor(CImVector&);
-
-void GxLogOpen();
-
-void GxLogClose();
-
-void GxLog(const char* format, ...);
 
 void GxSetMaxFPS(uint32_t maxFPS);
 

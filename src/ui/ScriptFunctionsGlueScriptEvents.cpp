@@ -21,13 +21,22 @@ int32_t Script_IsShiftKeyDown(lua_State* L) {
 
 int32_t Script_GetBuildInfo(lua_State* L) {
     auto szVersion = FrameScript_GetText("VERSION", -1, GENDER_NOT_APPLICABLE);
+
+#if defined(NDEBUG)
+#if defined(WHOA_BUILD_ASSERTIONS)
+    auto szVersionType = FrameScript_GetText("ASSERTIONS_ENABLED_BUILD", -1, GENDER_NOT_APPLICABLE);
+#else
     auto szVersionType = FrameScript_GetText("RELEASE_BUILD", -1, GENDER_NOT_APPLICABLE);
+#endif
+#else
+    auto szVersionType = FrameScript_GetText("DEBUG_BUILD", -1, GENDER_NOT_APPLICABLE);
+#endif
 
     lua_pushstring(L, szVersion);
     lua_pushstring(L, szVersionType);
-    lua_pushstring(L, "3.3.5");
-    lua_pushstring(L, "12340");
-    lua_pushstring(L, "Jun 24 2010");
+    lua_pushstring(L, WHOA_VERSION_MAJOR "." WHOA_VERSION_MINOR "." WHOA_VERSION_PATCH);
+    lua_pushstring(L, WHOA_VERSION_BUILD);
+    lua_pushstring(L, __DATE__);
     return 5;
 }
 

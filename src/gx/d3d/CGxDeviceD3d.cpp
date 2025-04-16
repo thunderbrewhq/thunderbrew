@@ -1276,6 +1276,11 @@ void CGxDeviceD3d::CursorSetVisible(int32_t visible) {
     }
 }
 
+void CGxDeviceD3d::CursorUnlock(uint32_t x, uint32_t y) {
+    CGxDevice::CursorUnlock(x, y);
+    this->m_hwCursorNeedsUpdate = 1;
+}
+
 void CGxDeviceD3d::ICursorDraw() {
     if (!this->m_hwCursor) {
         this->ISceneBegin();
@@ -2195,12 +2200,8 @@ void CGxDeviceD3d::ShaderCreate(CGxShader* shaders[], EGxShTarget target, const 
 }
 
 int32_t CGxDeviceD3d::StereoEnabled() {
-    return this->m_d3dStereoEnabled == 1;
-}
-
-void CGxDeviceD3d::CursorUnlock(uint32_t x, uint32_t y) {
-    CGxDevice::CursorUnlock(x, y);
-    this->m_hwCursorNeedsUpdate = 1;
+    // return this->m_d3dStereoEnabled == 1;
+    return 0;
 }
 
 void CGxDeviceD3d::XformSetProjection(const C44Matrix& matrix) {

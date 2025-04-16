@@ -27,7 +27,10 @@ struct BlpPalPixel {
     uint8_t pad;
 };
 
+static_assert(sizeof(BlpPalPixel) == 4);
+
 class CBLPFile {
+#pragma pack(push, 1)
     struct BLPHeader {
         uint32_t magic = 0x32504C42;
         uint32_t formatVersion = 1;
@@ -49,6 +52,7 @@ class CBLPFile {
             } jpeg;
         } extended;
     };
+#pragma pack(pop)
 
     public:
         // Static variables

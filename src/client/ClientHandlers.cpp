@@ -3,7 +3,7 @@
 #include <storm/Error.hpp>
 #include <common/DataStore.hpp>
 
-#include "console/Line.hpp"
+#include "console/Console.hpp"
 #include "world/World.hpp"
 
 

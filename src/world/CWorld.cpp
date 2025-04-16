@@ -1,5 +1,5 @@
 #include "world/CWorld.hpp"
-#include "gx/Gx.hpp"
+#include "gx/Device.hpp"
 #include "gx/Shader.hpp"
 #include "model/Model2.hpp"
 

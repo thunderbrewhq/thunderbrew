@@ -57,7 +57,7 @@ void ProcessCommandLine() {
 }
 
 const char* CmdLineGetString(CMDOPT opt) {
-    static char buffer[260] = {0};
+    static char buffer[260];
 
     SCmdGetString(opt, buffer, 260);
 

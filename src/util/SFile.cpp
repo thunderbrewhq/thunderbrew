@@ -145,6 +145,13 @@ int32_t SFile::OpenEx(SArchive* archive, const char* filename, uint32_t flags, S
     }
 
     SStrCopy(path, filename, STORM_MAX_PATH);
+    for (int32_t i = 0; i < STORM_MAX_PATH; i++) {
+        if (!path[i]) {
+            break;
+        }
+
+        path[i] = static_cast<char>(tolower(path[i]));
+    }
 
     SFILE_TYPE filetype = SFILE_PLAIN;
     void* filehandle;
@@ -216,7 +223,9 @@ int32_t SFile::Read(SFile* file, void* buffer, size_t bytestoread, size_t* bytes
         auto stream = reinterpret_cast<Blizzard::File::StreamRecord*>(file->m_handle);
         auto count = static_cast<int32_t>(bytestoread);
         Blizzard::File::Read(stream, buffer, &count);
-        *bytesread = static_cast<size_t>(count);
+        if (bytesread) {
+            *bytesread = static_cast<size_t>(count);
+        }
         return 1;
     }
     case SFILE_PAQ: {

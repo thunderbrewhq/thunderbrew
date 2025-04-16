@@ -11,7 +11,9 @@
 #include "gx/Shader.hpp"
 #include "cursor/Cursor.hpp"
 #include <cstdint>
+#include <cstdarg>
 #include <storm/Hash.hpp>
+#include <storm/Log.hpp>
 #include <tempest/Box.hpp>
 #include <tempest/Rect.hpp>
 
@@ -39,6 +41,14 @@ struct ShaderConstants {
 
 class CGxDevice {
     public:
+        // Types
+        typedef void (*DEVICE_RESTORED_CALLBACK)();
+        typedef void (*TEXTURE_RECREATION_CALLBACK)();
+        typedef void (*STEREO_CHANGED_CALLBACK)();
+
+        static HSLOG m_log;
+        static uint32_t m_logBytes;
+
         // Static variables
         static uint32_t s_alphaRef[];
         static C3Vector s_pointScaleIdentity;
@@ -52,13 +62,19 @@ class CGxDevice {
         static CGxShader* s_uiPixelShader;
 
         // Static functions
-        static bool AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes);
+        static int32_t AdapterID(uint16_t& vendorID, uint16_t& deviceID, uint32_t& driverVersionHi, uint32_t& driverVersionLow);
+        static int32_t AdapterInfer(uint16_t& deviceID);
+        static int32_t AdapterDesktopMode(CGxMonitorMode& mode);
+        static int32_t AdapterMonitorModes(TSGrowableArray<CGxMonitorMode>& modes);
         static void ICursorUpdate(EGxTexCommand, uint32_t, uint32_t, uint32_t, uint32_t, void*, uint32_t&, const void*&);
         static void LogOpen();
+        static void VLog(const char* format, va_list args);
         static void Log(const char* format, ...);
         static void Log(const CGxFormat& format);
         static void LogClose();
         static uint32_t PrimCalcCount(EGxPrim primType, uint32_t count);
+
+        // graphics api factory
 #if defined(WHOA_SYSTEM_WIN)
         static CGxDevice* NewD3d();
         static CGxDevice* NewD3d9Ex();
@@ -156,6 +172,7 @@ class CGxDevice {
         const CGxCaps& Caps() const;
         CGxBuf* BufCreate(CGxPool* pool, uint32_t itemSize, uint32_t itemCount, uint32_t index);
         CGxBuf* BufStream(EGxPoolTarget target, uint32_t itemSize, uint32_t itemCount);
+        EGxApi DeviceApi();
         void DeviceCreatePools();
         void DeviceCreateStreamBufs();
         const CRect& DeviceCurWindow();

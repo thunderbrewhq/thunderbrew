@@ -2,7 +2,7 @@
 #define OS_COMPAT_HPP
 
 #if defined(WHOA_SYSTEM_MAC)
-    #include "os/compat/Mac.hpp"
+#include "os/mac/Compat.hpp"
 #endif
 
 #endif

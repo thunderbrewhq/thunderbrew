@@ -1,19 +1,55 @@
 #include "event/Synthesize.hpp"
+#include "event/Event.hpp"
+#include "event/Queue.hpp"
+#include "event/Types.hpp"
+#include "event/Scheduler.hpp"
 #include "event/EvtContext.hpp"
 #include "event/Queue.hpp"
 #include <common/Time.hpp>
+#include <common/Call.hpp>
 
 #if defined(WHOA_SYSTEM_WIN)
 #include <windows.h>
 #endif
 
 void SynthesizeDestroy(EvtContext* context) {
-    // TODO
-#if defined(WHOA_SYSTEM_WIN)
-    ExitProcess(0);
-#else
-    exit(0);
-#endif
+    if (!(context->m_schedFlags & 0x1)) {
+        context->m_schedFlags |= 0x1;
+        context->m_schedLastIdle = OsGetAsyncTimeMs();
+        IEvtQueueDispatch(context, EVENT_ID_INITIALIZE, nullptr);
+    }
+
+    if (context->m_schedFlags & 0x2) {
+        SInterlockedDecrement(&Event::s_interactiveCount);
+        if (!Event::s_interactiveCount) {
+            IEvtSchedulerShutdown();
+        }
+    }
+
+    IEvtQueueDispatch(context, EVENT_ID_3, nullptr);
+    context->m_critsect.Enter();
+    context->m_schedState = EvtContext::SCHEDSTATE_DESTROYED;
+    context->m_critsect.Leave();
+    IEvtQueueDispatchAll(context);
+    IEvtQueueDispatch(context, EVENT_ID_DESTROY, nullptr);
+
+    OsCallResetContext(context->m_callContext);
+    PropSelectContext(0);
+
+    int32_t findMask;
+    TSingletonInstanceId<EvtContext, offsetof(EvtContext, m_id)>::s_idTable.Ptr(
+        context->m_id,
+        1,
+        &findMask);
+
+    DEL(context);
+
+    if (findMask != -1) {
+        TSingletonInstanceId<EvtContext, offsetof(EvtContext, m_id)>::s_idTable.Unlock(
+            findMask & (INSTANCE_TABLE_SLOT_COUNT - 1),
+            findMask >= INSTANCE_TABLE_SLOT_COUNT
+        );
+    }
 }
 
 void SynthesizeIdle(EvtContext* context, uint32_t currTime, float elapsedSec) {

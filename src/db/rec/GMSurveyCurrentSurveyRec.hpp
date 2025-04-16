@@ -10,7 +10,6 @@ class GMSurveyCurrentSurveyRec {
     public:
         int32_t m_langid;
         int32_t m_gmsurveyID;
-        int32_t m_generatedID;
 
         static const char* GetFilename();
         static uint32_t GetNumColumns();

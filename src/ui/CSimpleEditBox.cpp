@@ -1,5 +1,5 @@
 #include "ui/CSimpleEditBox.hpp"
-#include "gx/Gx.hpp"
+#include "gx/Device.hpp"
 #include "gx/Coordinate.hpp"
 #include "ui/CSimpleEditBoxScript.hpp"
 #include "ui/CSimpleFontedFrameFont.hpp"

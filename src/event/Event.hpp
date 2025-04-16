@@ -35,6 +35,8 @@ namespace Event {
 
 HEVENTCONTEXT EventCreateContextEx(int32_t interactive, int32_t (*initializeHandler)(const void*, void*), int32_t (*destroyHandler)(const void*, void*), uint32_t idleTime, uint32_t debugFlags);
 
+void EventDestroy();
+
 void EventDoMessageLoop();
 
 HEVENTCONTEXT EventGetCurrentContext();

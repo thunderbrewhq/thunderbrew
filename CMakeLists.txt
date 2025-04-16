@@ -30,6 +30,18 @@ include(lib/system/cmake/system.cmake)
 
 # Build options
 
+set(WHOA_VERSION_BUILD 12340)
+set(WHOA_VERSION_MAJOR 3)
+set(WHOA_VERSION_MINOR 3)
+set(WHOA_VERSION_PATCH 5)
+set(WHOA_VERSION_HOTFIX a)
+
+add_definitions(-DWHOA_VERSION_BUILD="${WHOA_VERSION_BUILD}")
+add_definitions(-DWHOA_VERSION_MAJOR="${WHOA_VERSION_MAJOR}")
+add_definitions(-DWHOA_VERSION_MINOR="${WHOA_VERSION_MINOR}")
+add_definitions(-DWHOA_VERSION_PATCH="${WHOA_VERSION_PATCH}")
+add_definitions(-DWHOA_VERSION_HOTFIX="${WHOA_VERSION_HOTFIX}")
+
 # UBsan
 set(WHOA_UB_SAN_HELP_TEXT "Disable/Enable the Undefined Behavior Sanitizer. This is turned on by default in Debug build types. Has no effect when using MSVC.")
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")

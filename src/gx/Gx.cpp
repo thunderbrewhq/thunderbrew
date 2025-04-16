@@ -37,44 +37,6 @@ const char** g_gxShaderProfileNames[GxShTargets_Last] = {
 static uint32_t s_maxFPS;
 static uint32_t s_maxFPSBk;
 
-const CGxCaps& GxCaps() {
-    return g_theGxDevicePtr->Caps();
-}
-
-bool GxCapsWindowHasFocus(int32_t a1) {
-    // TODO
-    return true;
-}
-
-void GxCapsWindowSize(CRect& rect) {
-    g_theGxDevicePtr->CapsWindowSize(rect);
-}
-
-void GxFormatColor(CImVector& color) {
-    if (GxCaps().m_colorFormat == GxCF_rgba) {
-        CImVector formattedColor = {
-            color.r,
-            color.g,
-            color.b,
-            color.a
-        };
-
-        color = formattedColor;
-    }
-}
-
-void GxLogOpen() {
-    CGxDevice::LogOpen();
-}
-
-void GxLogClose() {
-    CGxDevice::LogClose();
-}
-
-void GxLog(const char* format, ...) {
-    // TODO
-}
-
 void GxSetMaxFPS(uint32_t maxFPS) {
     s_maxFPS = maxFPS;
 }
@@ -89,4 +51,17 @@ uint32_t GxGetMaxFPS() {
 
 uint32_t GxGetMaxFPSBk() {
     return s_maxFPSBk;
+}
+
+void GxFormatColor(CImVector& color) {
+    if (GxCaps().m_colorFormat == GxCF_rgba) {
+        CImVector formattedColor = {
+            color.r,
+            color.g,
+            color.b,
+            color.a
+        };
+
+        color = formattedColor;
+    }
 }

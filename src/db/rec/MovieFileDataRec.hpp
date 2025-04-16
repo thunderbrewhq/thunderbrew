@@ -10,7 +10,6 @@ class MovieFileDataRec {
     public:
         int32_t m_fileDataID;
         int32_t m_resolution;
-        int32_t m_generatedID;
 
         static const char* GetFilename();
         static uint32_t GetNumColumns();

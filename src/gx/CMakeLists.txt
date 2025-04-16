@@ -61,11 +61,11 @@ if (WHOA_SYSTEM_WIN)
     endif ()
 endif ()
 
-# Link SDL2 and GLEW for GLSDL
+# Link SDL3 and GLEW for GLSDL
 if (WHOA_BUILD_GLSDL)
     target_link_libraries(gx
         PRIVATE
-            SDL2::SDL2-static
+            SDL3::SDL3-static
             libglew_static
         )
 endif ()
