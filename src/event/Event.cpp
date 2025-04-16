@@ -86,6 +86,10 @@ HEVENTCONTEXT EventCreateContextEx(int32_t interactive, int32_t (*initializeHand
     return IEvtSchedulerCreateContext(interactive, initializeHandler, destroyHandler, idleTime, debugFlags);
 }
 
+void EventDestroy() {
+    // TODO
+}
+
 void EventDoMessageLoop() {
     IEvtSchedulerProcess();
 }

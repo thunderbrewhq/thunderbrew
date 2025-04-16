@@ -8,6 +8,7 @@
 
 const char* s_filename = nullptr;
 bool CVar::m_needsSave;
+bool CVar::m_initialized;
 TSHashTable<CVar, HASHKEY_STRI> CVar::s_registeredCVars;
 
 CVar* CVar::Lookup(const char* name) {
@@ -34,6 +35,10 @@ CVar* CVar::LookupRegistered(const char* name) {
 }
 
 CVar* CVar::Register(const char* name, const char* help, uint32_t flags, const char* value, HANDLER_FUNC fcn, uint32_t category, bool a7, void* arg, bool a9) {
+    if (!name || !*name || !value) {
+        return nullptr;
+    }
+
     auto cv = s_registeredCVars.Ptr(name);
 
     if (cv) {
@@ -280,6 +285,7 @@ int32_t CVar::Load(const char* filename) {
 void CVar::Initialize(const char* filename) {
     STORM_ASSERT(filename);
     s_filename = filename;
+    m_initialized = 1;
 
     // Get data path
     char path[STORM_MAX_PATH] = {0};
@@ -294,6 +300,72 @@ void CVar::Initialize(const char* filename) {
     ConsoleCommandRegister("cvarlist",     CvarListCommandHandler,    DEFAULT, "List cvars");
 
     CVar::Load(s_filename);
+}
+
+int32_t CVar::IterateForArchive(uint32_t a1, uint32_t a2, ITERATE_FUNC cb, void* param) {
+    auto cvar = s_registeredCVars.Head();
+
+    while (cvar) {
+        if (cvar->m_flags & 0x1) {
+            if (!(cvar->m_flags & 0x80) && (cvar->m_flags & 0x30) == a1 && (cvar->m_flags & a2) == 0) {
+                const char* value;
+                if ((value = cvar->m_latchedValue.GetString()) ||
+                    (value = cvar->m_stringValue.GetString()) ||
+                    (value = cvar->m_defaultValue.GetString())) {
+                    auto defaultvalue = cvar->m_defaultValue.GetString();
+                    if (!defaultvalue || SStrCmp(value, defaultvalue, STORM_MAX_STR)) {
+                        if (!cb(cvar->m_key.m_str, value, param)) {
+                            return 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        cvar = s_registeredCVars.Next(cvar);
+    }
+
+    return 1;
+}
+
+bool CVar::SaveCvar(const char* key, const char* value, void* param) {
+    char buffer[STORM_MAX_PATH];
+    SStrPrintf(buffer, sizeof(buffer), "SET %s \"%s\"\n", key, value);
+    uint32_t byteswritten = 0;
+    OsWriteFile(static_cast<HOSFILE>(param), buffer, SStrLen(buffer), &byteswritten);
+    return byteswritten != 0;
+}
+
+int32_t CVarSaveFile() {
+    if (!CVar::m_needsSave) {
+        return 1;
+    }
+
+    char name[STORM_MAX_PATH];
+
+    CVar::m_needsSave = false;
+    SStrCopy(name, "WTF\\", sizeof(name));
+    SStrPack(name, s_filename, sizeof(name));
+
+    int32_t result = 0;
+
+    auto file = OsCreateFile(name, OS_GENERIC_WRITE, 0, OS_CREATE_ALWAYS, OS_FILE_ATTRIBUTE_NORMAL, OS_FILE_TYPE_DEFAULT);
+    if (file != HOSFILE_INVALID) {
+        result = CVar::IterateForArchive(0, 0, CVar::SaveCvar, file);
+        OsCloseFile(file);
+    }
+
+    return result;
+}
+
+void CVar::Destroy() {
+    m_initialized = 0;
+    CVarSaveFile();
+    ConsoleCommandUnregister("set");
+    ConsoleCommandUnregister("cvar_reset");
+    ConsoleCommandUnregister("cvar_default");
+    ConsoleCommandUnregister("cvarlist");
+    s_registeredCVars.Clear();
 }
 
 int32_t CvarResetCommandHandler(const char* command, const char* arguments) {
@@ -395,7 +467,7 @@ int32_t SetCommandHandler(const char* command, const char* arguments) {
     }
 
     cvar->m_modified++;
-    if (!(cvar->m_flags & 0x2)) {
+    if ((cvar->m_flags & 0x2)) {
         cvar->m_latchedValue.Copy(cvarValue);
         CVar::m_needsSave = true;
     } else if (!(cvar->m_flags & 0x4)) {

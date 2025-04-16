@@ -51,7 +51,7 @@ void ResetSyncState(EvtContext* context) {
 
     auto list = &context->m_queueSyncKeyDownList;
 
-    while (node = list->Head()) {
+    while ((node = list->Head())) {
         list->UnlinkNode(node);
         list->DeleteNode(node);
     }

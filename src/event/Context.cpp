@@ -1,4 +1,5 @@
 #include "event/Context.hpp"
+#include "Event.hpp"
 #include "event/Event.hpp"
 #include "event/EvtThread.hpp"
 #include <common/Time.hpp>
@@ -53,8 +54,32 @@ HEVENTCONTEXT AttachContextToThread(EvtContext* context) {
     return context;
 }
 
-void DetachContextFromThread(uint32_t a1, EvtContext* a2) {
-    // TODO
+void DetachContextFromThread(uint32_t hThread, EvtContext* context) {
+    SInterlockedIncrement(&Event::s_threadListContention);
+    Event::s_threadListCritsect.Enter();
+
+    auto threadSlot = Event::s_threadSlots[hThread];
+    if (threadSlot) {
+        threadSlot->m_weightTotal -= context->m_schedWeight;
+        threadSlot->m_contextCount--;
+
+        threadSlot->m_weightAvg = threadSlot->m_contextCount ? threadSlot->m_weightTotal / threadSlot->m_contextCount : 0;
+
+        auto thread = Event::s_threadList.Head();
+        while (thread) {
+            if (thread != threadSlot && thread->m_weightAvg) {
+                if ((thread->m_weightAvg + threadSlot->m_weightTotal) <= thread->m_weightTotal) {
+                    thread->m_rebalance += (thread->m_weightTotal - threadSlot->m_weightTotal) / thread->m_weightAvg;
+                }
+                thread->m_rebalance = std::min(thread->m_rebalance, thread->m_contextCount);
+            }
+
+            thread = thread->Next();
+        }
+    }
+
+    Event::s_threadListCritsect.Leave();
+    SInterlockedDecrement(&Event::s_threadListContention);
 }
 
 EvtContext* GetNextContext(uint32_t hThread) {

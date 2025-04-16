@@ -1,4 +1,5 @@
 #include "event/Scheduler.hpp"
+#include "Event.hpp"
 #include "event/Context.hpp"
 #include "event/Event.hpp"
 #include "event/EvtContext.hpp"
@@ -149,6 +150,18 @@ void IEvtSchedulerProcess() {
 
 void IEvtSchedulerShutdown() {
     // TODO
+    Event::s_shutdownEvent.Set();
+    if (Event::s_netServer) {
+        return;
+    }
+
+    Event::s_threadListCritsect.Enter();
+    for (uint32_t i = 0; i < Event::s_threadSlotCount; i++) {
+        if (Event::s_threadSlots[i]) {
+            Event::s_threadSlots[i]->m_wakeEvent.Set();
+        }
+    }
+    Event::s_threadListCritsect.Leave();
 }
 
 uint32_t InitializeSchedulerThread() {

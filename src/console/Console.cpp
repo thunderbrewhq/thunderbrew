@@ -35,5 +35,5 @@ void ConsoleSetHotKey(KEY hotkey) {
 }
 
 void ConsolePostClose() {
-    EventPostCloseEx(EventGetCurrentContext());
+    EventPostClose();
 }

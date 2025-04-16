@@ -97,8 +97,6 @@ void ClientRegisterConsoleCommands() {
     ConsoleCommandRegister("reloadUI", CCommand_ReloadUI, GRAPHICS, nullptr);
     ConsoleCommandRegister("perf",     CCommand_Perf,     DEBUG,    nullptr);
 
-    const auto game = CATEGORY::GAME;
-
     Client::g_accountNameVar = CVar::Register(
         "accountName",
         "Saved account name",
@@ -180,7 +178,6 @@ void ClientPostClose(int32_t a1) {
 
 int32_t DestroyEngineCallback(const void* a1, void* a2) {
     // TODO
-
     return 1;
 }
 
@@ -625,6 +622,17 @@ int32_t InitializeGlobal() {
     return 1;
 }
 
+void DestroyGlobal() {
+    // TODO
+
+    OsTimeShutdown();
+    EventDestroy();
+    ConsoleDeviceDestroy();
+    CVar::Destroy();
+
+    // TODO
+}
+
 void CommonMain() {
     StormInitialize();
 
@@ -659,7 +667,7 @@ void CommonMain() {
 
     if (InitializeGlobal()) {
         EventDoMessageLoop();
-        // TODO: DestroyGlobal();
+        DestroyGlobal();
     }
 
     // TODO:
