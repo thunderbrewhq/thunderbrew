@@ -59,6 +59,7 @@ class CGlueMgr {
         static int32_t m_scandllOkayToLogIn;
         static float m_screenHeight;
         static float m_screenWidth;
+        static int32_t m_clientKickReason;
         static int32_t m_showedDisconnect;
         static CSimpleTop* m_simpleTop;
         static int32_t m_suspended;
@@ -78,6 +79,7 @@ class CGlueMgr {
         static int32_t HandleDisplaySizeChanged(const CSizeEvent& event);
         static void GetRealmList(bool showProgress);
         static void GetCharacterList();
+        static int32_t NetDisconnectHandler(const void* eventData, void*);
         static int32_t Idle(const void* a1, void* a2);
         static void Initialize();
         static void InitCursor();
@@ -87,7 +89,11 @@ class CGlueMgr {
         static void PollAccountLogin(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
         static void PollLoginServerLogin();
         static void PollCharacterList(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
+        static void PollRealmList(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
+        static void PollCreateCharacter(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
+        static void PollDeleteCharacter(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op);
         static void PollUserSurvey();
+        static void CancelLogin();
         static void Resume();
         static void SetCurrentAccount(const char* accountName);
         static void SetLoginStateAndResult(LOGIN_STATE state, LOGIN_RESULT result, char const* addrStr, char const* stateStr, char const* resultStr, uint8_t flags);
@@ -97,6 +103,7 @@ class CGlueMgr {
         static void Suspend();
         static void UpdateCurrentScreen(const char* screen);
         static bool HandleBattlenetDisconnect();
+        static void DeleteCharacter(uint64_t guid);
 
         static void PollEnterWorld();
 

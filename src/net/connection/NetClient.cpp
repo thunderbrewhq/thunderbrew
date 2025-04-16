@@ -1,5 +1,7 @@
 #include "net/connection/NetClient.hpp"
 #include "net/connection/WowConnection.hpp"
+#include "glue/CGlueMgr.hpp"
+#include "console/Console.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <new>
@@ -11,12 +13,18 @@
 
 HPROPCONTEXT s_propContext;
 
-int32_t NetClient::s_clientCount;
+CLIENT_NETSTATS NetClient::s_stats = {};
+int32_t NetClient::s_clientCount = 0;
 
 void InitializePropContext() {
     if (PropGetSelectedContext() != s_propContext) {
         PropSelectContext(s_propContext);
     }
+}
+
+
+NETEVENTQUEUE::~NETEVENTQUEUE() {
+    this->Clear();
 }
 
 void NETEVENTQUEUE::AddEvent(EVENTID eventId, void* conn, NetClient* client, const void* data, uint32_t bytes) {
@@ -98,12 +106,33 @@ void NETEVENTQUEUE::Poll() {
     this->m_critSect.Leave();
 }
 
+void NETEVENTQUEUE::Clear() {
+    this->m_critSect.Enter();
+    this->m_eventQueue.Clear();
+    this->m_critSect.Leave();
+}
+
+
+void NetClient::LogStats() {
+    char message[128];
+
+    uint32_t time = OsGetAsyncTimeMs();
+    SStrPrintf(
+        message,
+        sizeof(message),
+        "Client net stats: %Lu bytes sent, %Lu bytes received, %Lu msec elapsed",
+        NetClient::s_stats.bytesSent,
+        NetClient::s_stats.bytesReceived,
+        time - s_stats.logTimestamp);
+    ConsoleWrite(message, DEFAULT_COLOR);
+}
+
 void NetClient::AddRef() {
     SInterlockedIncrement(&this->m_refCount);
 }
 
 void NetClient::AuthChallengeHandler(WowConnection* conn, CDataStore* msg) {
-    auto challenge = static_cast<AuthenticationChallenge*>(SMemAlloc(sizeof(AuthenticationChallenge), __FILE__, __LINE__, 0x0));
+    auto challenge = NEW(AuthenticationChallenge);
 
     uint32_t v14;
     msg->Get(v14);
@@ -120,7 +149,7 @@ void NetClient::AuthChallengeHandler(WowConnection* conn, CDataStore* msg) {
         conn->Disconnect();
     }
 
-    delete challenge;
+    DEL(challenge);
 }
 
 void NetClient::Connect(const char* addrStr) {
@@ -144,6 +173,34 @@ void NetClient::Connect(const char* addrStr) {
     this->ConnectInternal(host, port);
 }
 
+void NetClient::Disconnect() {
+    if (this->m_redirectConnection) {
+        this->m_redirectConnection->SetResponse(nullptr, false);
+        this->m_redirectConnection->Disconnect();
+        this->m_redirectConnection->Release();
+    }
+
+    if (this->m_netState == NS_CONNECTED) {
+        this->m_netState = NS_DISCONNECTING;
+        this->m_serverConnection->Disconnect();
+    } else {
+        this->m_serverConnection->SetResponse(nullptr, false);
+        this->m_serverConnection->Disconnect();
+        this->m_netEventQueue->Clear();
+        this->m_serverConnection->Release();
+
+        auto connectionMem = SMemAlloc(sizeof(WowConnection), __FILE__, __LINE__, 0x0);
+        if (connectionMem) {
+            auto connection = new (connectionMem) WowConnection(this, nullptr);
+            this->m_serverConnection = connection;
+        } else {
+            this->m_serverConnection = nullptr;
+        }
+
+        this->m_netState = NS_INITIALIZED;
+    }
+}
+
 int32_t NetClient::ConnectInternal(const char* host, uint16_t port) {
     if (this->m_netState != NS_INITIALIZED) {
         SErrDisplayAppFatal("Expected (m_netState == NS_INITIALIZED), got %d", this->m_netState);
@@ -152,7 +209,12 @@ int32_t NetClient::ConnectInternal(const char* host, uint16_t port) {
     this->m_netState = NS_CONNECTING;
     this->m_serverConnection->Connect(host, port, -1);
 
-    // TODO
+    if (this->m_redirectConnection) {
+        this->m_redirectConnection->SetResponse(nullptr, false);
+        this->m_redirectConnection->Disconnect();
+        this->m_redirectConnection->Release();
+        this->m_redirectConnection = nullptr;
+    }
 
     return 1;
 }
@@ -192,44 +254,98 @@ NETSTATE NetClient::GetState() {
     return this->m_netState;
 }
 
+void NetClient::Ping() {
+    if (!this->m_serverConnection->m_encrypt) {
+        return;
+    }
+
+    this->m_pingLock.Enter();
+    this->m_pingSent = OsGetAsyncTimeMsPrecise();
+
+    CDataStore msg;
+    msg.Put(static_cast<uint32_t>(CMSG_PING));
+    msg.Put(++this->m_pingSequence);
+    if (this->m_netState == NS_CONNECTED) {
+        if (this->m_latencyEnd) {
+            msg.Put(this->m_latency[this->m_latencyEnd]);
+        } else {
+            msg.Put(static_cast<uint32_t>(0));
+        }
+    }
+    msg.Finalize();
+
+    this->m_pingLock.Leave();
+    this->Send(&msg);
+}
+
 int32_t NetClient::HandleCantConnect() {
-    // TODO
+    this->PushObjMgr();
+
+    STORM_ASSERT(m_netState == NS_CONNECTING);
+    this->m_netState = NS_INITIALIZED;
+
+    this->PopObjMgr();
+
     return 1;
 }
 
+int32_t NetClient::ValidateMessageId(uint32_t msgId) {
+    // This method does nothing
+    return 0;
+}
+
 int32_t NetClient::HandleConnect() {
-    // TODO push obj mgr
+    this->PushObjMgr();
 
     this->m_netState = NS_CONNECTED;
 
-    // TODO pop obj mgr
+    this->PopObjMgr();
 
     return 1;
 }
 
 int32_t NetClient::HandleData(uint32_t timeReceived, void* data, int32_t size) {
-    // TODO push obj mgr
+    this->PushObjMgr();
 
-    CDataStore msg;
-    msg.m_data = static_cast<uint8_t*>(data);
-    msg.m_size = size;
-    msg.m_alloc = -1;
-    msg.m_read = 0;
+    NetClient::s_stats.bytesReceived += size + 2;
 
-    this->ProcessMessage(timeReceived, &msg, 0);
+    if (this->m_netState == NS_CONNECTED) {
+        CDataStore msg;
+        msg.m_data = static_cast<uint8_t*>(data);
+        msg.m_size = size;
+        msg.m_alloc = -1;
+        msg.m_read = 0;
 
-    // TODO pop obj mgr
+        this->ProcessMessage(timeReceived, &msg, 0);
+    }
+
+    this->PopObjMgr();
 
     return 1;
 }
 
 int32_t NetClient::HandleDisconnect() {
-    // TODO
+    this->PushObjMgr();
+
+    STORM_ASSERT(this->m_netState == NS_CONNECTED || this->m_netState == NS_DISCONNECTING);
+
+    this->m_netState = NS_INITIALIZED;
+    ConsolePrintf("NetClient::HandleDisconnect()");
+    CGlueMgr::NetDisconnectHandler(this, nullptr);
+
+    this->PopObjMgr();
     return 1;
 }
 
 void NetClient::HandleIdle() {
-    // TODO;
+    s_stats.unk1 = s_stats.bytesSent;
+    s_stats.unk2 = s_stats.bytesReceived;
+    s_stats.unk3 = s_stats.messagesSent;
+    s_stats.unk4 = s_stats.messagesReceived;
+
+    if (OsGetAsyncTimeMsPrecise() - this->m_pingSent >= 30000) {
+        this->Ping();
+    }
 }
 
 int32_t NetClient::Initialize() {
@@ -261,21 +377,77 @@ int32_t NetClient::Initialize() {
     return 1;
 }
 
+void NetClient::Destroy() {
+    if (this->m_netState == NS_UNINITIALIZED) {
+        return;
+    }
+
+    this->Disconnect();
+
+    this->m_serverConnection->SetResponse(nullptr, false);
+    this->m_serverConnection->Release();
+    this->m_serverConnection = nullptr;
+
+    memset(this->m_handlers, 0, sizeof(this->m_handlers));
+    memset(this->m_handlerParams, 0, sizeof(this->m_handlerParams));
+
+    if (this->m_netEventQueue) {
+        DEL(this->m_netEventQueue);
+    }
+    this->m_netEventQueue = nullptr;
+
+    if (--NetClient::s_clientCount == 0) {
+        OsSleep(1);
+        // TODO: WowConnection::DestroyOsNet();
+    }
+
+    this->m_netState = NS_UNINITIALIZED;
+
+    if (NetClient::s_clientCount == 0) {
+        NetClient::LogStats();
+    }
+}
+
 void NetClient::PollEventQueue() {
     this->m_netEventQueue->Poll();
 }
 
 void NetClient::PongHandler(WowConnection* conn, CDataStore* msg) {
-    // TODO
+    if (conn != this->m_serverConnection || this->m_suspended) {
+        conn->Disconnect();
+        return;
+    }
+
+    this->m_pingLock.Enter();
+
+    uint32_t sequence;
+    msg->Get(sequence);
+
+    if (sequence == this->m_pingSequence) {
+        this->m_latency[this->m_latencyEnd++] = OsGetAsyncTimeMsPrecise() - this->m_pingSent;
+
+        if (this->m_latencyEnd >= 16) {
+            this->m_latencyEnd = 0;
+        }
+
+        if (this->m_latencyEnd == this->m_latencyStart) {
+            ++this->m_latencyStart;
+            if (this->m_latencyStart >= 16)
+                this->m_latencyStart = 0;
+        }
+    } else {
+        ConsolePrintf("Received pong with old sequence");
+    }
+    this->m_pingLock.Leave();
 }
 
 void NetClient::ProcessMessage(uint32_t timeReceived, CDataStore* msg, int32_t a4) {
-    // TODO s_stats.messagesReceived++
+    ++NetClient::s_stats.messagesReceived;
 
     uint16_t msgId;
     msg->Get(msgId);
 
-    // TODO virtual function call on NetClient
+    this->ValidateMessageId(msgId);
 
     if (msgId >= NUM_MSG_TYPES || !this->m_handlers[msgId]) {
         msg->Reset();
@@ -324,13 +496,70 @@ void NetClient::SetLoginData(LoginData* loginData) {
     memcpy(&this->m_loginData, loginData, sizeof(this->m_loginData));
 }
 
+void NetClient::DisplayNetworkStats() {
+    this->m_pingLock.Enter();
+    OsGetAsyncTimeMs();
+
+    float bandwidthIn;
+    float bandwidthOut;
+    uint32_t latency;
+    this->GetNetStats(bandwidthIn, bandwidthOut, latency);
+
+    this->m_pingLock.Leave();
+}
+
+void NetClient::GetNetStats(float& bandwidthIn, float& bandwidthOut, uint32_t& latency) {
+    this->m_pingLock.Enter();
+
+    double v5 = (double)(OsGetAsyncTimeMs() - this->m_connectedTimestamp) * 0.001;
+    bandwidthIn = (double)this->m_bytesReceived * 0.0009765625 / v5;
+    bandwidthOut = (double)this->m_bytesSent * 0.0009765625 / v5;
+
+    uint32_t latencyStart = this->m_latencyStart;
+    uint32_t latencyEnd = this->m_latencyEnd;
+
+    uint32_t v6 = 0;
+    uint32_t v9 = 0;
+
+    while (latencyStart != latencyEnd) {
+        if (latencyStart >= 16) {
+            latencyStart = 0;
+            if (!latencyEnd)
+                break;
+        }
+        v9 += this->m_latency[latencyStart];
+        ++v6;
+        ++latencyStart;
+    } ;
+
+    if (!v6) {
+        latency = 0;
+    } else {
+        latency = v9 / v6;
+    }
+
+    this->m_pingLock.Leave();
+}
+
+void NetClient::PushObjMgr() {
+    // TODO
+}
+
+void NetClient::PopObjMgr() {
+    // TODO
+}
+
 void NetClient::SetMessageHandler(NETMESSAGE msgId, MESSAGE_HANDLER handler, void* param) {
     this->m_handlers[msgId] = handler;
     this->m_handlerParams[msgId] = param;
 }
 
 void NetClient::WCCantConnect(WowConnection* conn, uint32_t timeStamp, NETCONNADDR* addr) {
-    // TODO
+    if (conn == this->m_redirectConnection) {
+        // TODO
+    } else if (conn == this->m_serverConnection) {
+        this->m_netEventQueue->AddEvent(EVENT_ID_NET_CANTCONNECT, conn, this, nullptr, 0);
+    }
 }
 
 void NetClient::WCConnected(WowConnection* conn, WowConnection* inbound, uint32_t timeStamp, const NETCONNADDR* addr) {
@@ -353,7 +582,10 @@ void NetClient::WCConnected(WowConnection* conn, WowConnection* inbound, uint32_
 }
 
 void NetClient::WCDisconnected(WowConnection* conn, uint32_t timeStamp, NETCONNADDR* addr) {
-    // TODO
+    this->DisplayNetworkStats();
+    if (this->m_netEventQueue) {
+        this->m_netEventQueue->AddEvent(EVENT_ID_NET_DISCONNECT, conn, this, nullptr, 0);
+    }
 }
 
 void NetClient::WCMessageReady(WowConnection* conn, uint32_t timeStamp, CDataStore* msg) {

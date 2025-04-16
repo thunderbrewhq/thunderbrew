@@ -19,7 +19,7 @@ int32_t Script_SetCharSelectModelFrame(lua_State* L) {
     auto frame = CScriptObject::GetScriptObjectByName(name, type);
 
     if (frame) {
-        CCharacterSelection::s_modelFrame = static_cast<CSimpleModelFFX*>(frame);
+        CCharacterSelection::m_modelFrame = static_cast<CSimpleModelFFX*>(frame);
     }
 
     return 0;
@@ -54,8 +54,8 @@ int32_t Script_GetCharacterInfo(lua_State* L) {
         luaL_error(L, "Usage: GetCharacterInfo(index)");
     }
 
-    int index = static_cast<int>(lua_tonumber(L, 1)) - 1;
-    if (index < 0 || index > CCharacterSelection::GetNumCharacters()) {
+    int32_t index = static_cast<int32_t>(lua_tonumber(L, 1)) - 1;
+    if (index < 0 || index >= CCharacterSelection::GetNumCharacters()) {
         lua_pushnil(L); // name
         lua_pushnil(L); // race
         lua_pushnil(L); // class
@@ -75,16 +75,14 @@ int32_t Script_GetCharacterInfo(lua_State* L) {
     auto raceName = CGUnit_C::GetDisplayRaceNameFromRecord(g_chrRacesDB.GetRecord(character.raceID), character.sexID);
     lua_pushstring(L, raceName ? raceName : "");
 
-    // TODO: auto className = CGUnit_C::GetDisplayClassNameFromRecord(g_chrClassesDB.GetRecord(character.classID), character.sexID);
-    auto className = "Warrior";
+    auto className = CGUnit_C::GetDisplayClassNameFromRecord(g_chrClassesDB.GetRecord(character.classID), character.sexID);
     lua_pushstring(L, className ? className : "");
 
     lua_pushnumber(L, character.experienceLevel);
 
-    // TODO: auto areaRecord = g_areaTableDB.GetRecord(character.zoneID);
-    void* areaRecord = nullptr;
+    auto areaRecord = g_areaTableDB.GetRecord(character.zoneID);
     if (areaRecord) {
-        // TODO: lua_pushstring(L, areaRecord->name)
+        lua_pushstring(L, areaRecord->m_areaName);
     } else {
         lua_pushnil(L);
     }
@@ -108,11 +106,31 @@ int32_t Script_GetCharacterInfo(lua_State* L) {
 }
 
 int32_t Script_SelectCharacter(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1)) {
+        luaL_error(L, "Usage: SelectCharacter(index)");
+    }
+
+    int32_t index = static_cast<int32_t>(lua_tonumber(L, 1)) - 1;
+    if (index < 1 || index >= CCharacterSelection::GetNumCharacters()) {
+        index = 0;
+    }
+
+    CCharacterSelection::m_selectionIndex = index;
+    CCharacterSelection::ShowCharacter();
+    FrameScript_SignalEvent(8u, "%d", CCharacterSelection::m_selectionIndex + 1);
+    return 0;
 }
 
 int32_t Script_DeleteCharacter(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1)) {
+        luaL_error(L, "Usage: DeleteCharacter(index)");
+    }
+
+    int32_t index = static_cast<int32_t>(lua_tonumber(L, 1)) - 1;
+    if (index >= 0 && index < CCharacterSelection::GetNumCharacters()) {
+        CGlueMgr::DeleteCharacter(CCharacterSelection::s_characterList[index].m_characterInfo.guid);
+    }
+    return 0;
 }
 
 int32_t Script_RenameCharacter(lua_State* L) {
@@ -131,7 +149,7 @@ int32_t Script_UpdateSelectionCustomizationScene(lua_State* L) {
 
 int32_t Script_GetCharacterSelectFacing(lua_State* L) {
     // Radian to Degree
-    lua_pushnumber(L, CCharacterSelection::s_charFacing * 57.29578f);
+    lua_pushnumber(L, CCharacterSelection::m_charFacing * 57.29578f);
     return 1;
 }
 

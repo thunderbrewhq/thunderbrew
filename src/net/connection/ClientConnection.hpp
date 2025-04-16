@@ -28,7 +28,9 @@ class ClientConnection : public RealmConnection {
         void AccountLogin_Finish(int32_t authResult);
         void AccountLogin_Queued();
         void GetCharacterList();
+        void EnumerateCharacters(ENUMERATE_CHARACTERS_CALLBACK fcn, void* param);
         void CharacterLogin(uint64_t id);
+        void DeleteCharacter(uint64_t guid);
         void Cancel(int32_t errorCode);
         void Cleanup();
         void Connect();

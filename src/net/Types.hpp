@@ -1174,6 +1174,7 @@ enum NETSTATE {
     NS_STATE_3          = 3,
     NS_CONNECTING       = 4,
     NS_CONNECTED        = 5,
+    NS_DISCONNECTING    = 6
 };
 
 enum WOW_CONN_STATE {
@@ -1284,6 +1285,29 @@ struct CHARACTER_INFO {
     uint8_t experienceLevel;
     uint8_t firstLogin;
 };
+
+struct CHARACTER_CREATE_INFO {
+    uint8_t unk[24];
+    uint32_t raceID;
+    uint32_t sexID;
+};
+
+struct CLIENT_NETSTATS {
+    uint32_t bytesSent;
+    uint32_t messagesSent;
+    uint32_t sendTimestamp;
+    uint32_t bytesReceived;
+    uint32_t messagesReceived;
+    uint32_t receivTimestamp;
+    uint32_t logTimestamp;
+    uint32_t unk1;
+    uint32_t unk2;
+    uint32_t unk3;
+    uint32_t unk4;
+};
+
+
+typedef void (*ENUMERATE_CHARACTERS_CALLBACK)(CHARACTER_INFO&, void*);
 
 
 #endif

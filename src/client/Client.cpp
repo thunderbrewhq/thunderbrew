@@ -39,6 +39,7 @@ CVar* Client::g_accountUsesTokenVar;
 CVar* Client::g_movieVar;
 CVar* Client::g_expansionMovieVar;
 CVar* Client::g_movieSubtitleVar;
+CVar* Client::g_lastCharacterIndex;
 
 
 HEVENTCONTEXT Client::g_clientEventContext;
@@ -168,6 +169,16 @@ void ClientRegisterConsoleCommands() {
         false
     );
 
+    Client::g_lastCharacterIndex = CVar::Register(
+        "lastCharacterIndex",
+        "Last character selected",
+        0,
+        "0",
+        nullptr,
+        GAME,
+        false,
+        nullptr,
+        false);
     // TODO
 }
 

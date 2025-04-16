@@ -99,6 +99,7 @@ class WowConnection {
         void FreeSendNode(SENDNODE* sn);
         WOW_CONN_STATE GetState();
         void Init(WowConnectionResponse* response, void (*func)(void));
+        void SetResponse(WowConnectionResponse* response, bool a3);
         SENDNODE* NewSendNode(void* data, int32_t size, bool raw);
         void Release();
         void ReleaseResponseRef();

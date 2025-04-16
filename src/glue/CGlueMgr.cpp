@@ -1,6 +1,8 @@
 #include "glue/CGlueMgr.hpp"
 #include "glue/CRealmList.hpp"
 #include "glue/CCharacterSelection.hpp"
+#include "glue/CCharacterCreation.hpp"
+#include "console/Console.hpp"
 #include "client/Client.hpp"
 #include "client/ClientServices.hpp"
 #include "gx/Coordinate.hpp"
@@ -67,6 +69,7 @@ int32_t CGlueMgr::m_reload;
 int32_t CGlueMgr::m_scandllOkayToLogIn = 1; // TODO
 float CGlueMgr::m_screenHeight;
 float CGlueMgr::m_screenWidth;
+int32_t CGlueMgr::m_clientKickReason;
 int32_t CGlueMgr::m_showedDisconnect;
 CSimpleTop* CGlueMgr::m_simpleTop;
 int32_t CGlueMgr::m_suspended;
@@ -229,6 +232,61 @@ void CGlueMgr::GetCharacterList() {
     }
 }
 
+int32_t CGlueMgr::NetDisconnectHandler(const void* eventData, void*) {
+    bool v11 = CGlueMgr::m_idleState != IDLE_ACCOUNT_LOGIN;
+
+    CGlueMgr::m_idleState = IDLE_NONE;
+    CGlueMgr::m_showedDisconnect = 0;
+
+    if (CGlueMgr::m_disconnectPending) {
+        ConsolePrintf("CGlueMgr::NetDisconnectHandler: Disconnect pending");
+        CGlueMgr::m_disconnectPending = 0;
+
+        if (CGlueMgr::m_reconnect) {
+            CGlueMgr::m_reconnect = 0;
+            CGlueMgr::m_idleState = IDLE_ACCOUNT_LOGIN;
+            CGlueMgr::m_showedDisconnect = 0;
+            auto text = FrameScript_GetText("GAME_SERVER_LOGIN", -1, GENDER_NOT_APPLICABLE);
+            FrameScript_SignalEvent(3u, "%s%s", "CANCEL", text);
+            ClientServices::Connection()->Connect();
+            return 1;
+        }
+        return 1;
+    }
+    if (!ClientServices::ValidDisconnect(eventData)) {
+        ConsolePrintf("CGlueMgr::NetDisconnectHandler: Invalid disconnect");
+        return 1;
+    }
+    // TODO: ClientDestroyGame(0, 1, 0);
+    // TODO: EventSetMouseMode(0, 0);
+
+    if (CGlueMgr::m_suspended) {
+        CGlueMgr::Resume();
+    }
+
+    if (v11) {
+        ConsolePrintf("CGlueMgr::NetDisconnectHandler: Displaying script");
+        FrameScript_SignalEvent(2u, "%d", CGlueMgr::m_clientKickReason);
+    } else {
+        ConsolePrintf("CGlueMgr::NetDisconnectHandler: NOT displaying script");
+        WOWCS_OPS op;
+        const char* msg;
+        int32_t result;
+        int32_t errorCode;
+        int32_t complete = ClientServices::Connection()->PollStatus(op, &msg, result, errorCode);
+
+        if (!complete || result) {
+            ClientServices::SelectRealm("");
+            FrameScript_SignalEvent(2u, "%d", CGlueMgr::m_clientKickReason);
+        } else {
+            FrameScript_SignalEvent(3u, "%s%s", "OKAY", msg);
+        }
+    }
+
+    ClientServices::LoginConnection()->Logoff();
+    return 1;
+}
+
 // TODO a1: const EVENT_DATA_IDLE*
 int32_t CGlueMgr::Idle(const void* a1, void* a2) {
     // TODO:
@@ -287,44 +345,64 @@ int32_t CGlueMgr::Idle(const void* a1, void* a2) {
     int32_t complete = ClientServices::Connection()->PollStatus(op, &msg, result, errorCode);
 
     switch (CGlueMgr::m_idleState) {
-    case IDLE_LOGIN_SERVER_LOGIN: {
-        CGlueMgr::PollLoginServerLogin();
-        break;
-    }
-
-    case IDLE_ACCOUNT_LOGIN: {
-        CGlueMgr::PollAccountLogin(errorCode, msg, complete, result, op);
-        break;
-    }
-
-    case IDLE_CHARACTER_LIST: {
-        CGlueMgr::PollCharacterList(errorCode, msg, complete, result, op);
-        break;
-    }
-
-    case IDLE_ENTER_WORLD: {
-        CGlueMgr::PollEnterWorld();
-        break;
-    }
-
-    case IDLE_12: {
-        if (CGlueMgr::m_patchDownload) {
-            CGlueMgr::PatchDownloadIdle();
-        } else if (CGlueMgr::m_surveyDownload) {
-            CGlueMgr::SurveyDownloadIdle();
+        case IDLE_LOGIN_SERVER_LOGIN: {
+            CGlueMgr::PollLoginServerLogin();
+            break;
         }
-        break;
-    }
 
-    case IDLE_13: {
-        CGlueMgr::PollUserSurvey();
-        break;
-    }
+        case IDLE_ACCOUNT_LOGIN: {
+            CGlueMgr::PollAccountLogin(errorCode, msg, complete, result, op);
+            break;
+        }
 
-    // TODO other idle states
+        case IDLE_CHARACTER_LIST: {
+            CGlueMgr::PollCharacterList(errorCode, msg, complete, result, op);
+            break;
+        }
 
-    default:
-        break;
+        case IDLE_REALM_LIST: {
+            CGlueMgr::PollRealmList(errorCode, msg, complete, result, op);
+            break;
+        }
+
+        case IDLE_CREATE_CHARACTER: {
+            CGlueMgr::PollCreateCharacter(errorCode, msg, complete, result, op);
+            break;
+        }
+
+        case IDLE_DELETE_CHARACTER: {
+            CGlueMgr::PollDeleteCharacter(errorCode, msg, complete, result, op);
+            break;
+        }
+
+        case IDLE_ENTER_WORLD: {
+            CGlueMgr::PollEnterWorld();
+            break;
+        }
+
+        case IDLE_WORLD_LOGIN: {
+            FrameScript_SignalEvent(3u, "%s%s", "OKAY", msg);
+            break;
+        }
+
+        case IDLE_12: {
+            if (CGlueMgr::m_patchDownload) {
+                CGlueMgr::PatchDownloadIdle();
+            } else if (CGlueMgr::m_surveyDownload) {
+                CGlueMgr::SurveyDownloadIdle();
+            }
+            break;
+        }
+
+        case IDLE_13: {
+            CGlueMgr::PollUserSurvey();
+            break;
+        }
+
+        // TODO other idle states
+
+        default:
+            break;
     }
 
     return 1;
@@ -624,6 +702,80 @@ void CGlueMgr::PollCharacterList(int32_t errorCode, const char* msg, int32_t com
     CGlueMgr::m_accountMsgAvailable = 0;
 }
 
+void CGlueMgr::PollRealmList(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op) {
+    FrameScript_SignalEvent(4u, "%s", msg);
+    if (CGlueMgr::HandleBattlenetDisconnect()) {
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+    }
+
+    if (!complete) {
+        return;
+    }
+
+    if (result) {
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+        FrameScript_SignalEvent(5u, nullptr);
+        CRealmList::UpdateList();
+        if (!CGlueMgr::m_accountMsgAvailable)
+            return;
+        FrameScript_SignalEvent(34u, nullptr);
+        CGlueMgr::m_accountMsgAvailable = 0;
+    } else {
+        FrameScript_SignalEvent(3u, "%s%s", "OKAY", msg);
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+    }
+}
+void CGlueMgr::PollCreateCharacter(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op) {
+    FrameScript_SignalEvent(4u, "%s", msg);
+
+    if (CGlueMgr::HandleBattlenetDisconnect()) {
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+    }
+
+    if (!complete) {
+        return;
+    }
+
+    if (result) {
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+        FrameScript_SignalEvent(5u, 0);
+        FrameScript_SignalEvent(0xCu, 0);
+        CGlueMgr::SetScreen("charselect");
+    } else {
+        FrameScript_SignalEvent(3u, "%s%s", "OKAY", msg);
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+    }
+}
+
+void CGlueMgr::PollDeleteCharacter(int32_t errorCode, const char* msg, int32_t complete, int32_t result, WOWCS_OPS op) {
+    FrameScript_SignalEvent(4, "%s", msg);
+
+    if (CGlueMgr::HandleBattlenetDisconnect()) {
+        CGlueMgr::m_idleState = IDLE_NONE;
+        CGlueMgr::m_showedDisconnect = 0;
+    }
+
+    if (!complete) {
+        return;
+    }
+
+    if (result) {
+        FrameScript_SignalEvent(13, 0);
+        CGlueMgr::GetCharacterList();
+        return;
+    }
+
+    FrameScript_SignalEvent(3, "%s%s", "OKAY", msg);
+    CGlueMgr::m_idleState = IDLE_NONE;
+    CGlueMgr::m_showedDisconnect = 0;
+}
+
 void CGlueMgr::PollUserSurvey() {
     if (CGlueMgr::m_surveyDownload && false /* virtual call */) {
         if (CGlueMgr::m_executedSurvey) {
@@ -637,6 +789,12 @@ void CGlueMgr::PollUserSurvey() {
                 // TODO: CGlueMgr::m_surveyTimer = OsGetAsyncTimeMs();
             }
         }
+    }
+}
+
+void CGlueMgr::CancelLogin() {
+    if (CGlueMgr::m_idleState == IDLE_LOGIN_SERVER_LOGIN) {
+        CGlueMgr::StatusDialogClick();
     }
 }
 
@@ -708,6 +866,9 @@ void CGlueMgr::Resume() {
     FrameScript_CreateEvents(g_glueScriptEvents, NUM_GLUE_SCRIPT_EVENTS);
 
     OsCreateDirectory("Logs", 0);
+
+    CCharacterSelection::Initialize();
+    CCharacterCreation::Initialize();
 
     CWOWClientStatus status;
 
@@ -918,6 +1079,20 @@ void CGlueMgr::UpdateCurrentScreen(const char* screen) {
 
 bool CGlueMgr::HandleBattlenetDisconnect() {
     return false;
+}
+
+void CGlueMgr::DeleteCharacter(uint64_t guid) {
+    if (!guid) {
+        return;
+    }
+
+    CGlueMgr::m_idleState = IDLE_DELETE_CHARACTER;
+    CGlueMgr::m_showedDisconnect = 0;
+
+    auto errorText = ClientServices::GetErrorToken(70);
+    auto text = FrameScript_GetText(errorText, -1, GENDER_NOT_APPLICABLE);
+    FrameScript_SignalEvent(3u, "%s%s", "CANCEL", text);
+    ClientServices::CharacterDelete(guid);
 }
 
 void CGlueMgr::PollEnterWorld() {

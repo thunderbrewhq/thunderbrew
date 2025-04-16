@@ -41,12 +41,16 @@ class NETEVENTQUEUE {
         NETEVENTQUEUE(NetClient* client)
             : m_client(client)
             {};
+        ~NETEVENTQUEUE();
         void AddEvent(EVENTID eventId, void* conn, NetClient* client, const void* data, uint32_t bytes);
         void Poll();
+        void Clear();
 };
 
 class NetClient : public WowConnectionResponse {
     public:
+        static void LogStats();
+
         // Virtual member functions
         virtual void WCMessageReady(WowConnection* conn, uint32_t timeStamp, CDataStore* msg);
         virtual void WCConnected(WowConnection* conn, WowConnection* inbound, uint32_t timeStamp, const NETCONNADDR* addr);
@@ -57,19 +61,23 @@ class NetClient : public WowConnectionResponse {
         virtual int32_t HandleConnect();
         virtual int32_t HandleDisconnect();
         virtual int32_t HandleCantConnect();
+        virtual int32_t ValidateMessageId(uint32_t msgId);
 
         // Member functions
         void AddRef();
         void AuthChallengeHandler(WowConnection* conn, CDataStore* msg);
         void Connect(const char* addrStr);
+        void Disconnect();
         int32_t ConnectInternal(const char* host, uint16_t port);
         void DelRef();
         void EnableEncryption(WowConnection* conn, uint8_t* seed, uint8_t seedLen);
         bool GetDelete();
         const LoginData& GetLoginData();
         NETSTATE GetState();
+        void Ping();
         void HandleIdle();
         int32_t Initialize();
+        void Destroy();
         void PollEventQueue();
         void PongHandler(WowConnection* conn, CDataStore* msg);
         void ProcessMessage(uint32_t timeReceived, CDataStore* msg, int32_t a4);
@@ -77,9 +85,14 @@ class NetClient : public WowConnectionResponse {
         void SetDelete();
         void SetLoginData(LoginData* loginData);
         void SetMessageHandler(NETMESSAGE msgId, MESSAGE_HANDLER handler, void* param);
+        void DisplayNetworkStats();
+        void GetNetStats(float& bandwidthIn, float& bandwidthOut, uint32_t& latency);
+        void PushObjMgr();
+        void PopObjMgr();
 
     private:
         // Static variables
+        static CLIENT_NETSTATS s_stats;
         static int32_t s_clientCount;
 
         // Member variables

@@ -32,6 +32,7 @@ target_include_directories(net
 target_link_libraries(net
     PRIVATE
         client
+        console
         event
     PUBLIC
         bc

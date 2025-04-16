@@ -341,8 +341,7 @@ void WowConnection::DoDisconnect() {
     this->m_lock.Leave();
 
     if (this->m_response && this->m_sock >= 0) {
-        // TODO
-        // this->m_response->Vfunc4(this, OsGetAsyncTimeMsPrecise());
+        this->m_response->WCDisconnected(this, OsGetAsyncTimeMsPrecise(), &this->m_peer);
     }
 
     this->m_lock.Enter();
@@ -670,6 +669,27 @@ void WowConnection::Init(WowConnectionResponse* response, void (*func)(void)) {
     this->m_type = WOWC_TYPE_MESSAGES;
 }
 
+void WowConnection::SetResponse(WowConnectionResponse* response, bool a3) {
+    while (1) {
+        this->m_responseLock.Enter();
+        if (!this->m_responseRef || this->m_responseRefThread == SGetCurrentThreadId())
+            break;
+
+        if (a3) {
+            // this->off_53 = response;
+            this->m_responseLock.Leave();
+            return;
+        }
+
+        this->m_responseLock.Leave();
+        OsSleep(50u);
+    }
+
+    this->m_response = response;
+    // this->off_53 = nullptr;
+    this->m_responseLock.Leave();
+}
+
 WowConnection::SENDNODE* WowConnection::NewSendNode(void* data, int32_t size, bool raw) {
     // TODO counters
 
@@ -694,8 +714,7 @@ void WowConnection::Release() {
         if (WowConnection::s_network) {
             WowConnection::s_network->Delete(this);
         } else {
-            // TODO SMemFree
-            delete this;
+            DEL(this);
         }
     }
 }

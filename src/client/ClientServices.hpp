@@ -32,16 +32,20 @@ class ClientServices : public LoginResponse {
         static CVar* s_patchListVar;
 
         // Static functions
+        static const char* GetErrorToken(uint32_t token);
+        static bool ValidDisconnect(const void* client);
         static void ConnectToSelectedServer();
         static ClientConnection* Connection();
         static ClientServices* GetInstance();
         static void SetMessageHandler(NETMESSAGE msgId, MESSAGE_HANDLER handler, void* param);
         static void GetRealmList();
         static void GetCharacterList();
+        static void EnumerateCharacters(ENUMERATE_CHARACTERS_CALLBACK fcn, void* param);
         static void CharacterLogin(uint64_t id, const C3Vector& position);
         static REALM_INFO* GetRealmInfoByIndex(int32_t index);
         static const char* GetSelectedRealmName();
         static const REALM_INFO* GetSelectedRealm();
+        static void CharacterDelete(uint64_t guid);
         static void Initialize();
         static Login* LoginConnection();
         static void Logon(const char* accountName, const char* password);

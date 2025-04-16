@@ -72,7 +72,62 @@ void LoginResponse::HandleRealmData(uint32_t a2, CDataStore* msg) {
             realm.flags |= 0x80;
         }
 
-        // TODO name manipulation
+        if (realm.name[0] == '\0') {
+            continue;
+        }
+
+        int32_t j = 0;
+        while (realm.name[j]) {
+            switch (realm.name[j]) {
+                case '"':
+                case '*':
+                case '/':
+                case ':':
+                case '<':
+                case '>':
+                case '?':
+                case '\\':
+                case '|': {
+                    realm.name[j] = ' ';
+                    break;
+                }
+
+                default: {
+                    break;
+                }
+            }
+            ++j;
+        }
+
+        while (j > 0) {
+            bool stop = false;
+            switch (realm.name[j - 1]) {
+                case ' ':
+                case '"':
+                case '*':
+                case '.':
+                case '/':
+                case ':':
+                case '<':
+                case '>':
+                case '?':
+                case '\\':
+                case '|': {
+                    --j;
+                    break;
+                }
+
+                default: {
+                    stop = true;
+                    break;
+                }
+            }
+            if (stop) {
+                break;
+            }
+        }
+
+        realm.name[j] = '\0';
     }
 
     msg->Get(reinterpret_cast<uint16_t&>(this->uint10));

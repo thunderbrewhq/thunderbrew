@@ -88,6 +88,10 @@ int32_t GruntLogin::GetServerId() {
     return 0;
 }
 
+void GruntLogin::Reconnect() {
+    // TODO
+}
+
 void GruntLogin::GetVersionProof(const uint8_t* versionChallenge) {
     if (this->IsReconnect()) {
         // TODO
@@ -113,7 +117,9 @@ void GruntLogin::Init(LoginResponse* loginResponse) {
 }
 
 void GruntLogin::Logoff() {
-    // TODO
+    if (this->m_loggedOn) {
+        this->m_clientLink->Disconnect();
+    }
 }
 
 void GruntLogin::Logon(const char* a2, const char* a3) {

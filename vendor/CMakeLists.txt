@@ -9,7 +9,7 @@ endif ()
 if (WHOA_BUILD_GLSDL)
     set(SDL_SHARED OFF)
     set(SDL_STATIC ON)
-    add_subdirectory(sdl-2.30.5)
+    add_subdirectory(sdl-3.2.10)
 
     set(glew-cmake_BUILD_SHARED OFF)
     set(glew-cmake_BUILD_STATIC ON)
