@@ -266,25 +266,23 @@ int32_t CGlueMgr::NetDisconnectHandler(const void* eventData, void*) {
 
     if (v11) {
         ConsolePrintf("CGlueMgr::NetDisconnectHandler: Displaying script");
-LABEL_14:
         FrameScript_SignalEvent(2u, "%d", CGlueMgr::m_clientKickReason);
-        goto LABEL_15;
+    } else {
+        ConsolePrintf("CGlueMgr::NetDisconnectHandler: NOT displaying script");
+        WOWCS_OPS op;
+        const char* msg;
+        int32_t result;
+        int32_t errorCode;
+        int32_t complete = ClientServices::Connection()->PollStatus(op, &msg, result, errorCode);
+
+        if (!complete || result) {
+            ClientServices::SelectRealm("");
+            FrameScript_SignalEvent(2u, "%d", CGlueMgr::m_clientKickReason);
+        } else {
+            FrameScript_SignalEvent(3u, "%s%s", "OKAY", msg);
+        }
     }
-    ConsolePrintf("CGlueMgr::NetDisconnectHandler: NOT displaying script");
 
-    WOWCS_OPS op;
-    const char* msg;
-    int32_t result;
-    int32_t errorCode;
-    int32_t complete = ClientServices::Connection()->PollStatus(op, &msg, result, errorCode);
-
-    if (!complete || result) {
-        ClientServices::SelectRealm("");
-        goto LABEL_14;
-    }
-    FrameScript_SignalEvent(3u, "%s%s", "OKAY", msg);
-
-LABEL_15:
     ClientServices::LoginConnection()->Logoff();
     return 1;
 }
