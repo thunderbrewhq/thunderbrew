@@ -807,7 +807,7 @@ WC_SEND_RESULT WowConnection::Send(CDataStore* msg, int32_t a3) {
     uint32_t written;
 #if defined(WHOA_SYSTEM_WIN)
     written = send(this->m_sock, reinterpret_cast<char*>(sn->data), sn->size, 0x0);
-#elif defined(WHOA_SYSTEM_MAC)
+#elif defined(WHOA_SYSTEM_MAC) || defined(WHOA_SYSTEM_LINUX)
     written = write(this->m_sock, sn->data, sn->size);
 #endif
 
@@ -950,7 +950,7 @@ void WowConnection::StartConnect() {
 #if defined(WHOA_SYSTEM_WIN)
     u_long argp = 1;
     ioctlsocket(this->m_sock, FIONBIO, &argp);
-#elif defined(WHOA_SYSTEM_MAC)
+#elif defined(WHOA_SYSTEM_MAC) || defined(WHOA_SYSTEM_LINUX)
     fcntl(this->m_sock, F_SETFL, O_NONBLOCK);
 
     uint32_t opt = 1;
@@ -980,7 +980,7 @@ void WowConnection::StartConnect() {
 
         return;
     }
-#elif defined(WHOA_SYSTEM_MAC)
+#elif defined(WHOA_SYSTEM_MAC) || defined(WHOA_SYSTEM_LINUX)
     if (errno == EAGAIN || errno == EINTR || errno == EINPROGRESS) {
         this->m_lock.Leave();
 
