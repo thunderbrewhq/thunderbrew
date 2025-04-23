@@ -6,6 +6,7 @@
 #include "ui/CSimpleFrame.hpp"
 #include "ui/CSimpleHTML.hpp"
 #include "ui/CSimpleModel.hpp"
+#include "ui/CSimpleMovieFrame.hpp"
 #include "ui/CSimpleScrollFrame.hpp"
 #include "ui/CSimpleSlider.hpp"
 #include "util/CStatus.hpp"
@@ -109,8 +110,10 @@ CSimpleFrame* Create_SimpleColorSelect(CSimpleFrame* parent) {
 
 CSimpleFrame* Create_SimpleMovieFrame(CSimpleFrame* parent) {
     // TODO
+    // auto m = CDataAllocator::GetData(CSimpleMovie::s_simpleMovieHeap, 0, __FILE__, __LINE__);
 
-    return nullptr;
+    auto m = SMemAlloc(sizeof(CSimpleMovieFrame), __FILE__, __LINE__, 0x0);
+    return new (m) CSimpleMovieFrame(parent);
 }
 
 XMLNode* FrameXML_AcquireHashNode(const char* name, const char*& tainted, bool& locked) {

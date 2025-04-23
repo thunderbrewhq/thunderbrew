@@ -8,6 +8,7 @@
 #include "ui/CSimpleHTML.hpp"
 #include "ui/CSimpleModel.hpp"
 #include "ui/CSimpleModelFFX.hpp"
+#include "ui/CSimpleMovieFrame.hpp"
 #include "ui/CSimpleScrollFrame.hpp"
 #include "ui/CSimpleSlider.hpp"
 #include "ui/CSimpleTexture.hpp"
@@ -88,7 +89,7 @@ void RegisterSimpleFrameScriptMethods() {
     // TODO
     // CSimpleStatusBar::CreateScriptMetaTable();
     // CSimpleColorSelect::CreateScriptMetaTable();
-    // CSimpleMovieFrame::CreateScriptMetaTable();
+    CSimpleMovieFrame::CreateScriptMetaTable();
 }
 
 void SystemRegisterFunctions() {
