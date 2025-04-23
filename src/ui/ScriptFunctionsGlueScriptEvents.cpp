@@ -118,7 +118,16 @@ int32_t Script_StopGlueMusic(lua_State* L) {
 }
 
 int32_t Script_GetMovieResolution(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto gxResolution = CVar::Lookup("gxResolution");
+    STORM_ASSERT(gxResolution);
+    auto resolution = gxResolution->GetString();
+    STORM_ASSERT(resolution);
+
+    int32_t width = 0;
+    int32_t height = 0;
+    sscanf(resolution, "%dx%d", &width, &height);
+    lua_pushnumber(L, width);
+    return 1;
 }
 
 int32_t Script_GetScreenWidth(lua_State* L) {

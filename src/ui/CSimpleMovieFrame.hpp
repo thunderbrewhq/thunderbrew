@@ -19,6 +19,9 @@ class CSimpleMovieFrame : public CSimpleFrame {
     static void RegisterScriptMethods(lua_State* L);
 
     // Member variables
+    ScriptIx m_onMovieFinished;
+    ScriptIx m_onMovieShowSubtitle;
+    ScriptIx m_onMovieHideSubtitle;
 
     // Virtual member functions
     virtual ScriptIx* GetScriptByName(const char* name, ScriptData& data);

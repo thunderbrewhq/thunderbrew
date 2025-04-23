@@ -31,16 +31,16 @@ FrameScript_Object::ScriptIx* CSimpleMovieFrame::GetScriptByName(const char* nam
     }
 
     if (!SStrCmpI(name, "OnMovieFinished", STORM_MAX_STR)) {
-        //return (int)this + 948;
+        return &this->m_onMovieFinished;
     }
 
     if (!SStrCmpI(name, "OnMovieShowSubtitle", STORM_MAX_STR)) {
         data.wrapper = "return function(self,text) %s end";
-        //return (int)this + 956;
+        return &this->m_onMovieShowSubtitle;
     }
 
     if (!SStrCmpI(name, "OnMovieHideSubtitle", STORM_MAX_STR)) {
-        //return (int)this + 964;
+        return &this->m_onMovieHideSubtitle;
     }
 
     return nullptr;
