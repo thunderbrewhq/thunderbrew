@@ -65,8 +65,27 @@ CSimpleMovieFrame::CSimpleMovieFrame(CSimpleFrame* parent)
 }
 
 int32_t CSimpleMovieFrame::StartMovie(const char* filename, int32_t volume) {
-    return 0;
+    if (!this->ParseAVIFile(filename) || !this->OpenVideo()) {
+        return 0;
+    }
+
+    SStrCopy(this->m_filename, filename, 256);
+    this->m_volume = volume;
+
+    // this->OpenAudio(this, filename, volume, 0);
+    // this->OpenCaptions(this, filename);
+
+    this->m_isPlaying = 1;
+    return 1;
 }
 
 void CSimpleMovieFrame::StopMovie() {
+}
+
+int32_t CSimpleMovieFrame::ParseAVIFile(const char* filename) {
+    return 0;
+}
+
+int32_t CSimpleMovieFrame::OpenVideo() {
+    return 0;
 }

@@ -36,8 +36,7 @@ int32_t CSimpleMovieFrame_StopMovie(lua_State* L) {
 int32_t CSimpleMovieFrame_EnableSubtitles(lua_State* L) {
     auto type = CSimpleMovieFrame::GetObjectType();
     auto movieFrame = static_cast<CSimpleMovieFrame*>(FrameScript_GetObjectThis(L, type));
-    bool enabled = StringToBOOL(L, 2, 1);
-    // *(movieFrame + 680) = enabled;
+    movieFrame->m_enableSubtitles = StringToBOOL(L, 2, 1);
     return 0;
 }
 

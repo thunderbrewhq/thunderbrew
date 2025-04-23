@@ -19,6 +19,10 @@ class CSimpleMovieFrame : public CSimpleFrame {
     static void RegisterScriptMethods(lua_State* L);
 
     // Member variables
+    int32_t m_isPlaying = 0;
+    int32_t m_enableSubtitles = 0;
+    char m_filename[256];
+    int32_t m_volume = 100;
     ScriptIx m_onMovieFinished;
     ScriptIx m_onMovieShowSubtitle;
     ScriptIx m_onMovieHideSubtitle;
@@ -33,6 +37,8 @@ class CSimpleMovieFrame : public CSimpleFrame {
     CSimpleMovieFrame(CSimpleFrame* parent);
     int32_t StartMovie(const char* filename, int32_t volume);
     void StopMovie();
+    int32_t ParseAVIFile(const char* filename);
+    int32_t OpenVideo();
 };
 
 #endif
