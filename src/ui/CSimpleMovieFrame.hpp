@@ -17,9 +17,11 @@ class CSimpleMovieFrame : public CSimpleFrame {
     static void CreateScriptMetaTable();
     static int32_t GetObjectType();
     static void RegisterScriptMethods(lua_State* L);
+    static void RenderMovie(void* param);
 
     // Member variables
     int32_t m_isPlaying = 0;
+    int32_t m_isStopped = 0;
     int32_t m_enableSubtitles = 0;
     char m_filename[256];
     int32_t m_volume = 100;

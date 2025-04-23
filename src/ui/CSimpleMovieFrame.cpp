@@ -23,6 +23,14 @@ void CSimpleMovieFrame::RegisterScriptMethods(lua_State* L) {
     FrameScript_Object::FillScriptMethodTable(L, SimpleMovieFrameMethods, NUM_SIMPLE_MOVIE_FRAME_SCRIPT_METHODS);
 }
 
+void CSimpleMovieFrame::RenderMovie(void* param) {
+    auto movieFrame = reinterpret_cast<CSimpleMovieFrame*>(param);
+    if (movieFrame->m_isPlaying) {
+        // movieFrame->UpdateTiming();
+        // movieFrame->Render();
+    }
+}
+
 FrameScript_Object::ScriptIx* CSimpleMovieFrame::GetScriptByName(const char* name, ScriptData& data) {
     auto parentScript = CSimpleFrame::GetScriptByName(name, data);
 
@@ -58,6 +66,10 @@ int32_t CSimpleMovieFrame::GetScriptMetaTable() {
 }
 
 void CSimpleMovieFrame::OnFrameRender(CRenderBatch* batch, uint32_t layer) {
+    this->CSimpleFrame::OnFrameRender(batch, layer);
+    if (layer == DRAWLAYER_ARTWORK) {
+        batch->QueueCallback(&CSimpleMovieFrame::RenderMovie, this);
+    }
 }
 
 CSimpleMovieFrame::CSimpleMovieFrame(CSimpleFrame* parent)
@@ -80,6 +92,18 @@ int32_t CSimpleMovieFrame::StartMovie(const char* filename, int32_t volume) {
 }
 
 void CSimpleMovieFrame::StopMovie() {
+    if (!this->m_isPlaying) {
+        return;
+    }
+
+    // UnloadDivxDecoder
+    // CloseAudio
+    // CloseCaptions
+    this->m_isStopped = 0;
+    this->m_isPlaying = 0;
+    if (this->m_onMovieFinished.luaRef) {
+        this->RunScript(this->m_onMovieFinished, 0, nullptr);
+    }
 }
 
 int32_t CSimpleMovieFrame::ParseAVIFile(const char* filename) {
