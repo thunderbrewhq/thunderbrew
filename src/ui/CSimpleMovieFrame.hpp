@@ -28,6 +28,14 @@ class CSimpleMovieFrame : public CSimpleFrame {
     ScriptIx m_onMovieFinished;
     ScriptIx m_onMovieShowSubtitle;
     ScriptIx m_onMovieHideSubtitle;
+    float m_frameRate  = 0.0;
+    uint32_t m_videoWidth = 0;
+    uint32_t m_videoHeight = 0;
+    uint32_t m_numFrames = 0;
+    char* m_videoData = nullptr;
+    uint32_t m_videoBytes = 0;
+    char* m_audioData = nullptr;
+    uint32_t m_audioBytes = 0;
 
     // Virtual member functions
     virtual ScriptIx* GetScriptByName(const char* name, ScriptData& data);

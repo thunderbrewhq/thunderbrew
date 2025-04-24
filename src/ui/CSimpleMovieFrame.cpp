@@ -1,5 +1,6 @@
 #include "ui/CSimpleMovieFrame.hpp"
 #include "ui/CSimpleMovieFrameScript.hpp"
+#include "util/SFile.hpp"
 
 int32_t CSimpleMovieFrame::s_metatable;
 int32_t CSimpleMovieFrame::s_objectType;
@@ -107,7 +108,175 @@ void CSimpleMovieFrame::StopMovie() {
 }
 
 int32_t CSimpleMovieFrame::ParseAVIFile(const char* filename) {
-    return 0;
+    char path[STORM_MAX_PATH];
+    // WARNING(workaround): Remove "Data/enGB/" substring
+    SStrPrintf(path, STORM_MAX_PATH, "Data/enGB/%s.avi", filename);
+
+    SFile* videoFile = nullptr;
+    if (!SFile::OpenEx(nullptr, path, 1, &videoFile)) {
+        return 0;
+    }
+
+    // -- ParseAVIHeader --
+#pragma pack(push, 1)
+    struct
+    {
+        char id[4];
+        uint32_t length;
+        char format[4];
+    } block;
+#pragma pack(pop)
+
+    if (!SFile::Read(videoFile, &block, 12, nullptr, nullptr, nullptr) ||
+        SStrCmpI(block.id, "RIFF", 4) || SStrCmpI(block.format, "AVI ", 4)) {
+        SFile::Close(videoFile);
+        return 0;
+    }
+
+    uint32_t fileSize = SFile::GetFileSize(videoFile, nullptr);
+
+    char* data = nullptr;
+    uint32_t dataSize = 0;
+
+    uint8_t* indexData = nullptr;
+    uint32_t indexDataSize = 0;
+
+    uint32_t moviStart = 0;
+
+    while (true) {
+        uint32_t position = SFile::SetFilePointer(videoFile, 0, nullptr, 1);
+        if (position >= fileSize) {
+            break;
+        }
+
+        if (!SFile::Read(videoFile, &block, 8, nullptr, nullptr, nullptr)) {
+            break;
+        }
+
+        if (SStrCmpI(block.id, "LIST", 4)) {
+            if (SStrCmpI(block.id, "idx1", 4)) {
+                SFile::SetFilePointer(videoFile, block.length, nullptr, 1);
+            } else {
+                indexDataSize = block.length;
+                indexData = reinterpret_cast<uint8_t*>(alloca(indexDataSize));
+                if (!SFile::Read(videoFile, indexData, indexDataSize, nullptr, nullptr, nullptr)) {
+                    break;
+                }
+            }
+        } else {
+            if (!SFile::Read(videoFile, &block, 4, nullptr, nullptr, nullptr)) {
+                break;
+            }
+
+            block.length -= 4;
+
+            if (SStrCmpI(block.id, "hdrl", 4)) {
+                if (SStrCmpI(block.id, "movi", 4)) {
+                    SFile::SetFilePointer(videoFile, block.length, nullptr, 1);
+                } else {
+                    moviStart = SFile::SetFilePointer(videoFile, 0, nullptr, 1);
+                    SFile::SetFilePointer(videoFile, block.length, nullptr, 1);
+                }
+            } else {
+                dataSize = block.length;
+                data = reinterpret_cast<char*>(alloca(dataSize));
+                if (!SFile::Read(videoFile, data, dataSize, nullptr, nullptr, nullptr)) {
+                    break;
+                }
+            }
+        }
+    }
+
+    int32_t v41 = 0;
+    int32_t v39 = -1;
+    int32_t v30 = -1;
+
+    uint32_t offset = 0;
+
+    while (offset < dataSize) {
+        if (!SStrCmpI(&data[offset], "LIST", 4)) {
+            offset += 12;
+            continue;
+        }
+
+        uint32_t length = *reinterpret_cast<uint32_t*>(&data[offset + 4]);
+        if (SStrCmpI(&data[offset], "strh", 4u)) {
+            if (SStrCmpI(&data[offset], "strf", 4)) {
+                offset += 8;
+            } else {
+                offset += 8;
+                if (v39 >= 0 && v30 < 0) {
+                    this->m_videoWidth = *reinterpret_cast<uint32_t*>(&data[offset + 4]);
+                    this->m_videoHeight = *reinterpret_cast<uint32_t*>(&data[offset + 8]);
+                }
+            }
+        } else {
+            offset += 8;
+            if (!SStrCmpI(&data[offset], "vids", 4)) {
+                float scale = *reinterpret_cast<uint32_t*>(&data[offset + 20]);
+                float rate = *reinterpret_cast<uint32_t*>(&data[offset + 24]);
+                this->m_frameRate = rate / scale;
+                this->m_numFrames = *reinterpret_cast<uint32_t*>(&data[offset + 32]);
+                v39 = v41;
+            }
+            if (!SStrCmpI(&data[offset], "auds", 4)) {
+                v30 = v41;
+            }
+            ++v41;
+        }
+        offset += length;
+    }
+
+    // -- ParseAVIIndex --
+    this->m_videoBytes = 0;
+    this->m_audioBytes = 0;
+
+    offset = 0;
+    while (offset < indexDataSize) {
+        // IsVideoChunk
+        if (indexData[offset + 2] == 100) {
+            this->m_videoBytes += *reinterpret_cast<uint32_t*>(&indexData[offset + 12]) + 4;
+        }
+
+        // IsAudioChunk
+        if (indexData[offset + 2] == 119) {
+            this->m_audioBytes += *reinterpret_cast<uint32_t*>(&indexData[offset + 12]);
+        }
+        offset += 16;
+    }
+
+    this->m_videoData = reinterpret_cast<char*>(ALLOC(this->m_videoBytes));
+    this->m_audioData = reinterpret_cast<char*>(ALLOC(this->m_audioBytes));
+
+    char* videoData = this->m_videoData;
+    char* audioData = this->m_audioData;
+
+    offset = 0;
+    while (offset < indexDataSize) {
+        // IsVideoChunk
+        if (indexData[offset + 2] == 100) {
+            uint32_t frameSize = *reinterpret_cast<uint32_t*>(&indexData[offset + 12]);
+            uint32_t frameOffset = *reinterpret_cast<uint32_t*>(&indexData[offset + 8]) + moviStart + 4;
+            memcpy(videoData, &frameSize, 4);
+            videoData += 4;
+            SFile::SetFilePointer(videoFile, frameOffset, nullptr, 0);
+            SFile::Read(videoFile, videoData, frameSize, nullptr, nullptr, nullptr);
+            videoData += frameSize;
+        }
+
+        // IsAudioChunk
+        if (indexData[offset + 2] == 119) {
+            uint32_t frameSize = *reinterpret_cast<uint32_t*>(&indexData[offset + 12]);
+            uint32_t frameOffset = *reinterpret_cast<uint32_t*>(&indexData[offset + 8]) + moviStart + 4;
+            SFile::SetFilePointer(videoFile, frameOffset, nullptr, 0);
+            SFile::Read(videoFile, audioData, frameSize, nullptr, nullptr, nullptr);
+            audioData += frameSize;
+        }
+        offset += 16;
+    }
+
+    SFile::Close(videoFile);
+    return dataSize > 0;
 }
 
 int32_t CSimpleMovieFrame::OpenVideo() {
