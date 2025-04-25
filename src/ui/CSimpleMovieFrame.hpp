@@ -20,8 +20,9 @@ class CSimpleMovieFrame : public CSimpleFrame {
     static void RenderMovie(void* param);
 
     // Member variables
+    void* m_audioChannel = nullptr;
     int32_t m_isPlaying = 0;
-    int32_t m_isStopped = 0;
+    int32_t m_isInterrupted = 0;
     int32_t m_enableSubtitles = 0;
     char m_filename[256];
     int32_t m_volume = 100;
@@ -33,9 +34,16 @@ class CSimpleMovieFrame : public CSimpleFrame {
     uint32_t m_videoHeight = 0;
     uint32_t m_numFrames = 0;
     char* m_videoData = nullptr;
+    char* m_currentFrameData = nullptr;
     uint32_t m_videoBytes = 0;
     char* m_audioData = nullptr;
     uint32_t m_audioBytes = 0;
+    uint64_t m_startTime = 0;
+    uint32_t m_prevFrame = 0;
+    uint32_t m_currentFrame = 0;
+    uint32_t m_frameAudioSync = 0;
+    uint32_t m_lastKeyFrame = 0;
+    uint64_t m_elapsedTime = 0;
 
     // Virtual member functions
     virtual ScriptIx* GetScriptByName(const char* name, ScriptData& data);
@@ -49,6 +57,9 @@ class CSimpleMovieFrame : public CSimpleFrame {
     void StopMovie();
     int32_t ParseAVIFile(const char* filename);
     int32_t OpenVideo();
+    int32_t UpdateTiming();
+    int32_t DecodeFrame(bool unk);
+    void Render();
 };
 
 #endif

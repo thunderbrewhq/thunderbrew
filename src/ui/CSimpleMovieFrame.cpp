@@ -1,6 +1,7 @@
 #include "ui/CSimpleMovieFrame.hpp"
 #include "ui/CSimpleMovieFrameScript.hpp"
 #include "util/SFile.hpp"
+#include <common/Time.hpp>
 
 int32_t CSimpleMovieFrame::s_metatable;
 int32_t CSimpleMovieFrame::s_objectType;
@@ -27,8 +28,8 @@ void CSimpleMovieFrame::RegisterScriptMethods(lua_State* L) {
 void CSimpleMovieFrame::RenderMovie(void* param) {
     auto movieFrame = reinterpret_cast<CSimpleMovieFrame*>(param);
     if (movieFrame->m_isPlaying) {
-        // movieFrame->UpdateTiming();
-        // movieFrame->Render();
+        movieFrame->UpdateTiming();
+        movieFrame->Render();
     }
 }
 
@@ -100,7 +101,7 @@ void CSimpleMovieFrame::StopMovie() {
     // UnloadDivxDecoder
     // CloseAudio
     // CloseCaptions
-    this->m_isStopped = 0;
+    this->m_isInterrupted = 0;
     this->m_isPlaying = 0;
     if (this->m_onMovieFinished.luaRef) {
         this->RunScript(this->m_onMovieFinished, 0, nullptr);
@@ -275,10 +276,73 @@ int32_t CSimpleMovieFrame::ParseAVIFile(const char* filename) {
         offset += 16;
     }
 
+    this->m_currentFrameData = this->m_videoData;
+
     SFile::Close(videoFile);
     return dataSize > 0;
 }
 
 int32_t CSimpleMovieFrame::OpenVideo() {
     return 0;
+}
+
+int32_t CSimpleMovieFrame::UpdateTiming() {
+    bool isAudioPlaying = false; /* SE2::IsPlaying(this->m_audioChannel) */
+
+    if (isAudioPlaying) {
+        //this->m_elapsedTime = SE2::GetPositionInMS(this->m_audioChannel);
+        //this->m_startTime = OsGetAsyncTimeMs() - this->m_elapsedTime;
+    } else {
+        this->m_elapsedTime = OsGetAsyncTimeMs() - this->m_startTime;
+    }
+
+    uint32_t currentFrame = static_cast<uint32_t>(this->m_elapsedTime * this->m_frameRate * 0.001 + 0.5);
+
+    if (isAudioPlaying) {
+        // TODO
+    }
+
+    currentFrame += this->m_frameAudioSync;
+    if (currentFrame <= this->m_prevFrame) {
+        currentFrame = this->m_prevFrame;
+    }
+
+    this->m_currentFrame = currentFrame;
+
+    if (currentFrame >= this->m_numFrames) {
+        this->m_isInterrupted = 1;
+    }
+
+    if (this->m_isInterrupted) {
+        this->StopMovie();
+        return 0;
+    }
+
+    if (currentFrame == this->m_prevFrame) {
+        return 0;
+    }
+
+    if (currentFrame != this->m_prevFrame + 1) {
+        ++this->m_lastKeyFrame;
+    }
+
+    while (this->m_prevFrame < this->m_currentFrame - 1) {
+        this->DecodeFrame(false);
+        ++this->m_prevFrame;
+    }
+
+    if (!this->DecodeFrame(true)) {
+        this->m_isInterrupted = 1;
+    }
+
+    this->m_prevFrame = this->m_currentFrame;
+
+    // TODO: Subtitle stuff
+}
+
+int32_t CSimpleMovieFrame::DecodeFrame(bool unk) {
+    return 0;
+}
+
+void CSimpleMovieFrame::Render() {
 }
