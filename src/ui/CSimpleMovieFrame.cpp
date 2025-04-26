@@ -1,7 +1,17 @@
 #include "ui/CSimpleMovieFrame.hpp"
 #include "ui/CSimpleMovieFrameScript.hpp"
 #include "util/SFile.hpp"
+#include "gx/Texture.hpp"
 #include <common/Time.hpp>
+
+
+static uint32_t LoadDivxDecoder() {
+    return 0;
+}
+
+static void UnloadDivxDecoder(uint32_t decoder) {
+
+}
 
 int32_t CSimpleMovieFrame::s_metatable;
 int32_t CSimpleMovieFrame::s_objectType;
@@ -283,7 +293,85 @@ int32_t CSimpleMovieFrame::ParseAVIFile(const char* filename) {
 }
 
 int32_t CSimpleMovieFrame::OpenVideo() {
-    return 0;
+    this->m_startTime = OsGetAsyncTimeMs();
+    this->m_elapsedTime = 0;
+    this->m_decoder = LoadDivxDecoder();
+    this->m_currentFrame = 0;
+    this->m_prevFrame = -1;
+    this->m_lastKeyFrame = 0;
+    this->m_frameAudioSync = 0;
+
+    if (!this->m_decoder) {
+        return 0;
+    }
+
+    if (this->m_videoWidth == 1024) {
+        if (this->m_videoHeight == 576) {
+            this->m_textureFormat = 3;
+        } else if (this->m_videoHeight == 436) {
+            this->m_textureFormat = 5;
+        } else {
+            this->m_textureFormat = 1;
+        }
+    } else if (this->m_videoWidth == 800) {
+        if (this->m_videoHeight == 448) {
+            this->m_textureFormat = 2;
+        } else if (this->m_videoHeight == 342 || this->m_videoHeight == 340) {
+            this->m_textureFormat = 4;
+        } else {
+            this->m_textureFormat = 0;
+        }
+    } else {
+        CloseVideo();
+        return 0;
+    }
+
+    const uint32_t widthByFormat[6] = { 800, 1024, 800, 1024, 800, 1024 };
+    const uint32_t heightByFormat[6] = { 384, 512, 512, 576, 384, 512 };
+
+    const uint32_t imageSize = widthByFormat[this->m_textureFormat] * heightByFormat[this->m_textureFormat] * 4;
+    this->m_imageData = reinterpret_cast<char*>(ALLOC_ZERO(imageSize));
+    if (!this->m_imageData) {
+        CloseVideo();
+        return 0;
+    }
+
+    const uint32_t textureCountByFormat[6] = { 6, 2, 3, 4, 6, 2 };
+
+    int32_t hasTextures = 1;
+    for (uint32_t i = 0; i < textureCountByFormat[this->m_textureFormat]; ++i) {
+        // TODO: GxTexCreate()
+        hasTextures = 0;
+    }
+
+    if (hasTextures) {
+        for (uint32_t i = 0; i < textureCountByFormat[this->m_textureFormat]; ++i) {
+            GxTexUpdate(this->m_textures[i], 0, 0, 0, 0, 1);
+        }
+    }
+
+    return 1;
+}
+
+void CSimpleMovieFrame::CloseVideo() {
+    if (this->m_decoder) {
+        UnloadDivxDecoder(this->m_decoder);
+        this->m_decoder = 0;
+    }
+
+    if (this->m_imageData) {
+        FREE(this->m_imageData);
+        this->m_imageData = nullptr;
+    }
+
+    if (this->m_videoData) {
+        FREE(this->m_videoData);
+        this->m_videoData = nullptr;
+    }
+
+    for (uint32_t i = 0; i < 6; ++i) {
+        GxTexDestroy(this->m_textures[i]);
+    }
 }
 
 int32_t CSimpleMovieFrame::UpdateTiming() {
@@ -296,7 +384,7 @@ int32_t CSimpleMovieFrame::UpdateTiming() {
         this->m_elapsedTime = OsGetAsyncTimeMs() - this->m_startTime;
     }
 
-    uint32_t currentFrame = static_cast<uint32_t>(this->m_elapsedTime * this->m_frameRate * 0.001 + 0.5);
+    int32_t currentFrame = static_cast<int32_t>(this->m_elapsedTime * this->m_frameRate * 0.001 + 0.5);
 
     if (isAudioPlaying) {
         // TODO

@@ -6,9 +6,17 @@
 
 class CRect;
 class CRenderBatch;
+class CGxTex;
+class CGxTexParms;
 
 class CSimpleMovieFrame : public CSimpleFrame {
     public:
+    struct TextureData {
+        CGxTexParms* params;
+        char* data;
+    };
+
+
     // Static variables
     static int32_t s_metatable;
     static int32_t s_objectType;
@@ -29,20 +37,25 @@ class CSimpleMovieFrame : public CSimpleFrame {
     ScriptIx m_onMovieFinished;
     ScriptIx m_onMovieShowSubtitle;
     ScriptIx m_onMovieHideSubtitle;
+    uint32_t m_decoder = 0;
     float m_frameRate  = 0.0;
     uint32_t m_videoWidth = 0;
     uint32_t m_videoHeight = 0;
-    uint32_t m_numFrames = 0;
+    int32_t m_numFrames = 0;
+    uint32_t m_textureFormat = 0;
+    CGxTex* m_textures[6] = {};
+    TextureData m_textureData[6] = {};
+    char* m_imageData = nullptr;
     char* m_videoData = nullptr;
     char* m_currentFrameData = nullptr;
     uint32_t m_videoBytes = 0;
     char* m_audioData = nullptr;
     uint32_t m_audioBytes = 0;
     uint64_t m_startTime = 0;
-    uint32_t m_prevFrame = 0;
-    uint32_t m_currentFrame = 0;
-    uint32_t m_frameAudioSync = 0;
-    uint32_t m_lastKeyFrame = 0;
+    int32_t m_prevFrame = 0;
+    int32_t m_currentFrame = 0;
+    int32_t m_frameAudioSync = 0;
+    int32_t m_lastKeyFrame = 0;
     uint64_t m_elapsedTime = 0;
 
     // Virtual member functions
@@ -57,6 +70,7 @@ class CSimpleMovieFrame : public CSimpleFrame {
     void StopMovie();
     int32_t ParseAVIFile(const char* filename);
     int32_t OpenVideo();
+    void CloseVideo();
     int32_t UpdateTiming();
     int32_t DecodeFrame(bool unk);
     void Render();
