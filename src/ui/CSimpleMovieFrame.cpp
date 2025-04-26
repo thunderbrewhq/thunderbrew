@@ -1,17 +1,283 @@
 #include "ui/CSimpleMovieFrame.hpp"
 #include "ui/CSimpleMovieFrameScript.hpp"
 #include "util/SFile.hpp"
+#include "gx/Buffer.hpp"
+#include "gx/RenderState.hpp"
 #include "gx/Texture.hpp"
+#include "gx/Transform.hpp"
+#include "gx/Draw.hpp"
 #include <common/Time.hpp>
+#include <tempest/Matrix.hpp>
 
+#if defined(WHOA_SYSTEM_WIN)
+
+#include <map>
+#include <windows.h>
+
+#define XVID_MAKE_VERSION(a, b, c) ((((a) & 0xff) << 16) | (((b) & 0xff) << 8) | ((c) & 0xff))
+#define XVID_VERSION_MAJOR(a) ((char)(((a) >> 16) & 0xff))
+#define XVID_VERSION_MINOR(a) ((char)(((a) >> 8) & 0xff))
+#define XVID_VERSION_PATCH(a) ((char)(((a) >> 0) & 0xff))
+
+#define XVID_MAKE_API(a, b) ((((a) & 0xff) << 16) | (((b) & 0xff) << 0))
+#define XVID_API_MAJOR(a) (((a) >> 16) & 0xff)
+#define XVID_API_MINOR(a) (((a) >> 0) & 0xff)
+
+#define XVID_VERSION XVID_MAKE_VERSION(1, 4, -127)
+#define XVID_API XVID_MAKE_API(4, 4)
+
+extern "C" {
+
+/* xvid_image_t
+    for non-planar colorspaces use only plane[0] and stride[0]
+    four plane reserved for alpha*/
+typedef struct {
+    int csp;        /* [in] colorspace; or with XVID_CSP_VFLIP to perform vertical flip */
+    void* plane[4]; /* [in] image plane ptrs */
+    int stride[4];  /* [in] image stride; "bytes per row"*/
+} xvid_image_t;
+
+/* XVID_GBL_INIT param1 */
+typedef struct {
+    int version;
+    unsigned int cpu_flags; /* [in:opt] zero = autodetect cpu; XVID_CPU_FORCE|{cpu features} = force cpu features */
+    int debug;              /* [in:opt] debug level */
+} xvid_gbl_init_t;
+
+/* XVID_GBL_INFO param1 */
+typedef struct {
+    int version;
+    int actual_version;     /* [out] returns the actual xvidcore version */
+    const char* build;      /* [out] if !null, points to description of this xvid core build */
+    unsigned int cpu_flags; /* [out] detected cpu features */
+    int num_threads;        /* [out] detected number of cpus/threads */
+} xvid_gbl_info_t;
+
+#define XVID_GBL_INIT 0    /* initialize xvidcore; must be called before using xvid_decore, or xvid_encore) */
+#define XVID_GBL_INFO 1    /* return some info about xvidcore, and the host computer */
+#define XVID_GBL_CONVERT 2 /* colorspace conversion utility */
+
+typedef int (*XVID_GLOBAL)(void* handle, int opt, void* param1, void* param2);
+
+#define XVID_DEC_CREATE 0  /* create decore instance; return 0 on success */
+#define XVID_DEC_DESTROY 1 /* destroy decore instance: return 0 on success */
+#define XVID_DEC_DECODE 2  /* decode a frame: returns number of bytes consumed >= 0 */
+
+typedef int (*XVID_DECORE)(void* handle, int opt, void* param1, void* param2);
+
+/* XVID_DEC_CREATE param 1
+    image width & height as well as FourCC code may be specified
+    here when known in advance (e.g. being read from container) */
+typedef struct {
+    int version;
+    int width;       /* [in:opt] image width */
+    int height;      /* [in:opt] image width */
+    void* handle;    /* [out]    decore context handle */
+                     /* ------- v1.3.x ------- */
+    int fourcc;      /* [in:opt] fourcc of the input video */
+    int num_threads; /* [in:opt] number of threads to use in decoder */
+} xvid_dec_create_t;
+
+typedef struct {
+    int version;
+    int general;         /* [in:opt] general flags */
+    void* bitstream;     /* [in]     bitstream (read from)*/
+    int length;          /* [in]     bitstream length */
+    xvid_image_t output; /* [in]     output image (written to) */
+                         /* ------- v1.1.x ------- */
+    int brightness;      /* [in]	 brightness offset (0=none) */
+} xvid_dec_frame_t;
+
+/* XVID_DEC_DECODE param2 :: optional */
+typedef struct
+{
+    int version;
+
+    int type; /* [out] output data type */
+    union {
+        struct {                /* type>0 {XVID_TYPE_IVOP,XVID_TYPE_PVOP,XVID_TYPE_BVOP,XVID_TYPE_SVOP} */
+            int general;        /* [out] flags */
+            int time_base;      /* [out] time base */
+            int time_increment; /* [out] time increment */
+
+            /* XXX: external deblocking stuff */
+            int* qscale;       /* [out] pointer to quantizer table */
+            int qscale_stride; /* [out] quantizer scale stride */
+
+        } vop;
+        struct {            /* XVID_TYPE_VOL */
+            int general;    /* [out] flags */
+            int width;      /* [out] width */
+            int height;     /* [out] height */
+            int par;        /* [out] pixel aspect ratio (refer to XVID_PAR_xxx above) */
+            int par_width;  /* [out] aspect ratio width  [1..255] */
+            int par_height; /* [out] aspect ratio height [1..255] */
+        } vol;
+    } data;
+} xvid_dec_stats_t;
+
+} // extern "C"
+
+static std::map<uint32_t, void*> s_divxHandles;
+static uint32_t s_divxRefCounter = 0;
+
+static XVID_GLOBAL s_xvid_global = nullptr;
+static XVID_DECORE s_xvid_decore = nullptr;
+
+static uint32_t LoadDivxDecoder() {
+    auto library = LoadLibraryA("xvidcore.dll");
+    if (!library) {
+        return 0;
+    }
+
+    s_xvid_global = reinterpret_cast<XVID_GLOBAL>(GetProcAddress(library, "xvid_global"));
+    s_xvid_decore = reinterpret_cast<XVID_DECORE>(GetProcAddress(library, "xvid_decore"));
+
+    if (!s_xvid_global || !s_xvid_decore) {
+        FreeLibrary(library);
+        return 0;
+    }
+
+    xvid_gbl_info_t info = {};
+    info.version = XVID_VERSION;
+
+    if (s_xvid_global(nullptr, XVID_GBL_INFO, &info, nullptr) < 0) {
+        return 0;
+    }
+
+    xvid_gbl_init_t init = {};
+    init.version = XVID_VERSION;
+    if (s_xvid_global(nullptr, XVID_GBL_INIT, &init, nullptr) < 0) {
+        return 0;
+    }
+
+    xvid_dec_create_t decoder = {};
+    decoder.version = XVID_VERSION;
+    decoder.num_threads = info.num_threads;
+    if (s_xvid_decore(nullptr, XVID_DEC_CREATE, &decoder, nullptr)) {
+        return 0;
+    }
+
+    if (++s_divxRefCounter == 0) {
+        ++s_divxRefCounter;
+    }
+
+    s_divxHandles[s_divxRefCounter] = decoder.handle;
+    return s_divxRefCounter;
+}
+
+static int write_tga(char* filename, char* image) {
+    FILE* f;
+    char hdr[18];
+
+    f = fopen(filename, "wb");
+    if (f == NULL) {
+        return -1;
+    }
+
+    int BPP = 1;
+    int XDIM = 1024;
+    int YDIM = 464;
+
+    hdr[0] = 0;                   /* ID length */
+    hdr[1] = 0;                   /* Color map type */
+    hdr[2] = (BPP > 1) ? 2 : 3;   /* Uncompressed true color (2) or greymap (3) */
+    hdr[3] = 0;                   /* Color map specification (not used) */
+    hdr[4] = 0;                   /* Color map specification (not used) */
+    hdr[5] = 0;                   /* Color map specification (not used) */
+    hdr[6] = 0;                   /* Color map specification (not used) */
+    hdr[7] = 0;                   /* Color map specification (not used) */
+    hdr[8] = 0;                   /* LSB X origin */
+    hdr[9] = 0;                   /* MSB X origin */
+    hdr[10] = 0;                  /* LSB Y origin */
+    hdr[11] = 0;                  /* MSB Y origin */
+    hdr[12] = (XDIM >> 0) & 0xff; /* LSB Width */
+    hdr[13] = (XDIM >> 8) & 0xff; /* MSB Width */
+    if (BPP > 1) {
+        hdr[14] = (YDIM >> 0) & 0xff; /* LSB Height */
+        hdr[15] = (YDIM >> 8) & 0xff; /* MSB Height */
+    } else {
+        hdr[14] = ((YDIM * 3) >> 1) & 0xff; /* LSB Height */
+        hdr[15] = ((YDIM * 3) >> 9) & 0xff; /* MSB Height */
+    }
+    hdr[16] = BPP * 8;
+    hdr[17] = 0x00 | (1 << 5) /* Up to down */ | (0 << 4); /* Image descriptor */
+
+    /* Write header */
+    fwrite(hdr, 1, sizeof(hdr), f);
+
+    fwrite(image, 1, XDIM * YDIM * BPP, f);
+
+    /* Write Y and V planes for YUV formats */
+    if (BPP == 1) {
+        int i;
+
+        /* Write the two chrominance planes */
+        for (i = 0; i < YDIM / 2; i++) {
+            fwrite(image + XDIM * YDIM + i * XDIM / 2, 1, XDIM / 2, f);
+            fwrite(image + 5 * XDIM * YDIM / 4 + i * XDIM / 2, 1, XDIM / 2, f);
+        }
+    }
+
+    /* Close the file */
+    fclose(f);
+
+    return (0);
+}
+
+static int32_t DivxDecode(uint32_t decoder, char* input, char* output) {
+    xvid_dec_frame_t frame = {};
+    xvid_dec_stats_t stats = {};
+
+	frame.version = XVID_VERSION;
+    stats.version = XVID_VERSION;
+
+    frame.bitstream = input + 4;
+    frame.length = *reinterpret_cast<int*>(input);
+
+    char* frameData = (char*)ALLOC(1024 * 464 * 4);
+
+    frame.output.plane[0] = frameData;
+    frame.output.stride[0] = 1024;
+    frame.output.csp = (1 << 1);
+
+    static int frameNo = 0;
+
+    while (true) {
+        int bytes = s_xvid_decore(s_divxHandles[decoder], XVID_DEC_DECODE, &frame, &stats);
+        if (bytes < 1) {
+            break;
+        }
+        frame.bitstream = (char*)frame.bitstream + bytes;
+        frame.length -= bytes;
+    }
+
+    frameNo++;
+
+    //if (frameNo == 168) {
+    //    write_tga("movie.tga", frameData);
+    //}
+
+    FREE(frameData);
+
+    return 1;
+}
+
+#else
 
 static uint32_t LoadDivxDecoder() {
     return 0;
 }
 
+#endif
+
+
 static void UnloadDivxDecoder(uint32_t decoder) {
 
 }
+
+static const uint32_t textureCountByFormat[6] = { 6, 2, 3, 4, 6, 2 };
+
 
 int32_t CSimpleMovieFrame::s_metatable;
 int32_t CSimpleMovieFrame::s_objectType;
@@ -336,8 +602,6 @@ int32_t CSimpleMovieFrame::OpenVideo() {
         return 0;
     }
 
-    const uint32_t textureCountByFormat[6] = { 6, 2, 3, 4, 6, 2 };
-
     int32_t hasTextures = 1;
     for (uint32_t i = 0; i < textureCountByFormat[this->m_textureFormat]; ++i) {
         // TODO: GxTexCreate()
@@ -429,8 +693,50 @@ int32_t CSimpleMovieFrame::UpdateTiming() {
 }
 
 int32_t CSimpleMovieFrame::DecodeFrame(bool unk) {
-    return 0;
+    auto frameSize = *reinterpret_cast<uint32_t*>(this->m_currentFrameData);
+    if (!DivxDecode(this->m_decoder, this->m_currentFrameData, this->m_imageData)) {
+        return 0;
+    }
+    this->m_currentFrameData += frameSize + 4;
+    return 1;
 }
 
 void CSimpleMovieFrame::Render() {
+    float minX;
+    float maxX;
+    float minY;
+    float maxY;
+    float minZ;
+    float maxZ;
+    GxXformViewport(minX, maxX, minY, maxY, minZ, maxZ);
+
+    GxXformSetViewport(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f);
+    CImVector clearColor = { 0x00, 0x00, 0x80, 0xFF };
+    GxSceneClear(3, clearColor);
+    C44Matrix matrix;
+    GxuXformCreateOrtho(0.0, 1.0, -0.5, 0.5, 0.0, 500.0, matrix);
+    GxXformSetView(C44Matrix());
+    GxXformSetProjection(matrix);
+
+    // TODO
+
+    GxRsPush();
+    GxRsSet(GxRs_Lighting, 0);
+    GxRsSet(GxRs_Fog, 0);
+    GxRsSet(GxRs_BlendingMode, 0);
+    GxRsSetAlphaRef();
+
+    for (uint32_t i = 0; i < textureCountByFormat[this->m_textureFormat]; ++i) {
+        C3Vector pos;
+        C3Vector normal(0.0f, 0.0f, 1.0f);
+        C2Vector tex(0.0f, 0.0f);
+        GxPrimLockVertexPtrs(4, &pos, sizeof(pos), &normal, 0, nullptr, 0, nullptr, 0, &tex, sizeof(tex), nullptr, 0);
+        GxRsSet(GxRs_Texture0, this->m_textures[i]);
+        uint16_t indices[] = { 0, 1, 2, 3 };
+        GxDrawLockedElements(GxPrim_TriangleStrip, 4, indices);
+        GxPrimUnlockVertexPtrs();
+    }
+
+    GxRsPop();
+    GxXformSetViewport(minX, maxX, minY, maxY, minZ, maxZ);
 }
