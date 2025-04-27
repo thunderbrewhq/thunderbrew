@@ -166,66 +166,7 @@ static uint32_t LoadDivxDecoder() {
     return s_divxRefCounter;
 }
 
-static int write_tga(char* filename, char* image) {
-    FILE* f;
-    char hdr[18];
-
-    f = fopen(filename, "wb");
-    if (f == NULL) {
-        return -1;
-    }
-
-    int BPP = 1;
-    int XDIM = 1024;
-    int YDIM = 464;
-
-    hdr[0] = 0;                   /* ID length */
-    hdr[1] = 0;                   /* Color map type */
-    hdr[2] = (BPP > 1) ? 2 : 3;   /* Uncompressed true color (2) or greymap (3) */
-    hdr[3] = 0;                   /* Color map specification (not used) */
-    hdr[4] = 0;                   /* Color map specification (not used) */
-    hdr[5] = 0;                   /* Color map specification (not used) */
-    hdr[6] = 0;                   /* Color map specification (not used) */
-    hdr[7] = 0;                   /* Color map specification (not used) */
-    hdr[8] = 0;                   /* LSB X origin */
-    hdr[9] = 0;                   /* MSB X origin */
-    hdr[10] = 0;                  /* LSB Y origin */
-    hdr[11] = 0;                  /* MSB Y origin */
-    hdr[12] = (XDIM >> 0) & 0xff; /* LSB Width */
-    hdr[13] = (XDIM >> 8) & 0xff; /* MSB Width */
-    if (BPP > 1) {
-        hdr[14] = (YDIM >> 0) & 0xff; /* LSB Height */
-        hdr[15] = (YDIM >> 8) & 0xff; /* MSB Height */
-    } else {
-        hdr[14] = ((YDIM * 3) >> 1) & 0xff; /* LSB Height */
-        hdr[15] = ((YDIM * 3) >> 9) & 0xff; /* MSB Height */
-    }
-    hdr[16] = BPP * 8;
-    hdr[17] = 0x00 | (1 << 5) /* Up to down */ | (0 << 4); /* Image descriptor */
-
-    /* Write header */
-    fwrite(hdr, 1, sizeof(hdr), f);
-
-    fwrite(image, 1, XDIM * YDIM * BPP, f);
-
-    /* Write Y and V planes for YUV formats */
-    if (BPP == 1) {
-        int i;
-
-        /* Write the two chrominance planes */
-        for (i = 0; i < YDIM / 2; i++) {
-            fwrite(image + XDIM * YDIM + i * XDIM / 2, 1, XDIM / 2, f);
-            fwrite(image + 5 * XDIM * YDIM / 4 + i * XDIM / 2, 1, XDIM / 2, f);
-        }
-    }
-
-    /* Close the file */
-    fclose(f);
-
-    return (0);
-}
-
-static int32_t DivxDecode(uint32_t decoder, char* input, char* output) {
+static int32_t DivxDecode(uint32_t decoder, char* input, char* output, int32_t width) {
     xvid_dec_frame_t frame = {};
     xvid_dec_stats_t stats = {};
 
@@ -235,11 +176,9 @@ static int32_t DivxDecode(uint32_t decoder, char* input, char* output) {
     frame.bitstream = input + 4;
     frame.length = *reinterpret_cast<int*>(input);
 
-    char* frameData = (char*)ALLOC(1024 * 464 * 4);
-
-    frame.output.plane[0] = frameData;
-    frame.output.stride[0] = 1024;
-    frame.output.csp = (1 << 1);
+    frame.output.plane[0] = output;
+    frame.output.stride[0] = 4 * width;
+    frame.output.csp = (1 << 15);
 
     static int frameNo = 0;
 
@@ -253,12 +192,6 @@ static int32_t DivxDecode(uint32_t decoder, char* input, char* output) {
     }
 
     frameNo++;
-
-    //if (frameNo == 168) {
-    //    write_tga("movie.tga", frameData);
-    //}
-
-    FREE(frameData);
 
     return 1;
 }
@@ -306,6 +239,13 @@ void CSimpleMovieFrame::RenderMovie(void* param) {
     if (movieFrame->m_isPlaying) {
         movieFrame->UpdateTiming();
         movieFrame->Render();
+    }
+}
+
+void CSimpleMovieFrame::TextureCallback(EGxTexCommand command, uint32_t width, uint32_t height, uint32_t, uint32_t, void* userData, uint32_t& texelStrideInBytes, const void*& texels) {
+    if (command == GxTex_Latch) {
+        texelStrideInBytes = 4 * width;
+        texels = reinterpret_cast<CSimpleMovieFrame::TextureData*>(userData)->data;
     }
 }
 
@@ -604,8 +544,18 @@ int32_t CSimpleMovieFrame::OpenVideo() {
 
     int32_t hasTextures = 1;
     for (uint32_t i = 0; i < textureCountByFormat[this->m_textureFormat]; ++i) {
-        // TODO: GxTexCreate()
-        hasTextures = 0;
+        CGxTexParms parms = {};
+        parms.target = GxTex_2d;
+        parms.width = widthByFormat[this->m_textureFormat];
+        parms.height = heightByFormat[this->m_textureFormat];
+        parms.format = GxTex_Argb8888;
+        parms.dataFormat = GxTex_Argb8888;
+        parms.flags = CGxTexFlags(GxTex_Linear, 0, 0, 0, 0, 0, 1);
+        parms.userArg = &this->m_textureData[i];
+        parms.userFunc = &CSimpleMovieFrame::TextureCallback;
+        this->m_textureData[i].params = parms;
+        this->m_textureData[i].data = this->m_imageData;
+        hasTextures &= GxTexCreate(parms, this->m_textures[i]);
     }
 
     if (hasTextures) {
@@ -692,12 +642,21 @@ int32_t CSimpleMovieFrame::UpdateTiming() {
     // TODO: Subtitle stuff
 }
 
-int32_t CSimpleMovieFrame::DecodeFrame(bool unk) {
+int32_t CSimpleMovieFrame::DecodeFrame(bool update) {
     auto frameSize = *reinterpret_cast<uint32_t*>(this->m_currentFrameData);
-    if (!DivxDecode(this->m_decoder, this->m_currentFrameData, this->m_imageData)) {
+    if (!DivxDecode(this->m_decoder, this->m_currentFrameData, this->m_imageData, this->m_videoWidth)) {
         return 0;
     }
     this->m_currentFrameData += frameSize + 4;
+
+    if (!update) {
+        return 1;
+    }
+
+    for (uint32_t i = 0; i < textureCountByFormat[this->m_textureFormat]; ++i) {
+        GxTexUpdate(this->m_textures[i], 0, 0, this->m_textureData[i].params.width, this->m_textureData[i].params.height, 1);
+    }
+
     return 1;
 }
 
@@ -711,7 +670,7 @@ void CSimpleMovieFrame::Render() {
     GxXformViewport(minX, maxX, minY, maxY, minZ, maxZ);
 
     GxXformSetViewport(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f);
-    CImVector clearColor = { 0x00, 0x00, 0x80, 0xFF };
+    CImVector clearColor = { 0x00, 0x00, 0x00, 0xFF };
     GxSceneClear(3, clearColor);
     C44Matrix matrix;
     GxuXformCreateOrtho(0.0, 1.0, -0.5, 0.5, 0.0, 500.0, matrix);
@@ -727,10 +686,35 @@ void CSimpleMovieFrame::Render() {
     GxRsSetAlphaRef();
 
     for (uint32_t i = 0; i < textureCountByFormat[this->m_textureFormat]; ++i) {
-        C3Vector pos;
-        C3Vector normal(0.0f, 0.0f, 1.0f);
-        C2Vector tex(0.0f, 0.0f);
-        GxPrimLockVertexPtrs(4, &pos, sizeof(pos), &normal, 0, nullptr, 0, nullptr, 0, &tex, sizeof(tex), nullptr, 0);
+        if (i > 0)
+            continue;
+
+        float inX = 0.1f;
+        float inY = -0.4f;
+
+        float axX = 0.9f;
+        float axY = 0.4f;
+
+        C3Vector position[] = {
+            { inX, inY, 0.0f },
+            { axX, inY, 0.0f },
+            { inX, axY, 0.0f },
+            { axX, axY, 0.0f }
+        };
+
+        C3Vector normal[] = {
+            { 0.0f, 0.0f, 1.0f },
+            { 0.0f, 0.0f, 1.0f },
+            { 0.0f, 0.0f, 1.0f },
+            { 0.0f, 0.0f, 1.0f }
+        };
+        C2Vector tex[] = {
+            { 0.0f, 0.0f },
+            { 1.0f, 0.0f },
+            { 0.0f, 1.0f },
+            { 1.0f, 1.0f }
+        };
+        GxPrimLockVertexPtrs(4, position, sizeof(C3Vector), nullptr, 0, nullptr, 0, nullptr, 0, tex, sizeof(C2Vector), nullptr, 0);
         GxRsSet(GxRs_Texture0, this->m_textures[i]);
         uint16_t indices[] = { 0, 1, 2, 3 };
         GxDrawLockedElements(GxPrim_TriangleStrip, 4, indices);
