@@ -642,6 +642,8 @@ int32_t CSimpleMovieFrame::DecodeFrame(bool update) {
 
     for (uint32_t i = 0; i < textureCountByFormat[this->m_textureFormat]; ++i) {
         uint32_t v9 = 4 * (i + 6 * this->m_textureFormat);
+        // WARNING(workaround): Uncomment the code below when GxTexUpdate will be working properly
+        /*
         GxTexUpdate(
             this->m_textures[i],
             s_movieTextureUpdate[v9 + 0],
@@ -649,6 +651,8 @@ int32_t CSimpleMovieFrame::DecodeFrame(bool update) {
             s_movieTextureUpdate[v9 + 2],
             s_movieTextureUpdate[v9 + 3],
             1);
+        */
+        GxTexUpdate(this->m_textures[i], 0, 0, 0, 0, 1);
     }
 
     return 1;
