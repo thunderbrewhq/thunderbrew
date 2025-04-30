@@ -14,8 +14,8 @@ class CGxTexParms;
 class CSimpleMovieFrame : public CSimpleFrame {
     public:
     struct TextureData {
-        uint32_t* strideData;
-        char* data;
+        uint32_t* data;
+        char* buffer;
     };
 
 

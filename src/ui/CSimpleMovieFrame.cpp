@@ -1,6 +1,7 @@
 #include "ui/CSimpleMovieFrame.hpp"
 #include "ui/CSimpleMovieFrameScript.hpp"
 #include "util/SFile.hpp"
+#include "gx/Coordinate.hpp"
 #include "gx/Buffer.hpp"
 #include "gx/RenderState.hpp"
 #include "gx/Texture.hpp"
@@ -112,10 +113,13 @@ void CSimpleMovieFrame::RenderMovie(void* param) {
 
 void CSimpleMovieFrame::TextureCallback(EGxTexCommand command, uint32_t width, uint32_t height, uint32_t, uint32_t, void* userData, uint32_t& texelStrideInBytes, const void*& texels) {
     if (command == GxTex_Latch) {
-        auto textureData = reinterpret_cast<CSimpleMovieFrame::TextureData*>(userData);
-        //texelStrideInBytes = textureData->strideData[3] / 2;
-        texelStrideInBytes = 4 * width;
-        texels = &textureData->data[textureData->strideData[2]];
+        auto data = reinterpret_cast<CSimpleMovieFrame::TextureData*>(userData);
+
+        STORM_ASSERT(width == data->data[0]);
+        STORM_ASSERT(height == data->data[1]);
+
+        texels = &data->buffer[data->data[2]];
+        texelStrideInBytes = data->data[3];
     }
 }
 
@@ -416,8 +420,8 @@ int32_t CSimpleMovieFrame::OpenVideo() {
     int32_t hasTextures = 1;
     for (uint32_t i = 0; i < textureCountByFormat[this->m_textureFormat]; ++i) {
         uint32_t stride = (6 * this->m_textureFormat + i) * 4;
-        this->m_textureData[i].strideData = &s_strideData[stride];
-        this->m_textureData[i].data = this->m_imageData;
+        this->m_textureData[i].data = &s_strideData[stride];
+        this->m_textureData[i].buffer = this->m_imageData;
 
         hasTextures &= GxTexCreate(
             s_strideData[stride],
@@ -599,18 +603,23 @@ void CSimpleMovieFrame::Render() {
         s_movieFrameNormalVec.x = 0.0;
         s_movieFrameNormalVec.y = 0.0;
         s_movieFrameNormalVec.z = 1.0;
+
         s_movieRenderFlag |= 1;
     }
 
     if ((s_movieRenderFlag & 2) == 0) {
-        s_movieFrameTexVec[0].x = 0.0;
-        s_movieFrameTexVec[0].y = 0.0;
-        s_movieFrameTexVec[1].y = 0.0;
-        s_movieFrameTexVec[2].x = 0.0;
-        s_movieFrameTexVec[1].x = 1.0;
-        s_movieFrameTexVec[2].y = s_movieFrameTexVec[1].x;
-        s_movieFrameTexVec[3].x = s_movieFrameTexVec[1].x;
-        s_movieFrameTexVec[3].y = s_movieFrameTexVec[1].x;
+        s_movieFrameTexVec[0].x = 0.0f;
+        s_movieFrameTexVec[0].y = 0.0f;
+
+        s_movieFrameTexVec[1].x = 1.0f;
+        s_movieFrameTexVec[1].y = 0.0f;
+
+        s_movieFrameTexVec[2].x = 0.0f;
+        s_movieFrameTexVec[2].y = 1.0f;
+
+        s_movieFrameTexVec[3].x = 1.0f;
+        s_movieFrameTexVec[3].y = 1.0f;
+
         s_movieRenderFlag |= 2;
     }
 
@@ -622,11 +631,13 @@ void CSimpleMovieFrame::Render() {
 
     static float s_layout[] = {0.0, 0.63999999, 0.11, -0.33000001, 0.63999999, 0.95999998, 0.11, -0.33000001, 0.95999998, 1.0, 0.11, -0.33000001, 0.0, 0.63999999, 0.33000001, 0.11, 0.63999999, 0.95999998, 0.33000001, 0.11, 0.95999998, 1.0, 0.33000001, 0.11, 0.0, 0.5, 0.333, -0.333, 0.5, 1.0, 0.333, -0.333, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.63999999, 0.41999999, -0.41999999, 0.63999999, 0.95999998, 0.41999999, -0.41999999, 0.95999998, 1.0, 0.41999999, -0.41999999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.32659999, -0.41999999, 0.5, 1.0, 0.32659999, -0.41999999, 0.0, 0.5, 0.41999999, 0.32659999, 0.5, 1.0, 0.41999999, 0.32659999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.63999999, 0.11, -0.33000001, 0.63999999, 0.95999998, 0.11, -0.33000001, 0.95999998, 1.0, 0.11, -0.33000001, 0.0, 0.63999999, 0.33000001, 0.11, 0.63999999, 0.95999998, 0.33000001, 0.11, 0.95999998, 1.0, 0.33000001, 0.11, 0.0, 0.5, 0.333, -0.333, 0.5, 1.0, 0.333, -0.333, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
+    float aspectCompensation = CoordinateGetAspectCompensation();
+
     for (uint32_t i = 0; i < textureCountByFormat[this->m_textureFormat]; ++i) {
         float* rect = &s_layout[24 * this->m_textureFormat + 4 * i];
 
-        float v16 = rect[3]; // * aspectCompensation
-        float v17 = rect[2]; // * aspectCompensation
+        float v16 = rect[3] * aspectCompensation;
+        float v17 = rect[2] * aspectCompensation;
 
         C3Vector position[] = {
             { rect[0], v16, 0.0f },
