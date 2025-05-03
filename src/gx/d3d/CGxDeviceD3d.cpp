@@ -225,11 +225,13 @@ int32_t CGxDeviceD3d::ILoadD3dLib(HINSTANCE& d3dLib, LPDIRECT3D9& d3d) {
 
     d3dLib = LoadLibrary(TEXT("d3d9.dll"));
 
+    typedef LPDIRECT3D9 (WINAPI *DIRECT3DCREATE9)(UINT SDKVersion);
+
     if (d3dLib) {
-        auto d3dCreateProc = GetProcAddress(d3dLib, "Direct3DCreate9");
+        auto d3dCreateProc = reinterpret_cast<DIRECT3DCREATE9>(GetProcAddress(d3dLib, "Direct3DCreate9"));
 
         if (d3dCreateProc) {
-            d3d = reinterpret_cast<LPDIRECT3D9>(d3dCreateProc());
+            d3d = d3dCreateProc(D3D_SDK_VERSION);
 
             if (d3d) {
                 return 1;
@@ -258,7 +260,7 @@ void CGxDeviceD3d::IUnloadD3dLib(HINSTANCE& d3dLib, LPDIRECT3D9& d3d) {
     }
 }
 
-LRESULT CGxDeviceD3d::WindowProcD3d(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK CGxDeviceD3d::WindowProcD3d(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     auto device = reinterpret_cast<CGxDeviceD3d*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
     switch (uMsg) {

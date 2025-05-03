@@ -218,7 +218,7 @@ class CGxDeviceD3d : public CGxDevice {
     // Static functions
     static int32_t ILoadD3dLib(HINSTANCE& d3dLib, LPDIRECT3D9& d3d);
     static void IUnloadD3dLib(HINSTANCE& d3dLib, LPDIRECT3D9& d3d);
-    static LRESULT WindowProcD3d(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK WindowProcD3d(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     // Member variables
     HWND m_hwnd = nullptr;
