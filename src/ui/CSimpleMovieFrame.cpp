@@ -11,6 +11,38 @@
 #include <tempest/Matrix.hpp>
 
 
+#define XVDEC_CALL
+
+#if defined(WHOA_SYSTEM_WIN)
+#include <windows.h>
+
+#if defined(WHOA_ARCH_32)
+#undef XVDEC_CALL
+#define XVDEC_CALL __cdecl
+#elif defined(__GNUC__) || defined(__clang__)
+#undef XVDEC_CALL
+#define XVDEC_CALL __attribute__((cdecl))
+#endif
+
+#define RTLD_LAZY 1
+
+static inline void* dlopen(const char* filename, int flag) {
+    (void)flag;
+    return LoadLibraryA(filename);
+}
+
+static inline void* dlsym(void* handle, const char* symbol) {
+    return GetProcAddress(reinterpret_cast<HMODULE>(handle), symbol);
+}
+
+static inline int dlclose(void* handle) {
+    return static_cast<int>(FreeLibrary(reinterpret_cast<HMODULE>(handle)));
+}
+
+#else // !defined(WHOA_SYSTEM_WIN)
+#include <dlfcn.h>
+#endif
+
 extern "C" {
 
 typedef struct {
@@ -22,26 +54,34 @@ typedef struct {
     int zero1;
 } decoder_data_t;
 
-typedef int(__cdecl* INITIALIZEDIVXDECODER)(unsigned int index, unsigned int width, unsigned int height);
-typedef int(__cdecl* SETOUTPUTFORMAT)(unsigned int index, unsigned int one, unsigned int width, unsigned int height);
-typedef int(__cdecl* DIVXDECODE)(unsigned int index, void* data, unsigned int zero);
-typedef int(__cdecl* UNINITIALIZEDIVXDECODER)(unsigned int index);
+typedef int (XVDEC_CALL * INITIALIZEDIVXDECODER)(unsigned int index, unsigned int width, unsigned int height);
+typedef int (XVDEC_CALL * SETOUTPUTFORMAT)(unsigned int index, unsigned int one, unsigned int width, unsigned int height);
+typedef int (XVDEC_CALL * DIVXDECODE)(unsigned int index, void* data, unsigned int zero);
+typedef int (XVDEC_CALL * UNINITIALIZEDIVXDECODER)(unsigned int index);
 
 }
+
+static void* s_decoderLibrary = nullptr;
 
 static INITIALIZEDIVXDECODER InitializeDivxDecoder = nullptr;
 static SETOUTPUTFORMAT SetOutputFormat = nullptr;
 static DIVXDECODE DivxDecode = nullptr;
 static UNINITIALIZEDIVXDECODER UnInitializeDivxDecoder = nullptr;
 
-#if defined(WHOA_SYSTEM_WIN)
 
-#include <windows.h>
+static const char* s_decoderNames[] = {
+    "DivxDecoder.dll",
+    "XvidDecoder.dll",
+    "libXvidDecoder.dylib",
+    "XvidDecoder.dylib",
+    "libXvidDecoder.so",
+    "XvidDecoder.so",
+    nullptr
+};
 
-static HMODULE s_decoderLibrary = NULL;
 
 static int32_t UnloadDivxDecoder() {
-    if (s_decoderLibrary == NULL) {
+    if (!s_decoderLibrary) {
         return 0;
     }
 
@@ -50,8 +90,8 @@ static int32_t UnloadDivxDecoder() {
     DivxDecode = nullptr;
     UnInitializeDivxDecoder = nullptr;
 
-    FreeLibrary(s_decoderLibrary);
-    s_decoderLibrary = NULL;
+    dlclose(s_decoderLibrary);
+    s_decoderLibrary = nullptr;
 
     return 1;
 }
@@ -61,20 +101,20 @@ static int32_t LoadDivxDecoder() {
         return 1;
     }
 
-    // Try to load original decoder first
-    s_decoderLibrary = LoadLibraryA("DivxDecoder.dll");
-    if (s_decoderLibrary == NULL) {
-        // Try to load open source decoder
-        s_decoderLibrary = LoadLibraryA("XvidDecoder.dll");
-        if (s_decoderLibrary == NULL) {
-            return 0;
-        }
+    const char** decoderName = s_decoderNames;
+    while (!s_decoderLibrary && *decoderName) {
+        s_decoderLibrary = dlopen(*decoderName, RTLD_LAZY);
+        ++decoderName;
     }
 
-    InitializeDivxDecoder = reinterpret_cast<INITIALIZEDIVXDECODER>(GetProcAddress(s_decoderLibrary, "InitializeDivxDecoder"));
-    SetOutputFormat = reinterpret_cast<SETOUTPUTFORMAT>(GetProcAddress(s_decoderLibrary, "SetOutputFormat"));
-    DivxDecode = reinterpret_cast<DIVXDECODE>(GetProcAddress(s_decoderLibrary, "DivxDecode"));
-    UnInitializeDivxDecoder = reinterpret_cast<UNINITIALIZEDIVXDECODER>(GetProcAddress(s_decoderLibrary, "UnInitializeDivxDecoder"));
+    if (!s_decoderLibrary) {
+        return 0;
+    }
+
+    InitializeDivxDecoder = reinterpret_cast<INITIALIZEDIVXDECODER>(dlsym(s_decoderLibrary, "InitializeDivxDecoder"));
+    SetOutputFormat = reinterpret_cast<SETOUTPUTFORMAT>(dlsym(s_decoderLibrary, "SetOutputFormat"));
+    DivxDecode = reinterpret_cast<DIVXDECODE>(dlsym(s_decoderLibrary, "DivxDecode"));
+    UnInitializeDivxDecoder = reinterpret_cast<UNINITIALIZEDIVXDECODER>(dlsym(s_decoderLibrary, "UnInitializeDivxDecoder"));
 
     if (!InitializeDivxDecoder || !SetOutputFormat || !DivxDecode || !UnInitializeDivxDecoder) {
         UnloadDivxDecoder();
@@ -83,18 +123,6 @@ static int32_t LoadDivxDecoder() {
 
     return 1;
 }
-
-#else
-
-static int32_t UnloadDivxDecoder() {
-    return 0;
-}
-
-static uint32_t LoadDivxDecoder() {
-    return 0;
-}
-
-#endif
 
 
 static uint32_t s_decoderIndex = 0;
