@@ -2,6 +2,8 @@
 #define UI_C_SIMPLE_MOVIE_FRAME_HPP
 
 #include "ui/CSimpleFrame.hpp"
+#include "gx/Types.hpp"
+#include "gx/Texture.hpp"
 #include <tempest/Vector.hpp>
 
 class CRect;
@@ -12,8 +14,8 @@ class CGxTexParms;
 class CSimpleMovieFrame : public CSimpleFrame {
     public:
     struct TextureData {
-        CGxTexParms* params;
-        char* data;
+        uint32_t* data;
+        char* buffer;
     };
 
 
@@ -26,6 +28,7 @@ class CSimpleMovieFrame : public CSimpleFrame {
     static int32_t GetObjectType();
     static void RegisterScriptMethods(lua_State* L);
     static void RenderMovie(void* param);
+    static void TextureCallback(EGxTexCommand, uint32_t, uint32_t, uint32_t, uint32_t, void*, uint32_t&, const void*&);
 
     // Member variables
     void* m_audioChannel = nullptr;
@@ -72,7 +75,7 @@ class CSimpleMovieFrame : public CSimpleFrame {
     int32_t OpenVideo();
     void CloseVideo();
     int32_t UpdateTiming();
-    int32_t DecodeFrame(bool unk);
+    int32_t DecodeFrame(bool update);
     void Render();
 };
 

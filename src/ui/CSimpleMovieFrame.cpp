@@ -1,17 +1,265 @@
 #include "ui/CSimpleMovieFrame.hpp"
 #include "ui/CSimpleMovieFrameScript.hpp"
 #include "util/SFile.hpp"
+#include "gx/Coordinate.hpp"
+#include "gx/Buffer.hpp"
+#include "gx/RenderState.hpp"
 #include "gx/Texture.hpp"
+#include "gx/Transform.hpp"
+#include "gx/Draw.hpp"
 #include <common/Time.hpp>
+#include <tempest/Matrix.hpp>
 
 
-static uint32_t LoadDivxDecoder() {
-    return 0;
+#define XVDEC_CALL
+
+#if defined(WHOA_SYSTEM_WIN)
+#include <windows.h>
+
+#if defined(WHOA_ARCH_32)
+#undef XVDEC_CALL
+#define XVDEC_CALL __cdecl
+#elif defined(__GNUC__) || defined(__clang__)
+#undef XVDEC_CALL
+#define XVDEC_CALL __attribute__((cdecl))
+#endif
+
+#define RTLD_LAZY 1
+
+static inline void* dlopen(const char* filename, int flag) {
+    (void)flag;
+    return LoadLibraryA(filename);
 }
 
-static void UnloadDivxDecoder(uint32_t decoder) {
+static inline void* dlsym(void* handle, const char* symbol) {
+    return GetProcAddress(reinterpret_cast<HMODULE>(handle), symbol);
+}
+
+static inline int dlclose(void* handle) {
+    return static_cast<int>(FreeLibrary(reinterpret_cast<HMODULE>(handle)));
+}
+
+#else // !defined(WHOA_SYSTEM_WIN)
+#include <dlfcn.h>
+#endif
+
+extern "C" {
+
+typedef struct {
+    void* output;
+    void* input;
+    unsigned int input_size;
+    int update;
+    int zero0;
+    int zero1;
+} decoder_data_t;
+
+typedef int (XVDEC_CALL * INITIALIZEDIVXDECODER)(unsigned int index, unsigned int width, unsigned int height);
+typedef int (XVDEC_CALL * SETOUTPUTFORMAT)(unsigned int index, unsigned int one, unsigned int width, unsigned int height);
+typedef int (XVDEC_CALL * DIVXDECODE)(unsigned int index, void* data, unsigned int zero);
+typedef int (XVDEC_CALL * UNINITIALIZEDIVXDECODER)(unsigned int index);
 
 }
+
+static void* s_decoderLibrary = nullptr;
+
+static INITIALIZEDIVXDECODER InitializeDivxDecoder = nullptr;
+static SETOUTPUTFORMAT SetOutputFormat = nullptr;
+static DIVXDECODE DivxDecode = nullptr;
+static UNINITIALIZEDIVXDECODER UnInitializeDivxDecoder = nullptr;
+
+
+static const char* s_decoderNames[] = {
+    "DivxDecoder.dll",
+    "XvidDecoder.dll",
+    "libXvidDecoder.dylib",
+    "XvidDecoder.dylib",
+    "libXvidDecoder.so",
+    "XvidDecoder.so",
+    nullptr
+};
+
+
+static int32_t UnloadDivxDecoder() {
+    if (!s_decoderLibrary) {
+        return 0;
+    }
+
+    InitializeDivxDecoder = nullptr;
+    SetOutputFormat = nullptr;
+    DivxDecode = nullptr;
+    UnInitializeDivxDecoder = nullptr;
+
+    dlclose(s_decoderLibrary);
+    s_decoderLibrary = nullptr;
+
+    return 1;
+}
+
+static int32_t LoadDivxDecoder() {
+    if (InitializeDivxDecoder && SetOutputFormat && DivxDecode && UnInitializeDivxDecoder) {
+        return 1;
+    }
+
+    const char** decoderName = s_decoderNames;
+    while (!s_decoderLibrary && *decoderName) {
+        s_decoderLibrary = dlopen(*decoderName, RTLD_LAZY);
+        ++decoderName;
+    }
+
+    if (!s_decoderLibrary) {
+        return 0;
+    }
+
+    InitializeDivxDecoder = reinterpret_cast<INITIALIZEDIVXDECODER>(dlsym(s_decoderLibrary, "InitializeDivxDecoder"));
+    SetOutputFormat = reinterpret_cast<SETOUTPUTFORMAT>(dlsym(s_decoderLibrary, "SetOutputFormat"));
+    DivxDecode = reinterpret_cast<DIVXDECODE>(dlsym(s_decoderLibrary, "DivxDecode"));
+    UnInitializeDivxDecoder = reinterpret_cast<UNINITIALIZEDIVXDECODER>(dlsym(s_decoderLibrary, "UnInitializeDivxDecoder"));
+
+    if (!InitializeDivxDecoder || !SetOutputFormat || !DivxDecode || !UnInitializeDivxDecoder) {
+        UnloadDivxDecoder();
+        return 0;
+    }
+
+    return 1;
+}
+
+
+static uint32_t s_decoderIndex = 0;
+static uint32_t s_strideData[144] = {
+    512, 256, 0, 3200,
+    256, 256, 2048, 3200,
+    32, 256, 3072, 3200,
+    512, 128, 819200, 3200,
+    256, 128, 821248, 3200,
+    32, 128, 822272, 3200,
+
+    512, 512, 0, 4096,
+    512, 512, 2048, 4096,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+
+    512, 512, 0, 3200,
+    256, 512, 2048, 3200,
+    32, 512, 3072, 3200,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+
+    512, 512, 0, 4096,
+    512, 512, 2048, 4096,
+    512, 64, 2097152, 4096,
+    512, 64, 2099200, 4096,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+
+    512, 256, 0, 3200,
+    256, 256, 2048, 3200,
+    32, 256, 3072, 3200,
+    512, 128, 819200, 3200,
+    256, 128, 821248, 3200,
+    32, 128, 822272, 3200,
+
+    512, 512, 0, 4096,
+    512, 512, 2048, 4096,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0
+};
+static int32_t s_movieTextureUpdate[] = {
+    0, 6, 512, 256, // Format: 0, Texture: 0
+    0, 6, 256, 256, // Format: 0, Texture: 1
+    0, 6, 32, 256,  // Format: 0, Texture: 2
+    0, 0, 512, 122, // Format: 0, Texture: 3
+    0, 0, 256, 122, // Format: 0, Texture: 4
+    0, 0, 32, 122,  // Format: 0, Texture: 5
+
+    0, 24, 512, 512, // Format: 1, Texture: 0
+    0, 0, 512, 488,  // Format: 1, Texture: 1
+    0, 0, 0, 0,      // Format: 1, Texture: 2
+    0, 0, 0, 0,      // Format: 1, Texture: 3
+    0, 0, 0, 0,      // Format: 1, Texture: 4
+    0, 0, 0, 0,      // Format: 1, Texture: 5
+
+    0, 32, 512, 480, // Format: 2, Texture: 0
+    0, 32, 256, 480, // Format: 2, Texture: 1
+    0, 32, 32, 480,  // Format: 2, Texture: 2
+    0, 0, 0, 0,      // Format: 2, Texture: 3
+    0, 0, 0, 0,      // Format: 2, Texture: 4
+    0, 0, 0, 0,      // Format: 2, Texture: 5
+
+    0, 0, 512, 512, // Format: 3, Texture: 0
+    0, 0, 512, 512, // Format: 3, Texture: 1
+    0, 0, 512, 64,  // Format: 3, Texture: 2
+    0, 0, 512, 64,  // Format: 3, Texture: 3
+    0, 0, 0, 0,     // Format: 3, Texture: 4
+    0, 0, 0, 0,     // Format: 3, Texture: 5
+
+    0, 21, 512, 256, // Format: 4, Texture: 0
+    0, 21, 256, 256, // Format: 4, Texture: 1
+    0, 21, 32, 256,  // Format: 4, Texture: 2
+    0, 0, 512, 107,  // Format: 4, Texture: 3
+    0, 0, 256, 107,  // Format: 4, Texture: 4
+    0, 0, 32, 107,   // Format: 4, Texture: 5
+
+    0, 38, 512, 512, // Format: 5, Texture: 0
+    0, 0, 512, 474,  // Format: 5, Texture: 1
+    0, 0, 0, 0,      // Format: 5, Texture: 2
+    0, 0, 0, 0,      // Format: 5, Texture: 3
+    0, 0, 0, 0,      // Format: 5, Texture: 4
+    0, 0, 0, 0       // Format: 5, Texture: 5
+};
+static float s_layout[144] = {
+    0.0f, 0.63999999f, 0.11f, -0.33000001f,
+    0.63999999f, 0.95999998f, 0.11f, -0.33000001f,
+    0.95999998f, 1.0f, 0.11f, -0.33000001f,
+    0.0f, 0.63999999f, 0.33000001f, 0.11f,
+    0.63999999f, 0.95999998f, 0.33000001f, 0.11f,
+    0.95999998f, 1.0f, 0.33000001f, 0.11f,
+
+    0.0f, 0.5f, 0.333f, -0.333f,
+    0.5f, 1.0f, 0.333f, -0.333f,
+    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f,
+
+    0.0f, 0.63999999f, 0.41999999f, -0.41999999f,
+    0.63999999f, 0.95999998f, 0.41999999f, -0.41999999f,
+    0.95999998f, 1.0f, 0.41999999f, -0.41999999f,
+    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f,
+
+    0.0f, 0.5f, 0.32659999f, -0.41999999f,
+    0.5f, 1.0f, 0.32659999f, -0.41999999f,
+    0.0f, 0.5f, 0.41999999f, 0.32659999f,
+    0.5f, 1.0f, 0.41999999f, 0.32659999f,
+    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f,
+
+    0.0f, 0.63999999f, 0.11f, -0.33000001f,
+    0.63999999f, 0.95999998f, 0.11f, -0.33000001f,
+    0.95999998f, 1.0f, 0.11f, -0.33000001f,
+    0.0f, 0.63999999f, 0.33000001f, 0.11f,
+    0.63999999f, 0.95999998f, 0.33000001f, 0.11f,
+    0.95999998f, 1.0f, 0.33000001f, 0.11f,
+
+    0.0f, 0.5f, 0.333f, -0.333f,
+    0.5f, 1.0f, 0.333f, -0.333f,
+    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f
+};
+static const uint32_t s_textureCountByFormat[6] = { 6, 2, 3, 4, 6, 2 };
+static const uint32_t s_imageDataOffsets[6] = {
+    19200, 98304, 102400, 0, 67200, 155648
+};
+
 
 int32_t CSimpleMovieFrame::s_metatable;
 int32_t CSimpleMovieFrame::s_objectType;
@@ -40,6 +288,18 @@ void CSimpleMovieFrame::RenderMovie(void* param) {
     if (movieFrame->m_isPlaying) {
         movieFrame->UpdateTiming();
         movieFrame->Render();
+    }
+}
+
+void CSimpleMovieFrame::TextureCallback(EGxTexCommand command, uint32_t width, uint32_t height, uint32_t, uint32_t, void* userData, uint32_t& texelStrideInBytes, const void*& texels) {
+    if (command == GxTex_Latch) {
+        auto data = reinterpret_cast<CSimpleMovieFrame::TextureData*>(userData);
+
+        STORM_ASSERT(width == data->data[0]);
+        STORM_ASSERT(height == data->data[1]);
+
+        texels = &data->buffer[data->data[2]];
+        texelStrideInBytes = data->data[3];
     }
 }
 
@@ -89,6 +349,10 @@ CSimpleMovieFrame::CSimpleMovieFrame(CSimpleFrame* parent)
 }
 
 int32_t CSimpleMovieFrame::StartMovie(const char* filename, int32_t volume) {
+    if (!LoadDivxDecoder()) {
+        return 0;
+    }
+
     if (!this->ParseAVIFile(filename) || !this->OpenVideo()) {
         return 0;
     }
@@ -224,9 +488,9 @@ int32_t CSimpleMovieFrame::ParseAVIFile(const char* filename) {
         } else {
             offset += 8;
             if (!SStrCmpI(&data[offset], "vids", 4)) {
-                float scale = *reinterpret_cast<uint32_t*>(&data[offset + 20]);
-                float rate = *reinterpret_cast<uint32_t*>(&data[offset + 24]);
-                this->m_frameRate = rate / scale;
+                uint32_t scale = *reinterpret_cast<uint32_t*>(&data[offset + 20]);
+                uint32_t rate = *reinterpret_cast<uint32_t*>(&data[offset + 24]);
+                this->m_frameRate = static_cast<float>(rate) / static_cast<float>(scale);
                 this->m_numFrames = *reinterpret_cast<uint32_t*>(&data[offset + 32]);
                 v39 = v41;
             }
@@ -295,13 +559,16 @@ int32_t CSimpleMovieFrame::ParseAVIFile(const char* filename) {
 int32_t CSimpleMovieFrame::OpenVideo() {
     this->m_startTime = OsGetAsyncTimeMs();
     this->m_elapsedTime = 0;
-    this->m_decoder = LoadDivxDecoder();
+    this->m_decoder = ++s_decoderIndex;
+
     this->m_currentFrame = 0;
     this->m_prevFrame = -1;
     this->m_lastKeyFrame = 0;
     this->m_frameAudioSync = 0;
 
-    if (!this->m_decoder) {
+    if (InitializeDivxDecoder(this->m_decoder, this->m_videoWidth, this->m_videoHeight) ||
+        SetOutputFormat(this->m_decoder, 1, this->m_videoWidth, this->m_videoHeight)) {
+        this->CloseVideo();
         return 0;
     }
 
@@ -322,7 +589,7 @@ int32_t CSimpleMovieFrame::OpenVideo() {
             this->m_textureFormat = 0;
         }
     } else {
-        CloseVideo();
+        this->CloseVideo();
         return 0;
     }
 
@@ -336,16 +603,24 @@ int32_t CSimpleMovieFrame::OpenVideo() {
         return 0;
     }
 
-    const uint32_t textureCountByFormat[6] = { 6, 2, 3, 4, 6, 2 };
-
     int32_t hasTextures = 1;
-    for (uint32_t i = 0; i < textureCountByFormat[this->m_textureFormat]; ++i) {
-        // TODO: GxTexCreate()
-        hasTextures = 0;
+    for (uint32_t i = 0; i < s_textureCountByFormat[this->m_textureFormat]; ++i) {
+        uint32_t stride = (6 * this->m_textureFormat + i) * 4;
+        this->m_textureData[i].data = &s_strideData[stride];
+        this->m_textureData[i].buffer = this->m_imageData;
+
+        hasTextures &= GxTexCreate(
+            s_strideData[stride],
+            s_strideData[stride + 1],
+            GxTex_Argb8888,
+            CGxTexFlags(),
+            &this->m_textureData[i],
+            CSimpleMovieFrame::TextureCallback,
+            this->m_textures[i]);
     }
 
     if (hasTextures) {
-        for (uint32_t i = 0; i < textureCountByFormat[this->m_textureFormat]; ++i) {
+        for (uint32_t i = 0; i < s_textureCountByFormat[this->m_textureFormat]; ++i) {
             GxTexUpdate(this->m_textures[i], 0, 0, 0, 0, 1);
         }
     }
@@ -355,7 +630,8 @@ int32_t CSimpleMovieFrame::OpenVideo() {
 
 void CSimpleMovieFrame::CloseVideo() {
     if (this->m_decoder) {
-        UnloadDivxDecoder(this->m_decoder);
+        UnInitializeDivxDecoder(this->m_decoder);
+        --s_decoderIndex;
         this->m_decoder = 0;
     }
 
@@ -426,11 +702,120 @@ int32_t CSimpleMovieFrame::UpdateTiming() {
     this->m_prevFrame = this->m_currentFrame;
 
     // TODO: Subtitle stuff
+    return 1;
 }
 
-int32_t CSimpleMovieFrame::DecodeFrame(bool unk) {
-    return 0;
+int32_t CSimpleMovieFrame::DecodeFrame(bool update) {
+    decoder_data_t frame;
+
+    frame.output = this->m_imageData + s_imageDataOffsets[this->m_textureFormat];
+    frame.input = this->m_currentFrameData + 4;
+    frame.input_size = *reinterpret_cast<uint32_t*>(this->m_currentFrameData);
+    frame.update = update ? 1 : 0;
+    frame.zero0 = 0;
+    frame.zero1 = 0;
+
+    this->m_currentFrameData += frame.input_size + 4;
+
+    if (DivxDecode(this->m_decoder, &frame, 0)) {
+        return 0;
+    }
+
+    if (!update) {
+        return 1;
+    }
+
+    for (uint32_t i = 0; i < s_textureCountByFormat[this->m_textureFormat]; ++i) {
+        uint32_t v9 = 4 * (i + 6 * this->m_textureFormat);
+        // WARNING(workaround): Uncomment the code below when GxTexUpdate will be working properly
+        /*
+        GxTexUpdate(
+            this->m_textures[i],
+            s_movieTextureUpdate[v9 + 0],
+            s_movieTextureUpdate[v9 + 1],
+            s_movieTextureUpdate[v9 + 2],
+            s_movieTextureUpdate[v9 + 3],
+            1);
+        */
+        GxTexUpdate(this->m_textures[i], 0, 0, 0, 0, 1);
+    }
+
+    return 1;
 }
 
 void CSimpleMovieFrame::Render() {
+    float minX;
+    float maxX;
+    float minY;
+    float maxY;
+    float minZ;
+    float maxZ;
+    GxXformViewport(minX, maxX, minY, maxY, minZ, maxZ);
+
+    GxXformSetViewport(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f);
+    CImVector clearColor = { 0x00, 0x00, 0x00, 0xFF };
+    GxSceneClear(3, clearColor);
+    C44Matrix matrix;
+    GxuXformCreateOrtho(0.0, 1.0, -0.5, 0.5, 0.0, 500.0, matrix);
+    GxXformSetView(C44Matrix());
+    GxXformSetProjection(matrix);
+
+    static uint32_t s_movieRenderFlag = 0;
+    static C3Vector s_movieFrameNormalVec;
+    static C2Vector s_movieFrameTexVec[4];
+
+    if ((s_movieRenderFlag & 1) == 0) {
+        s_movieFrameNormalVec.x = 0.0;
+        s_movieFrameNormalVec.y = 0.0;
+        s_movieFrameNormalVec.z = 1.0;
+
+        s_movieRenderFlag |= 1;
+    }
+
+    if ((s_movieRenderFlag & 2) == 0) {
+        s_movieFrameTexVec[0].x = 0.0f;
+        s_movieFrameTexVec[0].y = 0.0f;
+
+        s_movieFrameTexVec[1].x = 1.0f;
+        s_movieFrameTexVec[1].y = 0.0f;
+
+        s_movieFrameTexVec[2].x = 0.0f;
+        s_movieFrameTexVec[2].y = 1.0f;
+
+        s_movieFrameTexVec[3].x = 1.0f;
+        s_movieFrameTexVec[3].y = 1.0f;
+
+        s_movieRenderFlag |= 2;
+    }
+
+    GxRsPush();
+    GxRsSet(GxRs_Lighting, 0);
+    GxRsSet(GxRs_Fog, 0);
+    GxRsSet(GxRs_BlendingMode, 0);
+    GxRsSetAlphaRef();
+
+    float aspectCompensation = CoordinateGetAspectCompensation();
+
+    for (uint32_t i = 0; i < s_textureCountByFormat[this->m_textureFormat]; ++i) {
+        float* rect = &s_layout[24 * this->m_textureFormat + 4 * i];
+
+        float v16 = rect[3] * aspectCompensation;
+        float v17 = rect[2] * aspectCompensation;
+
+        C3Vector position[] = {
+            { rect[0], v16, 0.0f },
+            { rect[1], v16, 0.0f },
+            { rect[0], v17, 0.0f },
+            { rect[1], v17, 0.0f }
+        };
+
+        GxPrimLockVertexPtrs(4, position, sizeof(C3Vector), &s_movieFrameNormalVec, 0, nullptr, 0, nullptr, 0, s_movieFrameTexVec, sizeof(C2Vector), nullptr, 0);
+        GxRsSet(GxRs_Texture0, this->m_textures[i]);
+        uint16_t indices[] = { 0, 1, 2, 3 };
+        GxDrawLockedElements(GxPrim_TriangleStrip, 4, indices);
+        GxPrimUnlockVertexPtrs();
+    }
+
+    GxRsPop();
+    GxXformSetViewport(minX, maxX, minY, maxY, minZ, maxZ);
 }
