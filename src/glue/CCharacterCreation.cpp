@@ -19,8 +19,52 @@ TSGrowableArray<uint32_t> CCharacterCreation::m_races;
 
 void CCharacterCreation::Initialize() {
     CCharacterCreation::m_charFacing = 0.0;
+    int32_t factionSwitch = 0;
     CCharacterCreation::m_charCustomizeFrame = nullptr;
     CCharacterCreation::m_existingCharacterIndex = -1;
+    // TODO: memset
+    int32_t factionSwitch2 = 0;
+
+    bool weirdCondition = false;
+
+    do
+    {
+        for (int32_t raceIndex = 0; raceIndex < g_chrRacesDB.GetNumRecords(); ++raceIndex)
+        {
+            auto raceRecord = g_chrRacesDB.GetRecordByIndex(raceIndex);
+            if (!raceRecord || (raceRecord->m_flags & 1) != 0) {
+                continue;
+            }
+
+            auto factionTemplateRecord = g_factionTemplateDB.GetRecord(raceRecord->m_factionID);
+            if (!factionTemplateRecord) {
+                continue;
+            }
+
+            for (int32_t factionGroupIndex = 0; factionGroupIndex < g_factionGroupDB.GetNumRecords(); ++factionGroupIndex) {
+                auto factionGroupRecord = g_factionGroupDB.GetRecordByIndex(factionGroupIndex);
+                if (!factionGroupRecord || factionGroupRecord->m_maskID == 0) {
+                    continue;
+                }
+
+                if (((1 << factionGroupRecord->m_maskID) & factionTemplateRecord->m_factionGroup) == 0) {
+                    continue;
+                }
+
+                if (SStrCmpI(factionGroupRecord->m_internalName, factionSwitch == 1 ? "Horde" : "Alliance", STORM_MAX_STR)) {
+                    continue;
+                }
+
+                uint32_t raceID = raceRecord->m_ID;
+                CCharacterCreation::m_races.Add(1, &raceID);
+
+                factionSwitch = factionSwitch2;
+            }
+        }
+
+        weirdCondition = factionSwitch++ == -1;
+        factionSwitch2 = factionSwitch;
+    } while (weirdCondition || factionSwitch == 1);
 }
 
 void CCharacterCreation::SetCharCustomizeFrame(CSimpleModel* frame) {

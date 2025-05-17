@@ -132,5 +132,6 @@ void CCharacterComponent::SetRandomFacialFeature(COMPONENT_CONTEXT context) {
 }
 
 bool CCharacterComponent::Init(ComponentData* data, const char* a3) {
+    this->m_data = *data;
     return false;
 }
