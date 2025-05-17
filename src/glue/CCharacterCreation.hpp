@@ -15,6 +15,7 @@ class ChrClassesRec;
 class CCharacterCreation {
     public:
     // Static variables
+    static int32_t m_selectedClassID;
     static int32_t m_existingCharacterIndex;
     static int32_t m_raceIndex;
     static CSimpleModel* m_charCustomizeFrame;

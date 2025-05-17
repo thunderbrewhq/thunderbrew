@@ -148,23 +148,73 @@ int32_t Script_GetClassesForRace(lua_State* L) {
 }
 
 int32_t Script_GetHairCustomization(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t raceID = 0;
+
+    if (CCharacterCreation::m_raceIndex >= 0 && CCharacterCreation::m_raceIndex < CCharacterCreation::m_races.Count()) {
+        raceID = CCharacterCreation::m_races[CCharacterCreation::m_raceIndex];
+    }
+
+    auto record = g_chrRacesDB.GetRecord(raceID);
+    lua_pushstring(L, record ? record->m_hairCustomization : "NORMAL");
+    return 1;
 }
 
 int32_t Script_GetFacialHairCustomization(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t raceID = 0;
+
+    if (CCharacterCreation::m_raceIndex >= 0 && CCharacterCreation::m_raceIndex < CCharacterCreation::m_races.Count()) {
+        raceID = CCharacterCreation::m_races[CCharacterCreation::m_raceIndex];
+    }
+
+    auto record = g_chrRacesDB.GetRecord(raceID);
+    if (record) {
+        auto sexID = CCharacterCreation::m_character->m_data.m_info.sexID;
+        lua_pushstring(L, record->m_facialHairCustomization[sexID]);
+    } else {
+        lua_pushstring(L, "NORMAL");
+    }
+    return 1;
 }
 
 int32_t Script_GetSelectedRace(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    lua_pushnumber(L, CCharacterCreation::m_raceIndex + 1.0);
+    return 1;
 }
 
 int32_t Script_GetSelectedSex(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO: g_glueFrameScriptGenders[CCharacterCreation::m_character->m_data.m_info.sexID]
+    lua_pushnumber(L, 2.0);
+    return 1;
 }
 
 int32_t Script_GetSelectedClass(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto record = g_chrClassesDB.GetRecord(CCharacterCreation::m_selectedClassID);
+    if (!record) {
+        return 0;
+    }
+    auto className = CGUnit_C::GetDisplayClassNameFromRecord(
+        record,
+        CCharacterCreation::m_character->m_data.m_info.sexID);
+
+    lua_pushstring(L, className);
+    lua_pushstring(L, record->m_filename);
+
+    int32_t index = 0;
+
+    for (int32_t i = 0; i < g_chrClassesDB.GetNumRecords(); ++i) {
+        record = g_chrClassesDB.GetRecordByIndex(i);
+        if (record && record->m_ID == CCharacterCreation::m_selectedClassID) {
+            index = i;
+        }
+    }
+
+    lua_pushnumber(L, index + 1);
+    // TODO: uint8_t roles = CGLookingForGroup::GetClassRoles(CCharacterCreation::m_selectedClassID);
+    uint8_t roles = 0;
+    lua_pushboolean(L, roles & 2);
+    lua_pushboolean(L, roles & 4);
+    lua_pushboolean(L, roles & 8);
+    return 6;
 }
 
 int32_t Script_SetSelectedRace(lua_State* L) {
@@ -240,7 +290,34 @@ int32_t Script_IsRaceClassRestricted(lua_State* L) {
 }
 
 int32_t Script_GetCreateBackgroundModel(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    if (false /* SFile::IsTrial() */) {
+        lua_pushstring(L, "CharacterSelect");
+        return 1;
+    }
+
+    if (CCharacterCreation::m_selectedClassID == 6) {
+        auto record = g_chrClassesDB.GetRecord(6);
+        if (record) {
+            lua_pushstring(L, record->m_filename);
+            return 1;
+        }
+    } else {
+        int32_t raceID = CCharacterCreation::m_character->m_data.m_info.raceID;
+        if (raceID == 7) {
+            raceID = 3;
+        } else if (raceID == 8) {
+            raceID = 2;
+        }
+
+        auto record = g_chrRacesDB.GetRecord(raceID);
+        if (record) {
+            lua_pushstring(L, record->m_clientFileString);
+            return 1;
+        }
+    }
+    lua_pushstring(L, "");
+    return 1;
 }
 
 FrameScript_Method FrameScript::s_ScriptFunctions_CharCreate[NUM_SCRIPT_FUNCTIONS_CHAR_CREATE] = {

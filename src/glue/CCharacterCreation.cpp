@@ -5,6 +5,7 @@
 #include "clientobject/Player_C.hpp"
 #include "db/Db.hpp"
 
+int32_t CCharacterCreation::m_selectedClassID;
 int32_t CCharacterCreation::m_existingCharacterIndex;
 int32_t CCharacterCreation::m_raceIndex;
 CSimpleModel* CCharacterCreation::m_charCustomizeFrame;
@@ -95,6 +96,12 @@ void CCharacterCreation::ResetCharCustomizeInfo() {
     // TODO
 
     CCharacterCreation::m_raceIndex = -1;
+    for (uint32_t i = 0; i < CCharacterCreation::m_races.Count(); ++i) {
+        if (CCharacterCreation::m_races[i] == CCharacterCreation::m_character->m_data.m_info.raceID) {
+            CCharacterCreation::m_raceIndex = i;
+            break;
+        }
+    }
 
     // TODO
 }
