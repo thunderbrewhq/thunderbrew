@@ -9,6 +9,7 @@ class CSimpleModelFFX;
 class CM2Model;
 class ComponentData;
 class CCharacterComponent;
+class ChrClassesRec;
 
 
 class CCharacterCreation {
@@ -24,7 +25,8 @@ class CCharacterCreation {
     static uint32_t m_prevHairStyleIndex;
     static uint32_t m_prevFacialFeatureIndex;
     static CCharacterComponent* m_character;
-    static TSGrowableArray<uint32_t> m_races;
+    static TSGrowableArray<ChrClassesRec*> m_classes;
+    static TSGrowableArray<int32_t> m_races;
 
     // Static functions
     static void Initialize();

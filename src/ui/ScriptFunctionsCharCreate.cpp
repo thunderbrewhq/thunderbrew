@@ -58,19 +58,93 @@ int32_t Script_GetNameForRace(lua_State* L) {
 }
 
 int32_t Script_GetFactionForRace(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1)) {
+        return luaL_error(L, "Usage: GetFactionForRace(index)");
+    }
+
+    uint32_t index = static_cast<uint32_t>(lua_tonumber(L, 1)) - 1;
+    int32_t raceID = 0;
+    if (index < CCharacterCreation::m_races.Count()) {
+        raceID = CCharacterCreation::m_races[index];
+    }
+
+    auto raceRecord = g_chrRacesDB.GetRecord(raceID);
+    if (raceRecord) {
+        auto factionTemplateRecord = g_factionTemplateDB.GetRecord(raceRecord->m_factionID);
+        if (factionTemplateRecord) {
+            for (int32_t i = 0; i < g_factionGroupDB.GetNumRecords(); ++i) {
+                auto factionGroupRecord = g_factionGroupDB.GetRecordByIndex(i);
+                if (!factionGroupRecord || factionGroupRecord->m_maskID == 0) {
+                    continue;
+                }
+
+                if (((1 << factionGroupRecord->m_maskID) & factionTemplateRecord->m_factionGroup) != 0) {
+                    lua_pushstring(L, factionGroupRecord->m_name);
+                    lua_pushstring(L, factionGroupRecord->m_internalName);
+                    return 2;
+                }
+            }
+        }
+    }
+
+    lua_pushnil(L);
+    lua_pushnil(L);
+    return 2;
 }
 
 int32_t Script_GetAvailableRaces(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    for (uint32_t i = 0; i < CCharacterCreation::m_races.Count(); ++i) {
+        auto raceRecord = g_chrRacesDB.GetRecord(CCharacterCreation::m_races[i]);
+        auto raceName = CGUnit_C::GetDisplayRaceNameFromRecord(
+            raceRecord,
+            CCharacterCreation::m_character->m_data.m_info.sexID);
+
+        lua_pushstring(L, raceName);
+        lua_pushstring(L, raceRecord ? raceRecord->m_clientFileString : nullptr);
+        // TODO: Expansion Check
+        lua_pushnumber(L, 1.0);
+    }
+    return CCharacterCreation::m_races.Count() * 3;
 }
 
 int32_t Script_GetAvailableClasses(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    for (int32_t i = 0; i < g_chrClassesDB.GetNumRecords(); ++i) {
+        auto record = g_chrClassesDB.GetRecordByIndex(i);
+        auto className = CGUnit_C::GetDisplayClassNameFromRecord(
+            record,
+            CCharacterCreation::m_character->m_data.m_info.sexID);
+        if (className) {
+            lua_pushstring(L, className);
+            lua_pushstring(L, record->m_filename);
+            // TODO: Expansion Check
+            lua_pushnumber(L, 1.0);
+        } else {
+            lua_pushnil(L);
+            lua_pushnil(L);
+            lua_pushnil(L);
+        }
+    }
+    return g_chrClassesDB.GetNumRecords() * 3;
 }
 
 int32_t Script_GetClassesForRace(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    for (uint32_t i = 0; i < CCharacterCreation::m_classes.Count(); ++i) {
+        auto record = CCharacterCreation::m_classes[i];
+        auto className = CGUnit_C::GetDisplayClassNameFromRecord(
+            record,
+            CCharacterCreation::m_character->m_data.m_info.sexID);
+        if (className) {
+            lua_pushstring(L, className);
+            lua_pushstring(L, record->m_filename);
+            // TODO: Expansion Check
+            lua_pushnumber(L, 1.0);            
+        } else {
+            lua_pushnil(L);
+            lua_pushnil(L);
+            lua_pushnil(L);
+        }
+    }
+    return CCharacterCreation::m_classes.Count() * 3;
 }
 
 int32_t Script_GetHairCustomization(lua_State* L) {

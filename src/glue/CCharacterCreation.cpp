@@ -15,7 +15,8 @@ uint32_t CCharacterCreation::m_prevHairColorIndex;
 uint32_t CCharacterCreation::m_prevHairStyleIndex;
 uint32_t CCharacterCreation::m_prevFacialFeatureIndex;
 CCharacterComponent* CCharacterCreation::m_character = nullptr;
-TSGrowableArray<uint32_t> CCharacterCreation::m_races;
+TSGrowableArray<ChrClassesRec*> CCharacterCreation::m_classes;
+TSGrowableArray<int32_t> CCharacterCreation::m_races;
 
 void CCharacterCreation::Initialize() {
     CCharacterCreation::m_charFacing = 0.0;
@@ -27,10 +28,8 @@ void CCharacterCreation::Initialize() {
 
     bool weirdCondition = false;
 
-    do
-    {
-        for (int32_t raceIndex = 0; raceIndex < g_chrRacesDB.GetNumRecords(); ++raceIndex)
-        {
+    do {
+        for (int32_t raceIndex = 0; raceIndex < g_chrRacesDB.GetNumRecords(); ++raceIndex) {
             auto raceRecord = g_chrRacesDB.GetRecordByIndex(raceIndex);
             if (!raceRecord || (raceRecord->m_flags & 1) != 0) {
                 continue;
@@ -55,8 +54,7 @@ void CCharacterCreation::Initialize() {
                     continue;
                 }
 
-                uint32_t raceID = raceRecord->m_ID;
-                CCharacterCreation::m_races.Add(1, &raceID);
+                CCharacterCreation::m_races.Add(1, &raceRecord->m_ID);
 
                 factionSwitch = factionSwitch2;
             }
@@ -108,6 +106,28 @@ void CCharacterCreation::GetRandomRaceAndSex(ComponentData* data) {
 }
 
 void CCharacterCreation::CalcClasses(uint32_t raceID) {
+    uint32_t count = 0;
+
+    for (int32_t i = 0; i < g_charBaseInfoDB.GetNumRecords(); ++i) {
+        auto record = g_charBaseInfoDB.GetRecordByIndex(i);
+        if (record && record->m_raceID == raceID) {
+            ++count;
+        }
+    }
+
+    CCharacterCreation::m_classes.SetCount(count);
+
+    uint32_t index = 0;
+
+    for (int32_t i = 0; i < g_charBaseInfoDB.GetNumRecords(); ++i) {
+        auto record = g_charBaseInfoDB.GetRecordByIndex(i);
+        if (!record || record->m_raceID != raceID) {
+            continue;
+        }
+
+        CCharacterCreation::m_classes[index] = g_chrClassesDB.GetRecord(record->m_classID);
+        ++index;
+    }
 }
 
 void CCharacterCreation::InitCharacterComponent(ComponentData* data, int32_t randomize) {
