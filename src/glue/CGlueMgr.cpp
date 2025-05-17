@@ -813,15 +813,12 @@ void CGlueMgr::InitCursor() {
 }
 
 void CGlueMgr::Resume() {
-    // TODO
-    // CGlueMgr::m_disconnectPending = 0;
-    // CGlueMgr::m_reconnect = 0;
-
+    CGlueMgr::m_disconnectPending = 0;
+    CGlueMgr::m_reconnect = 0;
     CGlueMgr::m_idleState = IDLE_NONE;
+    CGlueMgr::m_showedDisconnect = 0;
 
-    // TODO
-    // CGlueMgr::m_showedDisconnect = 0;
-    // CGlueMgr::m_characterInfo = 0;
+    CGlueMgr::m_characterInfo = nullptr;
 
     CGlueMgr::m_suspended = 0;
     CGlueMgr::m_reload = 0;

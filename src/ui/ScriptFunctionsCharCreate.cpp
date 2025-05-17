@@ -1,27 +1,49 @@
 #include "ui/ScriptFunctions.hpp"
+#include "ui/CSimpleModelFFX.hpp"
 #include "ui/Types.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
 #include "db/Db.hpp"
 #include "clientobject/Unit_C.hpp"
 #include "glue/CCharacterCreation.hpp"
+#include "glue/CCharacterComponent.hpp"
 #include <cstdint>
 
 int32_t Script_SetCharCustomizeFrame(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1)) {
+        return luaL_error(L, "Usage: SetCharCustomizeFrame(\"frameName\")");
+    }
+
+    auto type = CSimpleModel::GetObjectType();
+    auto name = lua_tolstring(L, 1, nullptr);
+    auto frame = CScriptObject::GetScriptObjectByName(name, type);
+
+    if (frame) {
+        CCharacterCreation::SetCharCustomizeFrame(static_cast<CSimpleModel*>(frame));
+    }
+
+    return 0;
 }
 
 int32_t Script_SetCharCustomizeBackground(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1)) {
+        return luaL_error(L, "Usage: SetCharCustomizeBackground(\"filename\")");
+    }
+
+    auto filename = lua_tolstring(L, 1, nullptr);
+    CCharacterCreation::SetCharCustomizeModel(filename);
+
+    return 0;
 }
 
-int32_t Script_ResetCharCustomize(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+int32_t Script_ResetCharCustomize(lua_State*) {
+    CCharacterCreation::ResetCharCustomizeInfo();
+    return 0;
 }
 
 int32_t Script_GetNameForRace(lua_State* L) {
-    auto raceID = CCharacterCreation::m_character.m_characterInfo.raceID;
-    auto sexID = CCharacterCreation::m_character.m_characterInfo.sexID;
+    auto raceID = CCharacterCreation::m_character->m_data.m_info.raceID;
+    auto sexID = CCharacterCreation::m_character->m_data.m_info.sexID;
     auto record = g_chrRacesDB.GetRecord(raceID);
     auto raceName = CGUnit_C::GetDisplayRaceNameFromRecord(record, sexID);
     if (record && raceName) {

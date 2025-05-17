@@ -1287,9 +1287,14 @@ struct CHARACTER_INFO {
 };
 
 struct CHARACTER_CREATE_INFO {
-    uint8_t unk[24];
     uint32_t raceID;
     uint32_t sexID;
+    uint32_t unk;
+    uint32_t hairColorID;
+    uint32_t skinID;
+    uint32_t faceID;
+    uint32_t facialFeatureID;
+    uint32_t hairStyleID;
 };
 
 struct CLIENT_NETSTATS {

@@ -12,6 +12,7 @@
 #include "db/Db.hpp"
 #include "db/Startup_Strings.hpp"
 #include "glue/CGlueMgr.hpp"
+#include "glue/CCharacterComponent.hpp"
 #include "gameui/CGGameUI.hpp"
 #include "gx/Screen.hpp"
 #include "gx/Texture.hpp"
@@ -736,8 +737,8 @@ void WowClientInit() {
 
     // TODO
     // sub_6F75E0();
-    // sub_401FF0();
 
+    CCharacterComponent::Initialize();
     ClientServices::Initialize();
     // TODO ClientServices::SetMessageHandler(SMSG_TUTORIAL_FLAGS, (int)sub_530920, 0);
 
