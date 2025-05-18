@@ -38,6 +38,9 @@ class CCharacterCreation {
     static void CalcClasses(uint32_t raceID);
     static void InitCharacterComponent(ComponentData* data, int32_t randomize);
     static void RandomizeCharFeatures();
+    static void SetSelectedRace(int32_t raceID);
+    static void SetSelectedSex(int32_t sexID);
+    static void SetSelectedClass(int32_t classID);
 };
 
 #endif // GLUE_C_CHARACTER_CREATION_HPP

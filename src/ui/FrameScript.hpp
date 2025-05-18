@@ -42,6 +42,7 @@ class FrameScript_EventObject : public TSHashObject<FrameScript_EventObject, HAS
 
 extern const char* g_glueScriptEvents[41];
 extern const char* g_scriptEvents[722];
+extern int32_t g_glueFrameScriptGenders[3];
 
 namespace FrameScript {
     extern void* s_mempool;

@@ -183,3 +183,15 @@ void CCharacterCreation::RandomizeCharFeatures() {
     CCharacterCreation::m_prevHairStyleIndex = info.hairStyleID;
     CCharacterCreation::m_prevFacialFeatureIndex = info.facialFeatureID;
 }
+
+void CCharacterCreation::SetSelectedRace(int32_t raceID) {
+    // TODO
+}
+
+void CCharacterCreation::SetSelectedSex(int32_t sexID) {
+    // TODO
+}
+
+void CCharacterCreation::SetSelectedClass(int32_t classID) {
+    // TODO
+}

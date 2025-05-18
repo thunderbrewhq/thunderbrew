@@ -307,3 +307,8 @@ int32_t SFile::RebuildHash() {
     // TODO
     return 1;
 }
+
+int32_t SFile::IsTrial() {
+    // TODO
+    return 0;
+}

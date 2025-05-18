@@ -423,6 +423,10 @@ bool ClientServices::LoadCDKey() {
     return true;
 }
 
+int32_t ClientServices::GetExpansionLevel() {
+    return ClientServices::Connection()->GetExpansionLevel();
+}
+
 void ClientServices::InitLoginServerCVars(int32_t overwrite, const char* locale) {
     if ((ClientServices::s_realmListBNVar == nullptr || ClientServices::s_realmListVar == nullptr) || overwrite != 0 ) {
         ClientServices::s_decorateAccountName = CVar::Register(

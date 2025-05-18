@@ -41,6 +41,7 @@ class SFile {
         static int32_t GetDataPath(char* path, size_t capacity);
         static int32_t SetDataPathAlternate(const char* path);
         static int32_t RebuildHash();
+        static int32_t IsTrial();
 
         // Member variables
         SFILE_TYPE m_type;

@@ -1,12 +1,15 @@
 #include "ui/ScriptFunctions.hpp"
 #include "ui/CSimpleModelFFX.hpp"
+#include "ui/FrameScript.hpp"
 #include "ui/Types.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
+#include "util/SFile.hpp"
 #include "db/Db.hpp"
 #include "clientobject/Unit_C.hpp"
 #include "glue/CCharacterCreation.hpp"
 #include "glue/CCharacterComponent.hpp"
+#include "client/ClientServices.hpp"
 #include <cstdint>
 
 int32_t Script_SetCharCustomizeFrame(lua_State* L) {
@@ -93,31 +96,37 @@ int32_t Script_GetFactionForRace(lua_State* L) {
 }
 
 int32_t Script_GetAvailableRaces(lua_State* L) {
+    auto sexID = CCharacterCreation::m_character->m_data.m_info.sexID;
+
     for (uint32_t i = 0; i < CCharacterCreation::m_races.Count(); ++i) {
         auto raceRecord = g_chrRacesDB.GetRecord(CCharacterCreation::m_races[i]);
-        auto raceName = CGUnit_C::GetDisplayRaceNameFromRecord(
-            raceRecord,
-            CCharacterCreation::m_character->m_data.m_info.sexID);
+        auto raceName = CGUnit_C::GetDisplayRaceNameFromRecord(raceRecord, sexID);
 
         lua_pushstring(L, raceName);
-        lua_pushstring(L, raceRecord ? raceRecord->m_clientFileString : nullptr);
-        // TODO: Expansion Check
-        lua_pushnumber(L, 1.0);
+        if (raceRecord) {
+            lua_pushstring(L, raceRecord->m_clientFileString);
+            bool available = ClientServices::GetExpansionLevel() >= raceRecord->m_requiredExpansion;
+            lua_pushnumber(L, available ? 1.0 : 0.0);
+        } else {
+            lua_pushstring(L, nullptr);
+            lua_pushnumber(L, 0.0);
+        }
     }
     return CCharacterCreation::m_races.Count() * 3;
 }
 
 int32_t Script_GetAvailableClasses(lua_State* L) {
+    auto sexID = CCharacterCreation::m_character->m_data.m_info.sexID;
+
     for (int32_t i = 0; i < g_chrClassesDB.GetNumRecords(); ++i) {
         auto record = g_chrClassesDB.GetRecordByIndex(i);
-        auto className = CGUnit_C::GetDisplayClassNameFromRecord(
-            record,
-            CCharacterCreation::m_character->m_data.m_info.sexID);
+        auto className = CGUnit_C::GetDisplayClassNameFromRecord(record, sexID);
+
         if (className) {
             lua_pushstring(L, className);
             lua_pushstring(L, record->m_filename);
-            // TODO: Expansion Check
-            lua_pushnumber(L, 1.0);
+            bool available = ClientServices::GetExpansionLevel() >= record->m_requiredExpansion;
+            lua_pushnumber(L, available ? 1.0 : 0.0);
         } else {
             lua_pushnil(L);
             lua_pushnil(L);
@@ -128,16 +137,17 @@ int32_t Script_GetAvailableClasses(lua_State* L) {
 }
 
 int32_t Script_GetClassesForRace(lua_State* L) {
+    auto sexID = CCharacterCreation::m_character->m_data.m_info.sexID;
+
     for (uint32_t i = 0; i < CCharacterCreation::m_classes.Count(); ++i) {
         auto record = CCharacterCreation::m_classes[i];
-        auto className = CGUnit_C::GetDisplayClassNameFromRecord(
-            record,
-            CCharacterCreation::m_character->m_data.m_info.sexID);
+        auto className = CGUnit_C::GetDisplayClassNameFromRecord(record, sexID);
+
         if (className) {
             lua_pushstring(L, className);
             lua_pushstring(L, record->m_filename);
-            // TODO: Expansion Check
-            lua_pushnumber(L, 1.0);            
+            bool available = ClientServices::GetExpansionLevel() >= record->m_requiredExpansion;
+            lua_pushnumber(L, available ? 1.0 : 0.0);
         } else {
             lua_pushnil(L);
             lua_pushnil(L);
@@ -182,8 +192,8 @@ int32_t Script_GetSelectedRace(lua_State* L) {
 }
 
 int32_t Script_GetSelectedSex(lua_State* L) {
-    // TODO: g_glueFrameScriptGenders[CCharacterCreation::m_character->m_data.m_info.sexID]
-    lua_pushnumber(L, 2.0);
+    auto sexID = CCharacterCreation::m_character->m_data.m_info.sexID;
+    lua_pushnumber(L, g_glueFrameScriptGenders[sexID]);
     return 1;
 }
 
@@ -218,15 +228,40 @@ int32_t Script_GetSelectedClass(lua_State* L) {
 }
 
 int32_t Script_SetSelectedRace(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1)) {
+        return luaL_error(L, "Usage: SetSelectedRace(index)");
+    }
+
+    int32_t raceID = static_cast<int32_t>(lua_tonumber(L, 1)) - 1;
+    CCharacterCreation::SetSelectedRace(raceID);
+    return 0;
 }
 
 int32_t Script_SetSelectedSex(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1)) {
+        return luaL_error(L, "Usage: SetSelectedSex(index)");
+    }
+
+    int32_t sexID = static_cast<int32_t>(lua_tonumber(L, 1));
+    for (int32_t i = 0; i < 3; ++i) {
+        if (g_glueFrameScriptGenders[i] == sexID) {
+            CCharacterCreation::SetSelectedSex(i);
+        }
+    }
+    return 0;
 }
 
 int32_t Script_SetSelectedClass(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1)) {
+        return luaL_error(L, "Usage: SetSelectedSex(index)");
+    }
+
+    int32_t index = static_cast<int32_t>(lua_tonumber(L, 1)) - 1;
+
+    // NOTICE: Original client has access violation issue in this method
+    auto record = g_chrClassesDB.GetRecordByIndex(index);
+    CCharacterCreation::SetSelectedClass(record ? record->m_ID : 0);
+    return 0;
 }
 
 int32_t Script_UpdateCustomizationBackground(lua_State* L) {
@@ -290,8 +325,7 @@ int32_t Script_IsRaceClassRestricted(lua_State* L) {
 }
 
 int32_t Script_GetCreateBackgroundModel(lua_State* L) {
-    // TODO
-    if (false /* SFile::IsTrial() */) {
+    if (SFile::IsTrial()) {
         lua_pushstring(L, "CharacterSelect");
         return 1;
     }

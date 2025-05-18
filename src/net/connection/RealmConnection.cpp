@@ -297,3 +297,7 @@ void RealmConnection::RequestCharacterLogin(uint64_t id) {
     msg.Finalize();
     this->Send(&msg);
 }
+
+int32_t RealmConnection::GetExpansionLevel() const {
+    return this->m_accountExpansion;
+}

@@ -15,6 +15,7 @@
 
 const char* g_glueScriptEvents[41];
 const char* g_scriptEvents[722];
+int32_t g_glueFrameScriptGenders[3] = { 2, 3, 1 };
 
 void* FrameScript::s_mempool;
 lua_State* FrameScript::s_context;

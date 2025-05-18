@@ -45,6 +45,7 @@ class RealmConnection : public NetClient {
         void SetSelectedRealm(uint32_t a2, uint32_t a3, uint32_t a4);
         void RequestCharacterEnum();
         void RequestCharacterLogin(uint64_t id);
+        int32_t GetExpansionLevel() const;
 };
 
 #endif

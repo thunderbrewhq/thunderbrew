@@ -56,6 +56,7 @@ class ClientServices : public LoginResponse {
         static const char* GetDefaultRealmlistString();
         static const char* GetDefaultPatchListString();
         static bool LoadCDKey();
+        static int32_t GetExpansionLevel();
 
         // Virtual member functions
         virtual int32_t GetLoginServerType();
