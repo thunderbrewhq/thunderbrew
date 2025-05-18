@@ -42,6 +42,7 @@ class CCharacterComponent {
     static void Initialize(EGxTexFormat format, uint32_t mipLevels, int32_t useThreads, int32_t useCompression);
     static CCharacterComponent* AllocComponent();
     static void FreeComponent(CCharacterComponent* component);
+    static void ValidateComponentData(ComponentData* data, COMPONENT_CONTEXT context = DEFAULT_CONTEXT);
 
     CCharacterComponent();
     ~CCharacterComponent();
@@ -53,6 +54,7 @@ class CCharacterComponent {
     void SetRandomFacialFeature(COMPONENT_CONTEXT context = DEFAULT_CONTEXT);
 
     bool Init(ComponentData* data, const char* a3);
+    void RenderPrep(int32_t a2);
 
     public:
     uint32_t m_handle;

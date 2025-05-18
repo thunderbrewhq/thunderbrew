@@ -9,6 +9,7 @@
 #include "clientobject/Unit_C.hpp"
 #include "glue/CCharacterCreation.hpp"
 #include "glue/CCharacterComponent.hpp"
+#include "glue/CCharacterSelection.hpp"
 #include "client/ClientServices.hpp"
 #include <cstdint>
 
@@ -264,40 +265,75 @@ int32_t Script_SetSelectedClass(lua_State* L) {
     return 0;
 }
 
-int32_t Script_UpdateCustomizationBackground(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+int32_t Script_UpdateCustomizationBackground(lua_State*) {
+    CCharacterCreation::SetSelectedRace(CCharacterCreation::m_raceIndex);
+    return 0;
 }
 
-int32_t Script_UpdateCustomizationScene(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+int32_t Script_UpdateCustomizationScene(lua_State*) {
+    CCharacterCreation::m_character->RenderPrep(0);
+    return 0;
 }
 
 int32_t Script_CycleCharCustomization(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+        return luaL_error(L, "Usage: CycleCharCustomization(index, delta)");
+    }
+
+    using CHAR_CUSTOMIZATION_TYPE = CCharacterCreation::CHAR_CUSTOMIZATION_TYPE;
+
+    auto customization = static_cast<CHAR_CUSTOMIZATION_TYPE>(lua_tonumber(L, 1) - 1.0);
+    int32_t delta = static_cast<int32_t>(lua_tonumber(L, 2));
+
+    CCharacterCreation::CycleCharCustomization(customization, delta);
+    return 0;
 }
 
-int32_t Script_RandomizeCharCustomization(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+int32_t Script_RandomizeCharCustomization(lua_State*) {
+    CCharacterCreation::RandomizeCharCustomization();
+    return 0;
 }
 
 int32_t Script_GetCharacterCreateFacing(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    lua_pushnumber(L, CCharacterCreation::m_charFacing * 57.29578);
+    return 1;
 }
 
 int32_t Script_SetCharacterCreateFacing(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1)) {
+        return luaL_error(L, "Usage: SetCharacterCreateFacing(degrees)");
+    }
+
+    // Degree to Radian
+    float facing = lua_tonumber(L, 1) * 0.017453292;
+    CCharacterCreation::SetCharFacing(facing);
+    return 1;
 }
 
 int32_t Script_GetRandomName(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO: Proper implementation
+    // WORKAROUND:
+    lua_pushstring(L, "RandomName");
+    return 1;
 }
 
 int32_t Script_CreateCharacter(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (lua_isstring(L, 1)) {
+        lua_tolstring(L, 1, nullptr);
+    }
+
+    CCharacterCreation::CreateCharacter(lua_tolstring(L, 1, nullptr));
+    return 0;
 }
 
 int32_t Script_CustomizeExistingCharacter(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1)) {
+        return luaL_error(L, "Usage: CustomizeExistingCharacter(index)");
+    }
+
+    uint32_t index = static_cast<uint32_t>(lua_tonumber(L, 1)) - 1;
+    CCharacterCreation::SetToExistingCharacter(index);
+    return 0;
 }
 
 int32_t Script_PaidChange_GetPreviousRaceIndex(lua_State* L) {
@@ -317,11 +353,80 @@ int32_t Script_PaidChange_GetName(lua_State* L) {
 }
 
 int32_t Script_IsRaceClassValid(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+        return luaL_error(L, "Usage: IsRaceClassValid(raceIndex, classIndex)");
+    }
+
+    uint32_t raceIndex = static_cast<uint32_t>(lua_tonumber(L, 1)) - 1;
+    int32_t classIndex = static_cast<int32_t>(lua_tonumber(L, 2)) - 1;
+
+    auto classRecord = g_chrClassesDB.GetRecordByIndex(classIndex);
+    if (!classRecord) {
+        return 0;
+    }
+
+    int32_t raceID = 0;
+    if (raceIndex < CCharacterCreation::m_races.Count()) {
+        raceID = CCharacterCreation::m_races[raceIndex];
+    }
+
+    if (CCharacterCreation::IsRaceClassValid(raceID, classRecord->m_ID)) {
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 int32_t Script_IsRaceClassRestricted(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+        return luaL_error(L, "Usage: Script_IsRaceClassRestricted(raceID, classID)");
+    }
+
+    int32_t raceID = static_cast<int32_t>(lua_tonumber(L, 1));
+    int32_t classID = static_cast<int32_t>(lua_tonumber(L, 2));
+
+    classID = (1 << classID);
+
+    bool restricted = false;
+    switch (raceID) {
+    case 1:
+        restricted = (CCharacterSelection::m_restrictHuman & classID) != 0;
+        break;
+    case 2:
+        restricted = (CCharacterSelection::m_restrictOrc & classID) != 0;
+        break;
+    case 3:
+        restricted = (CCharacterSelection::m_restrictDwarf & classID) != 0;
+        break;
+    case 4:
+        restricted = (CCharacterSelection::m_restrictNightElf & classID) != 0;
+        break;
+    case 5:
+        restricted = (CCharacterSelection::m_restrictUndead & classID) != 0;
+        break;
+    case 6:
+        restricted = (CCharacterSelection::m_restrictTauren & classID) != 0;
+        break;
+    case 7:
+        restricted = (CCharacterSelection::m_restrictGnome & classID) != 0;
+        break;
+    case 8:
+        restricted = (CCharacterSelection::m_restrictTroll & classID) != 0;
+        break;
+    case 10:
+        restricted = (CCharacterSelection::m_restrictBloodElf & classID) != 0;
+        break;
+    case 11:
+        restricted = (CCharacterSelection::m_restrictDraenei & classID) != 0;
+        break;
+    default:
+        luaL_error(L, "Script_IsRaceClassRestricted: unsupported race ID(%d)", raceID);
+        break;
+    }
+
+    lua_pushnumber(L, restricted ? 1.0 : 0.0);
+    return 1;
 }
 
 int32_t Script_GetCreateBackgroundModel(lua_State* L) {

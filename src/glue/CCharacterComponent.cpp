@@ -110,6 +110,9 @@ void CCharacterComponent::FreeComponent(CCharacterComponent* component) {
     // TODO: ObjectFree()
 }
 
+void CCharacterComponent::ValidateComponentData(ComponentData* data, COMPONENT_CONTEXT context) {
+}
+
 CCharacterComponent::CCharacterComponent() {
 }
 
@@ -134,4 +137,8 @@ void CCharacterComponent::SetRandomFacialFeature(COMPONENT_CONTEXT context) {
 bool CCharacterComponent::Init(ComponentData* data, const char* a3) {
     this->m_data = *data;
     return false;
+}
+
+void CCharacterComponent::RenderPrep(int32_t a2) {
+    // TODO
 }

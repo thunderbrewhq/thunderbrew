@@ -14,6 +14,15 @@ class ChrClassesRec;
 
 class CCharacterCreation {
     public:
+    enum CHAR_CUSTOMIZATION_TYPE {
+        CHAR_CUSTOMIZATION_SKIN           = 0,
+        CHAR_CUSTOMIZATION_FACE           = 1,
+        CHAR_CUSTOMIZATION_HAIR_STYLE     = 2,
+        CHAR_CUSTOMIZATION_HAIR_COLOR     = 3,
+        CHAR_CUSTOMIZATION_FACIAL_FEATURE = 4
+    };
+
+    public:
     // Static variables
     static int32_t m_selectedClassID;
     static int32_t m_existingCharacterIndex;
@@ -41,6 +50,14 @@ class CCharacterCreation {
     static void SetSelectedRace(int32_t raceID);
     static void SetSelectedSex(int32_t sexID);
     static void SetSelectedClass(int32_t classID);
+    static void CycleCharCustomization(CHAR_CUSTOMIZATION_TYPE customization, int32_t delta);
+    static void RandomizeCharCustomization();
+    static void SetCharFacing(float facing);
+    static void CreateCharacter(const char* name);
+    static void SetToExistingCharacter(uint32_t index);
+    static int32_t IsRaceClassValid(int32_t raceID, int32_t classID);
+    static int32_t IsClassValid(int32_t classID);
+    static int32_t GetRandomClassID();
 };
 
 #endif // GLUE_C_CHARACTER_CREATION_HPP

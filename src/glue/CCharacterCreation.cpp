@@ -93,7 +93,9 @@ void CCharacterCreation::ResetCharCustomizeInfo() {
     CCharacterCreation::CalcClasses(data.m_info.raceID);
     CCharacterCreation::InitCharacterComponent(&data, 1);
 
-    // TODO
+    CCharacterCreation::SetSelectedClass(CCharacterCreation::GetRandomClassID());
+
+    data.m_info.classID = CCharacterCreation::m_selectedClassID;
 
     CCharacterCreation::m_raceIndex = -1;
     for (uint32_t i = 0; i < CCharacterCreation::m_races.Count(); ++i) {
@@ -103,7 +105,7 @@ void CCharacterCreation::ResetCharCustomizeInfo() {
         }
     }
 
-    // TODO
+    // TODO: CNameGen::LoadNames
 }
 
 void CCharacterCreation::GetRandomRaceAndSex(ComponentData* data) {
@@ -193,5 +195,63 @@ void CCharacterCreation::SetSelectedSex(int32_t sexID) {
 }
 
 void CCharacterCreation::SetSelectedClass(int32_t classID) {
+    if (!CCharacterCreation::IsClassValid(classID)) {
+        return;
+    }
+
+    CCharacterCreation::m_selectedClassID = classID;
+    ComponentData data;
+    data.m_info = CCharacterCreation::m_character->m_data.m_info;
+    data.m_info.classID = classID;
+    CCharacterComponent::ValidateComponentData(&data);
+    CCharacterCreation::InitCharacterComponent(&data, 0);
+    // TODO: sub_4E0FD0
+    // TODO: sub_4E6AE0((int)CCharacterCreation::m_character, 1);
+}
+
+void CCharacterCreation::CycleCharCustomization(CHAR_CUSTOMIZATION_TYPE customization, int32_t delta) {
     // TODO
+}
+
+void CCharacterCreation::RandomizeCharCustomization() {
+    CCharacterCreation::RandomizeCharFeatures();
+    // TODO
+}
+
+void CCharacterCreation::SetCharFacing(float facing) {
+    // TODO
+}
+
+void CCharacterCreation::CreateCharacter(const char* name) {
+    // TODO
+}
+
+void CCharacterCreation::SetToExistingCharacter(uint32_t index) {
+    // TODO
+}
+
+int32_t CCharacterCreation::IsRaceClassValid(int32_t raceID, int32_t classID) {
+    for (int32_t i = 0; i < g_charBaseInfoDB.GetNumRecords(); ++i) {
+        auto record = g_charBaseInfoDB.GetRecordByIndex(i);
+        if (record && record->m_raceID == raceID && record->m_classID == classID) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int32_t CCharacterCreation::IsClassValid(int32_t classID) {
+    for (uint32_t i = 0; i < CCharacterCreation::m_classes.Count(); i) {
+        auto record = CCharacterCreation::m_classes[i];
+        if (record && record->m_ID == classID) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int32_t CCharacterCreation::GetRandomClassID() {
+    return 1;
 }
