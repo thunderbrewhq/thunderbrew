@@ -47,29 +47,34 @@ class CM2Model {
         uint32_t m_flags = 0;
         CM2Model** m_scenePrev = nullptr;
         CM2Model* m_sceneNext = nullptr;
-        uint32_t m_loaded : 1;
-        uint32_t m_flag2 : 1;
-        uint32_t m_flag4 : 1;
-        uint32_t m_flag8 : 1;
-        uint32_t m_flag10 : 1;
-        uint32_t m_flag20 : 1;
-        uint32_t m_flag40 : 1;
-        uint32_t m_flag80 : 1;
-        uint32_t m_flag100 : 1;
-        uint32_t m_flag200 : 1;
-        uint32_t m_flag400 : 1;
-        uint32_t m_flag800 : 1;
-        uint32_t m_flag1000 : 1;
-        uint32_t m_flag2000 : 1;
-        uint32_t m_flag4000 : 1;
-        uint32_t m_flag8000 : 1;
-        uint32_t m_flag10000 : 1;
-        uint32_t m_flag20000 : 1;
-        uint32_t m_flag40000 : 1;
-        uint32_t m_flag80000 : 1;
-        uint32_t m_flag100000 : 1;
-        uint32_t m_flag200000 : 1;
-        uint32_t m_flag400000 : 1;
+        union {
+            struct {
+                uint32_t m_loaded : 1;
+                uint32_t m_flag2 : 1;
+                uint32_t m_flag4 : 1;
+                uint32_t m_flag8 : 1;
+                uint32_t m_flag10 : 1;
+                uint32_t m_flag20 : 1;
+                uint32_t m_flag40 : 1;
+                uint32_t m_flag80 : 1;
+                uint32_t m_flag100 : 1;
+                uint32_t m_flag200 : 1;
+                uint32_t m_flag400 : 1;
+                uint32_t m_flag800 : 1;
+                uint32_t m_flag1000 : 1;
+                uint32_t m_flag2000 : 1;
+                uint32_t m_flag4000 : 1;
+                uint32_t m_flag8000 : 1;
+                uint32_t m_flag10000 : 1;
+                uint32_t m_flag20000 : 1;
+                uint32_t m_flag40000 : 1;
+                uint32_t m_flag80000 : 1;
+                uint32_t m_flag100000 : 1;
+                uint32_t m_flag200000 : 1;
+                uint32_t m_flag400000 : 1;
+            };
+            uint32_t f_flags;
+        };
         CM2Model** m_callbackPrev = nullptr;
         CM2Model* m_callbackNext = nullptr;
         void (*m_loadedCallback)(CM2Model*, void*) = nullptr;
@@ -82,6 +87,11 @@ class CM2Model {
         CM2Model** m_animatePrev = nullptr;
         CM2Model* m_animateNext = nullptr;
         CM2Model* m_attachParent = nullptr;
+        uint32_t m_attachmentId;
+        uint16_t m_attachmentIndex;
+        CM2Model* m_attachmentBase = nullptr;
+        CM2Model** m_attachmentPrev = nullptr;
+        CM2Model* m_attachmentNext = nullptr;
         uint32_t m_time = 0;
         CM2Model** m_drawPrev = nullptr;
         CM2Model* m_drawNext = nullptr;
@@ -108,6 +118,7 @@ class CM2Model {
         void* m_lightingArg = nullptr;
         M2ModelCamera* m_cameras = nullptr;
         void* ptr2D0 = nullptr;
+        uint32_t m_handle = 0;
 
         // Member functions
         CM2Model()
@@ -141,8 +152,11 @@ class CM2Model {
         void AnimateMTSimple(const C44Matrix* view, const C3Vector& a3, const C3Vector& a4, float a5, float a6);
         void AnimateST();
         void AttachToScene(CM2Scene* scene);
+        uint16_t AttachToParent(CM2Model* parent, uint32_t attachmentId, const C3Vector* a4, int32_t a5);
         void CancelDeferredSequences(uint32_t boneIndex, bool a3);
         void DetachFromScene();
+        void DetachFromParent();
+        C44Matrix GetAttachmentWorldTransform(uint32_t attachmentId);
         void FindKey(M2ModelBoneSeq* sequence, const M2TrackBase& track, uint32_t& currentKey, uint32_t& nextKey, float& ratio);
         CAaBox& GetBoundingBox(CAaBox& bounds);
         HCAMERA GetCameraByIndex(uint32_t index);

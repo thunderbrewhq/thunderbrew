@@ -23,7 +23,7 @@ int32_t Script_SetCharCustomizeFrame(lua_State* L) {
     auto frame = CScriptObject::GetScriptObjectByName(name, type);
 
     if (frame) {
-        CCharacterCreation::SetCharCustomizeFrame(static_cast<CSimpleModel*>(frame));
+        CCharacterCreation::SetCharCustomizeFrame(static_cast<CSimpleModelFFX*>(frame));
     }
 
     return 0;

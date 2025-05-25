@@ -24,8 +24,7 @@ CM2Model* CM2Model::AllocModel(uint32_t* heapId) {
     if (ObjectAlloc(*heapId, &memHandle, &object, 0)) {
         CM2Model* model = new (object) CM2Model();
 
-        // TODO
-        // model->uint2E8 = memHandle;
+        model->m_handle = memHandle;
 
         return model;
     }
@@ -587,12 +586,208 @@ void CM2Model::AttachToScene(CM2Scene* scene) {
     }
 }
 
+uint16_t CM2Model::AttachToParent(CM2Model* parent, uint32_t attachmentId, const C3Vector* a4, int32_t a5) {
+    if (this->m_attachParent) {
+        this->DetachFromParent();
+    }
+
+    this->SetAnimating(0);
+
+    uint16_t attachmentIndex = 0xFFFF;
+
+    if (parent->m_loaded) {
+        if (attachmentId < parent->m_shared->m_data->attachmentIndicesById.Count()) {
+            attachmentIndex = parent->m_shared->m_data->attachmentIndicesById[attachmentId];
+        }
+
+        if (attachmentIndex == 0xFFFF && !a5) {
+            return attachmentIndex;
+        }
+    }
+
+    this->m_attachmentIndex = attachmentIndex;
+    this->m_attachmentId = attachmentId;
+    this->m_attachParent = parent;
+
+    if (a5) {
+        this->f_flags = this->f_flags ^ (this->f_flags ^ (1 << 18)) & 0x40000 | 0x20080;
+    } else {
+        this->f_flags = this->f_flags ^ (this->f_flags ^ 0) & 0x40000 | 0x20080;
+    }
+
+    this->m_attachmentPrev = &parent->m_attachmentBase;
+    this->m_attachmentNext = parent->m_attachmentBase;
+    if (parent->m_attachmentBase) {
+        parent->m_attachmentBase->m_attachmentPrev = &this->m_attachmentNext;
+    }
+    parent->m_attachmentBase = this;
+
+    if (!this->m_loaded || !this->m_flag100) {
+        auto model = parent;
+        while (parent) {
+            model->f_flags &= ~0x100u;
+            model = model->m_attachParent;
+        }
+    }
+
+    if (!this->m_flag2) {
+        auto model = parent;
+        while (parent) {
+            model->f_flags &= ~0x200u;
+            model = model->m_attachParent;
+        }
+    }
+
+    if (a4 && this->m_attachParent && this->m_attachParent->m_loaded && this->m_attachmentIndex != 0xFFFF) {
+        auto transform = parent->GetAttachmentWorldTransform(attachmentId);
+
+        float v12 = sqrt(transform.a0 * transform.a0 + transform.a1 * transform.a1 + transform.a2 * transform.a2);
+        // WRAP: C44Matrix__AffineInvertInPlace below
+        if (fabs(v12 - 1.0f) >= 0.00000095367432) {
+            float v5[3][3];
+            v5[0][0] = transform.a0;
+            v5[0][1] = transform.a1;
+            v5[0][2] = transform.a2;
+            v5[1][0] = transform.b0;
+            v5[1][1] = transform.b1;
+            v5[1][2] = transform.b2;
+            v5[2][0] = transform.c0;
+            v5[2][1] = transform.c1;
+            v5[2][2] = transform.c2;
+
+            float v8[3][3];
+            v8[0][0] = v5[0][0];
+            v8[0][1] = v5[1][0];
+            v8[0][2] = v5[2][0];
+            v8[1][0] = v5[0][1];
+            v8[1][1] = v5[1][1];
+            v8[1][2] = v5[2][1];
+            v8[2][0] = v5[0][2];
+            v8[2][1] = v5[1][2];
+            v8[2][2] = v5[2][2];
+
+            C44Matrix matrix;
+            matrix.a0 = v8[0][0];
+            matrix.a1 = v8[0][1];
+            matrix.a2 = v8[0][2];
+            matrix.a3 = 0.0f;
+            matrix.b0 = v8[1][0];
+            matrix.b1 = v8[1][1];
+            matrix.b2 = v8[1][2];
+            matrix.b3 = 0.0f;
+            matrix.c0 = v8[2][0];
+            matrix.c1 = v8[2][1];
+            matrix.c2 = v8[2][2];
+            matrix.c3 = 0.0f;
+            matrix.d0 = 0.0f;
+            matrix.d1 = 0.0f;
+            matrix.d2 = 0.0f;
+            matrix.d3 = 1.0f;
+
+            matrix.Scale(1.0f / (v12 * v12));
+            matrix.Translate(C3Vector(-transform.d0, -transform.d1, -transform.d2));
+            transform = matrix;
+        } else {
+            float v5[3][3];
+            v5[0][0] = transform.a0;
+            v5[0][1] = transform.a1;
+            v5[0][2] = transform.a2;
+            v5[1][0] = transform.b0;
+            v5[1][1] = transform.b1;
+            v5[1][2] = transform.b2;
+            v5[2][0] = transform.c0;
+            v5[2][1] = transform.c1;
+            v5[2][2] = transform.c2;
+
+            float v8[3][3];
+            v8[0][0] = v5[0][0];
+            v8[0][1] = v5[1][0];
+            v8[0][2] = v5[2][0];
+            v8[1][0] = v5[0][1];
+            v8[1][1] = v5[1][1];
+            v8[1][2] = v5[2][1];
+            v8[2][0] = v5[0][2];
+            v8[2][1] = v5[1][2];
+            v8[2][2] = v5[2][2];
+
+            C44Matrix matrix;
+            matrix.a0 = v8[0][0];
+            matrix.a1 = v8[0][1];
+            matrix.a2 = v8[0][2];
+            matrix.a3 = 0.0f;
+            matrix.b0 = v8[1][0];
+            matrix.b1 = v8[1][1];
+            matrix.b2 = v8[1][2];
+            matrix.b3 = 0.0f;
+            matrix.c0 = v8[2][0];
+            matrix.c1 = v8[2][1];
+            matrix.c2 = v8[2][2];
+            matrix.c3 = 0.0f;
+            matrix.d0 = 0.0f;
+            matrix.d1 = 0.0f;
+            matrix.d2 = 0.0f;
+            matrix.d3 = 1.0f;
+
+            matrix.Translate(C3Vector(-transform.d0, -transform.d1, -transform.d2));
+            transform = matrix;
+        }
+
+        if (!this->m_flag8000) {
+            this->matrixB4 = C44Matrix();
+        }
+
+        transform.Translate(*a4);
+
+        this->matrixB4.d0 = transform.a0;
+        this->matrixB4.d1 = transform.a1;
+        this->matrixB4.d2 = transform.a2;
+        this->m_flag8000 = 1;
+    }
+
+    ++this->m_refCount;
+}
+
 void CM2Model::CancelDeferredSequences(uint32_t boneIndex, bool a3) {
     // TODO
 }
 
 void CM2Model::DetachFromScene() {
     // TODO
+}
+
+void CM2Model::DetachFromParent() {
+    // TODO
+}
+
+C44Matrix CM2Model::GetAttachmentWorldTransform(uint32_t attachmentId) {
+    if (!this->m_loaded) {
+        this->WaitForLoad(nullptr);
+    }
+
+    uint16_t attachmentIndex = 0xFFFF;
+
+    auto data = this->m_shared->m_data;
+    if (attachmentId < data->attachmentIndicesById.Count()) {
+        attachmentIndex = data->attachmentIndicesById[attachmentId];
+    }
+
+    uint16_t boneIndex = 0xFFFF;
+    if (attachmentIndex < data->attachments.Count()) {
+        boneIndex = data->attachments[attachmentIndex].boneIndex;
+    }
+
+    this->Animate();
+
+    C44Matrix matrix;
+
+    if (attachmentIndex == 0xFFFF) {
+        matrix = this->m_boneMatrices[0];
+    } else {
+        matrix = this->m_boneMatrices[boneIndex];
+        matrix.Translate(data->attachments[attachmentIndex].position);
+    }
+
+    return matrix * this->m_scene->m_viewInv;
 }
 
 void CM2Model::FindKey(M2ModelBoneSeq* sequence, const M2TrackBase& track, uint32_t& currentKey, uint32_t& nextKey, float& ratio) {

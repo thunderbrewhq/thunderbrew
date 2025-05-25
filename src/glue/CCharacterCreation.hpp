@@ -27,7 +27,7 @@ class CCharacterCreation {
     static int32_t m_selectedClassID;
     static int32_t m_existingCharacterIndex;
     static int32_t m_raceIndex;
-    static CSimpleModel* m_charCustomizeFrame;
+    static CSimpleModelFFX* m_charCustomizeFrame;
     static float m_charFacing;
     static uint32_t m_prevSkinIndex;
     static uint32_t m_prevFaceIndex;
@@ -40,7 +40,7 @@ class CCharacterCreation {
 
     // Static functions
     static void Initialize();
-    static void SetCharCustomizeFrame(CSimpleModel* frame);
+    static void SetCharCustomizeFrame(CSimpleModelFFX* frame);
     static void SetCharCustomizeModel(char const* filename);
     static void ResetCharCustomizeInfo();
     static void GetRandomRaceAndSex(ComponentData* data);

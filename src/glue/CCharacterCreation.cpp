@@ -8,7 +8,7 @@
 int32_t CCharacterCreation::m_selectedClassID;
 int32_t CCharacterCreation::m_existingCharacterIndex;
 int32_t CCharacterCreation::m_raceIndex;
-CSimpleModel* CCharacterCreation::m_charCustomizeFrame;
+CSimpleModelFFX* CCharacterCreation::m_charCustomizeFrame;
 float CCharacterCreation::m_charFacing;
 uint32_t CCharacterCreation::m_prevSkinIndex;
 uint32_t CCharacterCreation::m_prevFaceIndex;
@@ -66,7 +66,7 @@ void CCharacterCreation::Initialize() {
     } while (weirdCondition || factionSwitch == 1);
 }
 
-void CCharacterCreation::SetCharCustomizeFrame(CSimpleModel* frame) {
+void CCharacterCreation::SetCharCustomizeFrame(CSimpleModelFFX* frame) {
     CCharacterCreation::m_charCustomizeFrame = frame;
 }
 
