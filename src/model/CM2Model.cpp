@@ -75,6 +75,10 @@ uint16_t CM2Model::Sub8260C0(M2Data* data, uint32_t sequenceId, int32_t a3) {
     return -1;
 }
 
+CM2Model::~CM2Model() {
+
+}
+
 void CM2Model::Animate() {
     // TODO
 }
@@ -475,11 +479,34 @@ void CM2Model::AnimateMT(const C44Matrix* view, const C3Vector& a3, const C3Vect
         }
     }
 
+    if (this->m_attachmentBase) {
+        this->AnimateAttachmentsMT();
+    }
+
     // TODO
 }
 
 void CM2Model::AnimateMTSimple(const C44Matrix* view, const C3Vector& a3, const C3Vector& a4, float a5, float a6) {
     // TODO
+}
+
+void CM2Model::AnimateAttachmentsMT() {
+    // TODO: Proper implementation
+
+    for (auto child = this->m_attachmentBase; child; child = child->m_attachmentNext) {
+        child->m_flag80 = 1;
+        child->m_flag8 = 1;
+
+        if (child->m_attachmentIndex == 0xFFFF) {
+            child->AnimateMT(&this->m_boneMatrices[0], this->m_currentDiffuse, this->m_currentEmissive, 1.0f, 1.0f);
+        } else {
+            auto data = &this->m_shared->m_data->attachments[child->m_attachmentIndex];
+            C44Matrix matrix = this->m_boneMatrices[data->boneIndex];
+            matrix.Translate(data->position);
+            child->AnimateMT(&matrix, this->m_currentDiffuse, this->m_currentEmissive, 1.0f, 1.0f);
+        }
+        
+    }
 }
 
 void CM2Model::AnimateST() {
@@ -558,6 +585,11 @@ void CM2Model::AnimateST() {
     }
 
     // TODO
+
+    for (auto child = this->m_attachmentBase; child; child = child->m_attachmentNext) {
+        // TODO: v43
+        child->AnimateST();
+    }
 }
 
 void CM2Model::AttachToScene(CM2Scene* scene) {
@@ -624,7 +656,7 @@ uint16_t CM2Model::AttachToParent(CM2Model* parent, uint32_t attachmentId, const
 
     if (!this->m_loaded || !this->m_flag100) {
         auto model = parent;
-        while (parent) {
+        while (model) {
             model->f_flags &= ~0x100u;
             model = model->m_attachParent;
         }
@@ -632,7 +664,7 @@ uint16_t CM2Model::AttachToParent(CM2Model* parent, uint32_t attachmentId, const
 
     if (!this->m_flag2) {
         auto model = parent;
-        while (parent) {
+        while (model) {
             model->f_flags &= ~0x200u;
             model = model->m_attachParent;
         }
@@ -756,7 +788,58 @@ void CM2Model::DetachFromScene() {
 }
 
 void CM2Model::DetachFromParent() {
-    // TODO
+    if (this->m_attachmentPrev) {
+        *this->m_attachmentPrev = this->m_attachmentNext;
+    }
+
+    if (this->m_attachmentNext) {
+        this->m_attachmentNext->m_attachmentPrev = this->m_attachmentPrev;
+    }
+
+    this->f_flags &= ~0x40000u;
+    this->m_attachmentPrev = nullptr;
+    this->m_attachmentNext = nullptr;
+    this->m_attachParent = nullptr;
+    this->m_attachmentId = static_cast<uint32_t>(-1);
+    // this->dword174 = 0;
+    if (--this->m_refCount == 0) {
+        this->~CM2Model();
+        // TODO: ObjectFree
+    }
+}
+
+void CM2Model::DetachAllChildrenById(uint32_t id) {
+    CM2Model* attachmentNext = nullptr;
+
+    auto attachmentBase = this->m_attachmentBase;
+    if (attachmentBase) {
+        do {
+            attachmentNext = attachmentBase->m_attachmentNext;
+            auto v8 = attachmentNext;
+            if (attachmentBase->m_attachmentId == id) {
+                auto attachmentPrev = attachmentBase->m_attachmentPrev;
+                if (attachmentPrev) {
+                    *attachmentPrev = attachmentBase->m_attachmentNext;
+                }
+                auto v5 = attachmentBase->m_attachmentNext;
+                if (v5) {
+                    v5->m_attachmentPrev = attachmentBase->m_attachmentPrev;
+                }
+                attachmentBase->f_flags &= ~0x40000u;
+                attachmentBase->m_attachmentPrev = 0;
+                attachmentBase->m_attachmentNext = 0;
+                attachmentBase->m_attachParent = 0;
+                attachmentBase->m_attachmentId = -1;
+                // attachmentBase->dword174 = 0;
+                if (--attachmentBase->m_refCount == 0) {
+                    attachmentBase->~CM2Model();
+                    // ObjectFree(*v7, attachmentBase->m_handle);
+                    attachmentNext = v8;
+                }
+            }
+            attachmentBase = attachmentNext;
+        } while (attachmentNext);
+    }
 }
 
 C44Matrix CM2Model::GetAttachmentWorldTransform(uint32_t attachmentId) {
@@ -1627,10 +1710,9 @@ void CM2Model::SetupLighting() {
         this->m_lighting.CameraSpace();
     }
 
-    // TODO
-    // for (auto model = this->model58; model; model = model->model60) {
-    //     model->SetupLighting();
-    // }
+    for (auto model = this->m_attachmentBase; model; model = model->m_attachmentNext) {
+        model->SetupLighting();
+    }
 }
 
 void CM2Model::SetVisible(int32_t visible) {

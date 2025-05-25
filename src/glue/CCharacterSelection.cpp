@@ -77,11 +77,25 @@ void CCharacterSelection::ShowCharacter() {
     }
     // TODO
 
+    if (CCharacterSelection::m_modelFrame) {
+        auto model = CCharacterSelection::m_modelFrame->m_model;
+        if (model) {
+            //model->DetachAllChildrenById(0);
+            //model->DetachAllChildrenById(1);
+        }
+    }
+
     CCharacterSelection::m_charFacing = 0.0;
 
     auto& character = CCharacterSelection::s_characterList[index];
 
     if (character.m_characterModel) {
+        if (!character.m_characterModel->m_attachParent && CCharacterSelection::m_modelFrame && CCharacterSelection::m_modelFrame->m_model) {
+            character.m_characterModel->SetVisible(1);
+            character.m_characterModel->AttachToParent(CCharacterSelection::m_modelFrame->m_model, 0, nullptr, 0);
+            character.m_characterModel->SetVisible(1);
+        }
+
         // TODO
         return;
     }

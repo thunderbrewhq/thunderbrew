@@ -146,16 +146,19 @@ class CM2Model {
             , m_flag200000(0)
             , m_flag400000(0)
             {};
+        ~CM2Model();
         void Animate();
         void AnimateCamerasST();
         void AnimateMT(const C44Matrix* view, const C3Vector& a3, const C3Vector& a4, float a5, float a6);
         void AnimateMTSimple(const C44Matrix* view, const C3Vector& a3, const C3Vector& a4, float a5, float a6);
+        void AnimateAttachmentsMT();
         void AnimateST();
         void AttachToScene(CM2Scene* scene);
         uint16_t AttachToParent(CM2Model* parent, uint32_t attachmentId, const C3Vector* a4, int32_t a5);
         void CancelDeferredSequences(uint32_t boneIndex, bool a3);
         void DetachFromScene();
         void DetachFromParent();
+        void DetachAllChildrenById(uint32_t id);
         C44Matrix GetAttachmentWorldTransform(uint32_t attachmentId);
         void FindKey(M2ModelBoneSeq* sequence, const M2TrackBase& track, uint32_t& currentKey, uint32_t& nextKey, float& ratio);
         CAaBox& GetBoundingBox(CAaBox& bounds);
