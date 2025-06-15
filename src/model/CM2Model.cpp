@@ -674,98 +674,10 @@ uint16_t CM2Model::AttachToParent(CM2Model* parent, uint32_t attachmentId, const
         auto transform = parent->GetAttachmentWorldTransform(attachmentId);
 
         float v12 = sqrt(transform.a0 * transform.a0 + transform.a1 * transform.a1 + transform.a2 * transform.a2);
-        // WRAP: C44Matrix__AffineInvertInPlace below
-        if (fabs(v12 - 1.0f) >= 0.00000095367432) {
-            float v5[3][3];
-            v5[0][0] = transform.a0;
-            v5[0][1] = transform.a1;
-            v5[0][2] = transform.a2;
-            v5[1][0] = transform.b0;
-            v5[1][1] = transform.b1;
-            v5[1][2] = transform.b2;
-            v5[2][0] = transform.c0;
-            v5[2][1] = transform.c1;
-            v5[2][2] = transform.c2;
-
-            float v8[3][3];
-            v8[0][0] = v5[0][0];
-            v8[0][1] = v5[1][0];
-            v8[0][2] = v5[2][0];
-            v8[1][0] = v5[0][1];
-            v8[1][1] = v5[1][1];
-            v8[1][2] = v5[2][1];
-            v8[2][0] = v5[0][2];
-            v8[2][1] = v5[1][2];
-            v8[2][2] = v5[2][2];
-
-            C44Matrix matrix;
-            matrix.a0 = v8[0][0];
-            matrix.a1 = v8[0][1];
-            matrix.a2 = v8[0][2];
-            matrix.a3 = 0.0f;
-            matrix.b0 = v8[1][0];
-            matrix.b1 = v8[1][1];
-            matrix.b2 = v8[1][2];
-            matrix.b3 = 0.0f;
-            matrix.c0 = v8[2][0];
-            matrix.c1 = v8[2][1];
-            matrix.c2 = v8[2][2];
-            matrix.c3 = 0.0f;
-            matrix.d0 = 0.0f;
-            matrix.d1 = 0.0f;
-            matrix.d2 = 0.0f;
-            matrix.d3 = 1.0f;
-
-            matrix.Scale(1.0f / (v12 * v12));
-            matrix.Translate(C3Vector(-transform.d0, -transform.d1, -transform.d2));
-            transform = matrix;
-        } else {
-            float v5[3][3];
-            v5[0][0] = transform.a0;
-            v5[0][1] = transform.a1;
-            v5[0][2] = transform.a2;
-            v5[1][0] = transform.b0;
-            v5[1][1] = transform.b1;
-            v5[1][2] = transform.b2;
-            v5[2][0] = transform.c0;
-            v5[2][1] = transform.c1;
-            v5[2][2] = transform.c2;
-
-            float v8[3][3];
-            v8[0][0] = v5[0][0];
-            v8[0][1] = v5[1][0];
-            v8[0][2] = v5[2][0];
-            v8[1][0] = v5[0][1];
-            v8[1][1] = v5[1][1];
-            v8[1][2] = v5[2][1];
-            v8[2][0] = v5[0][2];
-            v8[2][1] = v5[1][2];
-            v8[2][2] = v5[2][2];
-
-            C44Matrix matrix;
-            matrix.a0 = v8[0][0];
-            matrix.a1 = v8[0][1];
-            matrix.a2 = v8[0][2];
-            matrix.a3 = 0.0f;
-            matrix.b0 = v8[1][0];
-            matrix.b1 = v8[1][1];
-            matrix.b2 = v8[1][2];
-            matrix.b3 = 0.0f;
-            matrix.c0 = v8[2][0];
-            matrix.c1 = v8[2][1];
-            matrix.c2 = v8[2][2];
-            matrix.c3 = 0.0f;
-            matrix.d0 = 0.0f;
-            matrix.d1 = 0.0f;
-            matrix.d2 = 0.0f;
-            matrix.d3 = 1.0f;
-
-            matrix.Translate(C3Vector(-transform.d0, -transform.d1, -transform.d2));
-            transform = matrix;
-        }
+        transform = transform.AffineInverse(v12);
 
         if (!this->m_flag8000) {
-            this->matrixB4 = C44Matrix();
+            this->matrixB4.Identity();
         }
 
         transform.Translate(*a4);

@@ -80,8 +80,8 @@ void CCharacterSelection::ShowCharacter() {
     if (CCharacterSelection::m_modelFrame) {
         auto model = CCharacterSelection::m_modelFrame->m_model;
         if (model) {
-            //model->DetachAllChildrenById(0);
-            //model->DetachAllChildrenById(1);
+            model->DetachAllChildrenById(0);
+            model->DetachAllChildrenById(1);
         }
     }
 
@@ -91,9 +91,7 @@ void CCharacterSelection::ShowCharacter() {
 
     if (character.m_characterModel) {
         if (!character.m_characterModel->m_attachParent && CCharacterSelection::m_modelFrame && CCharacterSelection::m_modelFrame->m_model) {
-            character.m_characterModel->SetVisible(1);
             character.m_characterModel->AttachToParent(CCharacterSelection::m_modelFrame->m_model, 0, nullptr, 0);
-            character.m_characterModel->SetVisible(1);
         }
 
         // TODO
@@ -109,10 +107,17 @@ void CCharacterSelection::ShowCharacter() {
 
     auto scene = CCharacterSelection::m_modelFrame->GetScene();
     character.m_characterModel = scene->CreateModel(rec->m_modelName, 0);
+    ++CCharacterSelection::m_characterCount;
 }
 
 void CCharacterSelection::SetCharFacing(float facing) {
-    if (!CCharacterSelection::m_characterCount || !CCharacterSelection::GetNumCharacters()) {
+    if (!CCharacterSelection::m_characterCount) {
+        return;
+    }
+
+    CCharacterSelection::m_charFacing = facing;
+
+    if (!CCharacterSelection::GetNumCharacters()) {
         return;
     }
 
