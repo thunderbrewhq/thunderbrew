@@ -24,6 +24,21 @@ ComponentData::ComponentData() {
     this->m_model = nullptr;
 }
 
+ComponentData::ComponentData(const CHARACTER_INFO& info) {
+    this->m_unkFlag &= 0xFFFFFFFC;
+    memset(&this->m_info, 0, sizeof(this->m_info));
+    this->m_model = nullptr;
+
+    this->m_info.raceID = info.raceID;
+    this->m_info.sexID = info.sexID;
+    this->m_info.classID = info.classID;
+    this->m_info.skinID = info.skinID;
+    this->m_info.faceID = info.faceID;
+    this->m_info.hairStyleID = info.hairStyleID;
+    this->m_info.hairColorID = info.hairColorID;
+    this->m_info.facialFeatureID = info.facialHairStyleID;
+}
+
 void CCharacterComponent::Initialize() {
     CCharacterComponent::g_componentTextureLevelVar = CVar::Register(
         "componentTextureLevel",

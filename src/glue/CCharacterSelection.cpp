@@ -8,6 +8,7 @@
 #include "net/Connection.hpp"
 #include "clientobject/Player_C.hpp"
 #include "db/Db.hpp"
+#include "glue/CCharacterComponent.hpp"
 
 CSimpleModelFFX* CCharacterSelection::m_modelFrame = nullptr;
 uint32_t CCharacterSelection::m_characterCount = 0;
@@ -26,17 +27,20 @@ TSGrowableArray<CharacterSelectionDisplay> CCharacterSelection::s_characterList;
 int32_t CCharacterSelection::m_selectionIndex = 0;
 
 
-CharacterSelectionDisplay::CharacterSelectionDisplay()
-    : m_characterModel(nullptr) {
-}
-
-
 void CCharacterSelection::Initialize() {
     // Empty method
 }
 
 void CCharacterSelection::RenderPrep() {
-    // TODO
+    auto index = CCharacterSelection::m_selectionIndex;
+    if (index < 0 || index >= CCharacterSelection::GetNumCharacters()) {
+        return;
+    }
+
+    auto component = CCharacterSelection::s_characterList[index].m_component;
+    if (component) {
+        component->RenderPrep(0);
+    }
 }
 
 void CCharacterSelection::SetBackgroundModel(const char* modelPath) {
@@ -75,7 +79,6 @@ void CCharacterSelection::ShowCharacter() {
     if (index < 0 || index >= CCharacterSelection::GetNumCharacters()) {
         return;
     }
-    // TODO
 
     if (CCharacterSelection::m_modelFrame) {
         auto model = CCharacterSelection::m_modelFrame->m_model;
@@ -88,25 +91,57 @@ void CCharacterSelection::ShowCharacter() {
     CCharacterSelection::m_charFacing = 0.0;
 
     auto& character = CCharacterSelection::s_characterList[index];
+    if (character.m_component) {
+        // TODO: info = DayNightGetInfo();
+        float v42;
+        if (character.m_characterInfo.flags & 0x2000) {
+            // FFX::SetEffect(CGlueMgr__m_deathEffect);
+            v42 = 0.15f;
+        } else {
+            // FFX::SetEffect(CGlueMgr__m_glowEffect);
+            v42 = 0.4f;
+        }
+        // *((float *)info + 75) = v42;
 
-    if (character.m_characterModel) {
-        if (!character.m_characterModel->m_attachParent && CCharacterSelection::m_modelFrame && CCharacterSelection::m_modelFrame->m_model) {
-            character.m_characterModel->AttachToParent(CCharacterSelection::m_modelFrame->m_model, 0, nullptr, 0);
+        if (CCharacterSelection::m_modelFrame->m_model) {
+            character.m_component->m_data.m_model->AttachToParent(
+                CCharacterSelection::m_modelFrame->m_model,
+                0,
+                nullptr,
+                0);
+
+            if (character.m_petModel) {
+                character.m_petModel->AttachToParent(
+                    CCharacterSelection::m_modelFrame->m_model, 1, nullptr,0);
+            }
         }
 
-        // TODO
+        // TODO: sub_4E6AE0((int)s_charList.m_data[selectionIndex2].m_component, v5);
         return;
     }
 
     auto rec = Player_C_GetModelName(character.m_characterInfo.raceID, character.m_characterInfo.sexID);
-    STORM_ASSERT(rec);
-    if (!rec->m_modelName) {
-        // TODO
+    if (!rec || !rec->m_modelName) {
         return;
     }
 
     auto scene = CCharacterSelection::m_modelFrame->GetScene();
-    character.m_characterModel = scene->CreateModel(rec->m_modelName, 0);
+    auto model = scene->CreateModel(rec->m_modelName, 0);
+
+    ComponentData componentData(character.m_characterInfo);
+    componentData.m_model = model;
+    componentData.m_unkFlag |= 2;
+
+    character.m_component = CCharacterComponent::AllocComponent();
+    character.m_component->Init(&componentData, 0);
+
+    // TODO: set model ribbon emitters & particles
+    model->SetBoneSequence(0xFFFFFFFF, 0, 0xFFFFFFFF, 0, 1.0f, 1, 1);
+
+
+    // Handle pet model
+    // Handle hand items
+
     ++CCharacterSelection::m_characterCount;
 }
 
@@ -121,9 +156,10 @@ void CCharacterSelection::SetCharFacing(float facing) {
         return;
     }
 
-    auto character = CCharacterSelection::s_characterList[CCharacterSelection::m_selectionIndex];
-    if (character.m_characterModel) {
-        character.m_characterModel->SetWorldTransform(C3Vector(), facing, 1.0);
+    auto index = CCharacterSelection::m_selectionIndex;
+    auto component = CCharacterSelection::s_characterList[index].m_component;
+    if (component && component->m_data.m_model) {
+        component->m_data.m_model->SetWorldTransform(C3Vector(), facing, 1.0);
     }
 }
 

@@ -6,12 +6,14 @@
 
 class CSimpleModelFFX;
 class CM2Model;
+class CCharacterComponent;
 
 struct CharacterSelectionDisplay {
-    CharacterSelectionDisplay();
+    CharacterSelectionDisplay() = default;
 
-    CHARACTER_INFO m_characterInfo;
-    CM2Model* m_characterModel;
+    CHARACTER_INFO m_characterInfo = {};
+    CCharacterComponent* m_component = nullptr;
+    CM2Model* m_petModel = nullptr;
 };
 
 class CCharacterSelection {

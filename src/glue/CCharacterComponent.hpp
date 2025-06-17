@@ -12,6 +12,7 @@ class CVar;
 class ComponentData {
     public:
     ComponentData();
+    explicit ComponentData(const CHARACTER_INFO& info);
 
     public:
     CHARACTER_CREATE_INFO m_info;
