@@ -522,7 +522,7 @@ void CM2Scene::Animate(const C3Vector& cameraPos) {
                 batch = &skinProfile->batches[batchIndex];
                 skinSection = &model->m_shared->m_skinSections[batch->skinSectionIndex];
 
-                if (!skinSection) {
+                if (!model->m_skinSections[batch->skinSectionIndex]) {
                     continue;
                 }
             }

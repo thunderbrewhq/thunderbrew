@@ -101,6 +101,7 @@ class CM2Model {
         uint32_t uint90 = 0;
         M2ModelBone* m_bones = nullptr;
         C44Matrix* m_boneMatrices = nullptr;
+        uint32_t* m_skinSections = nullptr;
         M2ModelColor* m_colors = nullptr;
         HTEXTURE* m_textures = nullptr;
         M2ModelTextureWeight* m_textureWeights = nullptr;
@@ -192,6 +193,8 @@ class CM2Model {
         void UnsetBoneSequence(uint32_t boneId, int32_t a3, int32_t a4);
         void UpdateLoaded();
         void WaitForLoad(const char* a2);
+        void UnoptimizeVisibleGeometry();
+        void SetGeometryVisible(uint32_t start, uint32_t end, int32_t visible);
 };
 
 #endif

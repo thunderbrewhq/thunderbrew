@@ -1007,6 +1007,22 @@ int32_t CM2Model::InitializeLoaded() {
         }
     }
 
+    if (this->m_shared->skinProfile->skinSections.Count()) {
+        this->m_skinSections = reinterpret_cast<uint32_t*>(&data[0]);
+        data += (sizeof(uint32_t) * this->m_shared->skinProfile->skinSections.Count());
+
+        if (this->model30) {
+            memcpy(
+                this->m_skinSections,
+                this->model30->m_skinSections,
+                sizeof(uint32_t) * this->m_shared->skinProfile->skinSections.Count());
+        } else {
+            for (uint32_t i = 0; i < this->m_shared->skinProfile->skinSections.Count(); ++i) {
+                this->m_skinSections[i] = 1;
+            }
+        }
+    }
+
     // TODO
 
     if (this->m_shared->m_data->colors.Count()) {
@@ -1104,7 +1120,10 @@ int32_t CM2Model::InitializeLoaded() {
             }
 
             case 1: {
-                // TODO
+                this->SetGeometryVisible(
+                    modelCall->args[0],
+                    modelCall->args[1],
+                    modelCall->args[2]);
                 break;
             }
 
@@ -1727,5 +1746,44 @@ void CM2Model::WaitForLoad(const char* a2) {
 
     if (this->m_flags & 0x20) {
         this->InitializeLoaded();
+    }
+}
+
+void CM2Model::UnoptimizeVisibleGeometry() {
+    // TODO
+}
+
+void CM2Model::SetGeometryVisible(uint32_t start, uint32_t end, int32_t visible) {
+    if (this->m_loaded) {
+        bool needUpdate = false;
+
+        const auto& skinSections = this->m_shared->skinProfile->skinSections;
+
+        for (uint32_t i = 0; i < skinSections.Count(); ++i) {
+            uint32_t id = skinSections[i].skinSectionId;
+            if (start <= id && id <= end) {
+                if (this->m_skinSections[i] != static_cast<uint32_t>(visible)) {
+                    this->m_skinSections[i] = static_cast<uint32_t>(visible);
+                    needUpdate = true;
+                }
+            }
+        }
+
+        if (needUpdate) {
+            this->UnoptimizeVisibleGeometry();
+        }
+
+    } else {
+        auto modelCall = NEW(CM2ModelCall);
+
+        modelCall->type = 1;
+        modelCall->modelCallNext = nullptr;
+        modelCall->time = this->m_scene->m_time;
+        modelCall->args[0] = start;
+        modelCall->args[1] = end;
+        modelCall->args[2] = static_cast<uint32_t>(visible);
+
+        *this->m_modelCallTail = modelCall;
+        this->m_modelCallTail = &modelCall->modelCallNext;
     }
 }
