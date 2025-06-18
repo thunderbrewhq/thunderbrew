@@ -37,15 +37,12 @@ int32_t Script_SetCharSelectBackground(lua_State* L) {
 }
 
 int32_t Script_GetCharacterListUpdate(lua_State* L) {
-    // TODO: CCharSelectInfo::ClearCharacterModel();
-    // TODO: CCharSelectInfo::ClearPetModel();
-    CGlueMgr::GetCharacterList();
+    CCharacterSelection::OnGetCharacterList();
     return 0;
 }
 
 int32_t Script_GetNumCharacters(lua_State* L) {
     lua_pushnumber(L, CCharacterSelection::GetNumCharacters());
-
     return 1;
 }
 

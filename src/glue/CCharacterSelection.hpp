@@ -44,6 +44,7 @@ class CCharacterSelection {
         static void SetCharFacing(float facing);
         static void ClearCharacterList();
         static void UpdateCharacterList();
+        static void OnGetCharacterList();
         static uint32_t GetNumCharacters();
 };
 

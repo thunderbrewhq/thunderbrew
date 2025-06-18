@@ -8,6 +8,7 @@
 #include "net/Connection.hpp"
 #include "clientobject/Player_C.hpp"
 #include "db/Db.hpp"
+#include "glue/CGlueMgr.hpp"
 #include "glue/CCharacterComponent.hpp"
 
 CSimpleModelFFX* CCharacterSelection::m_modelFrame = nullptr;
@@ -143,6 +144,36 @@ void CCharacterSelection::ShowCharacter() {
     // Handle hand items
 
     ++CCharacterSelection::m_characterCount;
+
+    // DUPLICATE (goto in the OG)
+    if (character.m_component) {
+        // TODO: info = DayNightGetInfo();
+        float v42;
+        if (character.m_characterInfo.flags & 0x2000) {
+            // FFX::SetEffect(CGlueMgr__m_deathEffect);
+            v42 = 0.15f;
+        } else {
+            // FFX::SetEffect(CGlueMgr__m_glowEffect);
+            v42 = 0.4f;
+        }
+        // *((float *)info + 75) = v42;
+
+        if (CCharacterSelection::m_modelFrame->m_model) {
+            character.m_component->m_data.m_model->AttachToParent(
+                CCharacterSelection::m_modelFrame->m_model,
+                0,
+                nullptr,
+                0);
+
+            if (character.m_petModel) {
+                character.m_petModel->AttachToParent(
+                    CCharacterSelection::m_modelFrame->m_model, 1, nullptr, 0);
+            }
+        }
+
+        // TODO: sub_4E6AE0((int)s_charList.m_data[selectionIndex2].m_component, v5);
+        return;
+    }
 }
 
 void CCharacterSelection::SetCharFacing(float facing) {
@@ -164,6 +195,25 @@ void CCharacterSelection::SetCharFacing(float facing) {
 }
 
 void CCharacterSelection::ClearCharacterList() {
+    CCharacterSelection::s_characterList.Clear();
+    if (CCharacterSelection::m_modelFrame) {
+        auto model = CCharacterSelection::m_modelFrame->m_model;
+        if (model) {
+            model->DetachAllChildrenById(0);
+            model->DetachAllChildrenById(1);
+        }
+    }
+
+    CCharacterSelection::m_selectionIndex = 0;
+    CCharacterSelection::ShowCharacter();
+
+    FrameScript_SignalEvent(8, "%d", CCharacterSelection::m_selectionIndex + 1);
+
+    if (CCharacterSelection::m_modelFrame) {
+        CCharacterSelection::m_modelFrame->SetCameraByIndex(0);
+    }
+
+    FrameScript_SignalEvent(7, nullptr);
 }
 
 void CCharacterSelection::UpdateCharacterList() {
@@ -200,12 +250,30 @@ void CCharacterSelection::UpdateCharacterList() {
     } else {
         CCharacterSelection::m_selectionIndex = 0;
         CCharacterSelection::ShowCharacter();
+
         FrameScript_SignalEvent(8, "%d", CCharacterSelection::m_selectionIndex + 1);
+
         if (CCharacterSelection::m_modelFrame) {
-            // TODO
+            auto model = CCharacterSelection::m_modelFrame->m_model;
+            if (model) {
+                model->DetachAllChildrenById(0);
+                model->DetachAllChildrenById(1);
+            }
         }
     }
     FrameScript_SignalEvent(7, nullptr);
+}
+
+void CCharacterSelection::OnGetCharacterList() {
+    CCharacterSelection::s_characterList.Clear();
+    if (CCharacterSelection::m_modelFrame) {
+        auto model = CCharacterSelection::m_modelFrame->m_model;
+        if (model) {
+            model->DetachAllChildrenById(0);
+            model->DetachAllChildrenById(1);
+        }
+    }
+    CGlueMgr::GetCharacterList();
 }
 
 uint32_t CCharacterSelection::GetNumCharacters() {

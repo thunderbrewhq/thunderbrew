@@ -148,7 +148,7 @@ void CCharacterCreation::InitCharacterComponent(ComponentData* data, int32_t ran
     if (CCharacterCreation::m_character) {
         auto model = CCharacterCreation::m_character->m_data.m_model;
         if (model->m_attachParent) {
-            // TODO: model->DetachFromParent();
+            model->DetachFromParent();
         }
         CCharacterComponent::FreeComponent(CCharacterCreation::m_character);
     }

@@ -479,7 +479,7 @@ void CM2Model::AnimateMT(const C44Matrix* view, const C3Vector& a3, const C3Vect
         }
     }
 
-    if (this->m_attachmentBase) {
+    if (this->m_attachList) {
         this->AnimateAttachmentsMT();
     }
 
@@ -493,7 +493,7 @@ void CM2Model::AnimateMTSimple(const C44Matrix* view, const C3Vector& a3, const 
 void CM2Model::AnimateAttachmentsMT() {
     // TODO: Proper implementation
 
-    for (auto child = this->m_attachmentBase; child; child = child->m_attachmentNext) {
+    for (auto child = this->m_attachList; child; child = child->m_attachNext) {
         child->m_flag80 = 1;
         child->m_flag8 = 1;
 
@@ -586,7 +586,7 @@ void CM2Model::AnimateST() {
 
     // TODO
 
-    for (auto child = this->m_attachmentBase; child; child = child->m_attachmentNext) {
+    for (auto child = this->m_attachList; child; child = child->m_attachNext) {
         // TODO: v43
         child->AnimateST();
     }
@@ -647,12 +647,12 @@ uint16_t CM2Model::AttachToParent(CM2Model* parent, uint32_t attachmentId, const
         this->f_flags = this->f_flags ^ (this->f_flags ^ 0) & 0x40000 | 0x20080;
     }
 
-    this->m_attachmentPrev = &parent->m_attachmentBase;
-    this->m_attachmentNext = parent->m_attachmentBase;
-    if (parent->m_attachmentBase) {
-        parent->m_attachmentBase->m_attachmentPrev = &this->m_attachmentNext;
+    this->m_attachPrev = &parent->m_attachList;
+    this->m_attachNext = parent->m_attachList;
+    if (parent->m_attachList) {
+        parent->m_attachList->m_attachPrev = &this->m_attachNext;
     }
-    parent->m_attachmentBase = this;
+    parent->m_attachList = this;
 
     if (!this->m_loaded || !this->m_flag100) {
         auto model = parent;
@@ -700,17 +700,17 @@ void CM2Model::DetachFromScene() {
 }
 
 void CM2Model::DetachFromParent() {
-    if (this->m_attachmentPrev) {
-        *this->m_attachmentPrev = this->m_attachmentNext;
+    if (this->m_attachPrev) {
+        *this->m_attachPrev = this->m_attachNext;
     }
 
-    if (this->m_attachmentNext) {
-        this->m_attachmentNext->m_attachmentPrev = this->m_attachmentPrev;
+    if (this->m_attachNext) {
+        this->m_attachNext->m_attachPrev = this->m_attachPrev;
     }
 
     this->f_flags &= ~0x40000u;
-    this->m_attachmentPrev = nullptr;
-    this->m_attachmentNext = nullptr;
+    this->m_attachPrev = nullptr;
+    this->m_attachNext = nullptr;
     this->m_attachParent = nullptr;
     this->m_attachmentId = static_cast<uint32_t>(-1);
     // this->dword174 = 0;
@@ -723,24 +723,24 @@ void CM2Model::DetachFromParent() {
 void CM2Model::DetachAllChildrenById(uint32_t id) {
     CM2Model* attachmentNext = nullptr;
 
-    auto attachmentBase = this->m_attachmentBase;
+    auto attachmentBase = this->m_attachList;
     if (attachmentBase) {
         do {
-            attachmentNext = attachmentBase->m_attachmentNext;
+            attachmentNext = attachmentBase->m_attachNext;
             auto v8 = attachmentNext;
             if (attachmentBase->m_attachmentId == id) {
-                auto attachmentPrev = attachmentBase->m_attachmentPrev;
+                auto attachmentPrev = attachmentBase->m_attachPrev;
                 if (attachmentPrev) {
-                    *attachmentPrev = attachmentBase->m_attachmentNext;
+                    *attachmentPrev = attachmentBase->m_attachNext;
                 }
-                auto v5 = attachmentBase->m_attachmentNext;
+                auto v5 = attachmentBase->m_attachNext;
                 if (v5) {
-                    v5->m_attachmentPrev = attachmentBase->m_attachmentPrev;
+                    v5->m_attachPrev = attachmentBase->m_attachPrev;
                 }
                 attachmentBase->f_flags &= ~0x40000u;
-                attachmentBase->m_attachmentPrev = 0;
-                attachmentBase->m_attachmentNext = 0;
-                attachmentBase->m_attachParent = 0;
+                attachmentBase->m_attachPrev = nullptr;
+                attachmentBase->m_attachNext = nullptr;
+                attachmentBase->m_attachParent = nullptr;
                 attachmentBase->m_attachmentId = -1;
                 // attachmentBase->dword174 = 0;
                 if (--attachmentBase->m_refCount == 0) {
@@ -1641,7 +1641,7 @@ void CM2Model::SetupLighting() {
         this->m_lighting.CameraSpace();
     }
 
-    for (auto model = this->m_attachmentBase; model; model = model->m_attachmentNext) {
+    for (auto model = this->m_attachList; model; model = model->m_attachNext) {
         model->SetupLighting();
     }
 }

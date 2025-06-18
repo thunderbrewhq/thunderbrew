@@ -994,7 +994,7 @@ void CGlueMgr::StatusDialogClick() {
         case IDLE_ACCOUNT_LOGIN:
         case IDLE_CHARACTER_LIST: {
             ClientServices::Connection()->Cancel(2);
-
+            CCharacterSelection::ClearCharacterList();
             break;
         }
 

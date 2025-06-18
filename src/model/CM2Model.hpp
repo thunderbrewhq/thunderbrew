@@ -89,9 +89,9 @@ class CM2Model {
         CM2Model* m_attachParent = nullptr;
         uint32_t m_attachmentId;
         uint16_t m_attachmentIndex;
-        CM2Model* m_attachmentBase = nullptr;
-        CM2Model** m_attachmentPrev = nullptr;
-        CM2Model* m_attachmentNext = nullptr;
+        CM2Model* m_attachList = nullptr;
+        CM2Model** m_attachPrev = nullptr;
+        CM2Model* m_attachNext = nullptr;
         uint32_t m_time = 0;
         CM2Model** m_drawPrev = nullptr;
         CM2Model* m_drawNext = nullptr;
