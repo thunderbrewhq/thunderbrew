@@ -6,6 +6,8 @@
 #include <common/Processor.hpp>
 #include "console/Types.hpp"
 #include "console/CVar.hpp"
+#include "model/CM2Model.hpp"
+#include "db/Db.hpp"
 
 CVar* CCharacterComponent::g_componentTextureLevelVar = nullptr;
 CVar* CCharacterComponent::g_componentThreadVar = nullptr;
@@ -22,6 +24,8 @@ ComponentData::ComponentData() {
     this->m_unkFlag &= 0xFFFFFFFC;
     memset(&this->m_info, 0, sizeof(this->m_info));
     this->m_model = nullptr;
+
+    DefaultGeosets();
 }
 
 ComponentData::ComponentData(const CHARACTER_INFO& info) {
@@ -37,6 +41,30 @@ ComponentData::ComponentData(const CHARACTER_INFO& info) {
     this->m_info.hairStyleID = info.hairStyleID;
     this->m_info.hairColorID = info.hairColorID;
     this->m_info.facialFeatureID = info.facialHairStyleID;
+
+    DefaultGeosets();
+}
+
+void ComponentData::DefaultGeosets() {
+    this->m_geosets[0] = 1;
+    this->m_geosets[1] = 101;
+    this->m_geosets[2] = 201;
+    this->m_geosets[3] = 301;
+    this->m_geosets[7] = 702;
+    this->m_geosets[4] = 401;
+    this->m_geosets[5] = 501;
+    this->m_geosets[6] = 601;
+    this->m_geosets[8] = 801;
+    this->m_geosets[9] = 901;
+    this->m_geosets[10] = 1001;
+    this->m_geosets[11] = 1101;
+    this->m_geosets[12] = 1201;
+    this->m_geosets[13] = 1301;
+    this->m_geosets[14] = 1401;
+    this->m_geosets[15] = 1501;
+    this->m_geosets[16] = 1601;
+    this->m_geosets[17] = 1701;
+    this->m_geosets[18] = 1801;
 }
 
 void CCharacterComponent::Initialize() {
@@ -154,6 +182,30 @@ bool CCharacterComponent::Init(ComponentData* data, const char* a3) {
     return false;
 }
 
-void CCharacterComponent::RenderPrep(int32_t a2) {
-    // TODO
+bool CCharacterComponent::RenderPrep(int32_t a2) {
+    // TODO: Proper implementation
+    GeosRenderPrep(a2);
+    return false;
+}
+
+void CCharacterComponent::GeosRenderPrep(int32_t a2) {
+
+    bool eyeGlowFlag = false;
+
+    // Death Knight
+    if (this->m_data.m_info.classID == 6) {
+        eyeGlowFlag = true;
+    } else {
+        // TODO: ComponentGetSectionsRecord
+    }
+
+    this->m_data.m_model->SetGeometryVisible(0, 2000, 0);
+    this->m_data.m_model->SetGeometryVisible(0, 0, 1);
+    for (int i = 0; i < 19; ++i) {
+        if (i == 17 && eyeGlowFlag) {
+            this->m_data.m_model->SetGeometryVisible(1703, 1703, 1);
+        } else {
+            this->m_data.m_model->SetGeometryVisible(this->m_data.m_geosets[i], this->m_data.m_geosets[i], 1);
+        }
+    }
 }

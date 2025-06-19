@@ -14,10 +14,13 @@ class ComponentData {
     ComponentData();
     explicit ComponentData(const CHARACTER_INFO& info);
 
+    void DefaultGeosets();
+
     public:
     CHARACTER_CREATE_INFO m_info;
     CM2Model* m_model;
     uint32_t m_unkFlag;
+    uint32_t m_geosets[19];
 };
 
 class CCharacterComponent {
@@ -55,7 +58,8 @@ class CCharacterComponent {
     void SetRandomFacialFeature(COMPONENT_CONTEXT context = DEFAULT_CONTEXT);
 
     bool Init(ComponentData* data, const char* a3);
-    void RenderPrep(int32_t a2);
+    bool RenderPrep(int32_t a2);
+    void GeosRenderPrep(int32_t a2);
 
     public:
     uint32_t m_handle;
