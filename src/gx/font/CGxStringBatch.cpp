@@ -139,9 +139,9 @@ void BATCHEDRENDERFONTDESC::RenderBatch() {
         this->m_face->m_textureCache[i].UpdateDirty();
     }
 
-    int32_t maxBatchCapacity = 2048;
+    const int32_t maxBatchCapacity = 4096; // WORKAROUND! It should be 2048;
 
-    CGxBuf* vertexStream = g_theGxDevicePtr->BufStream(GxPoolTarget_Vertex, 0x18, maxBatchCapacity);
+    CGxBuf* vertexStream = g_theGxDevicePtr->BufStream(GxPoolTarget_Vertex, sizeof(CGxVertexPCT), maxBatchCapacity);
     char* vertexData = g_theGxDevicePtr->BufLock(vertexStream);
     CGxVertexPCT* vertexBuf = reinterpret_cast<CGxVertexPCT*>(vertexData);
 

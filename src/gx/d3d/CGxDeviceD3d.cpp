@@ -925,7 +925,7 @@ LPDIRECT3DVERTEXBUFFER9 CGxDeviceD3d::ICreateD3dVB(EGxPoolUsage usage, uint32_t 
 
     LPDIRECT3DVERTEXBUFFER9 vertexBuf = nullptr;
 
-    if (SUCCEEDED(this->m_d3dDevice->CreateVertexBuffer(size, d3dUsage, D3DFMT_INDEX16, d3dPool, &vertexBuf, nullptr))) {
+    if (SUCCEEDED(this->m_d3dDevice->CreateVertexBuffer(size, d3dUsage, 0, d3dPool, &vertexBuf, nullptr))) {
         return vertexBuf;
     }
 
