@@ -50,7 +50,7 @@ class CCharacterCreation {
     static void Dress();
     static void InitCharacterComponent(ComponentData* data, int32_t randomize);
     static void RandomizeCharFeatures();
-    static void SetSelectedRace(int32_t raceID);
+    static void SetSelectedRace(int32_t raceIndex);
     static void SetSelectedSex(int32_t sexID);
     static void SetSelectedClass(int32_t classID);
     static void CycleCharCustomization(CHAR_CUSTOMIZATION_TYPE customization, int32_t delta);

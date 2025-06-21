@@ -254,8 +254,75 @@ void CCharacterCreation::RandomizeCharFeatures() {
     CCharacterCreation::m_prevFacialFeatureIndex = info.facialFeatureID;
 }
 
-void CCharacterCreation::SetSelectedRace(int32_t raceID) {
-    // TODO
+void CCharacterCreation::SetSelectedRace(int32_t raceIndex) {
+    if (raceIndex < 0 ||
+        raceIndex >= CCharacterCreation::m_races.Count() ||
+        raceIndex == CCharacterCreation::m_raceIndex) {
+        return;
+    }
+
+    auto previousRace = CCharacterCreation::m_races[CCharacterCreation::m_raceIndex];
+    auto sexID = CCharacterCreation::m_character->m_data.m_info.sexID;
+
+    auto preferences = CCharacterCreation::m_charPreferences[2 * previousRace + sexID];
+    if (!preferences) {
+        preferences = NEW(CHARACTER_CREATE_INFO);
+        CCharacterCreation::m_charPreferences[2 * previousRace + sexID] = preferences;
+    }
+
+    CCharacterCreation::m_character->GetInfo(preferences);
+    CCharacterCreation::m_raceIndex = raceIndex;
+
+    ComponentData data;
+
+    if (CCharacterCreation::m_existingCharacterIndex >= 0) {
+        auto display = CCharacterSelection::GetCharacterDisplay(CCharacterCreation::m_existingCharacterIndex);
+        if (display && display->m_characterInfo.sexID == sexID &&
+            (display->m_characterInfo.customizeFlags & 1)) {
+            data.m_info.raceID = display->m_characterInfo.raceID;
+            data.m_info.sexID = display->m_characterInfo.sexID;
+            data.m_info.classID = display->m_characterInfo.classID;
+            data.m_info.skinID = display->m_characterInfo.skinID;
+            data.m_info.hairStyleID = display->m_characterInfo.hairStyleID;
+            data.m_info.hairColorID = display->m_characterInfo.hairColorID;
+            data.m_info.facialFeatureID = display->m_characterInfo.facialHairStyleID;
+            data.m_info.faceID = display->m_characterInfo.faceID;
+
+            CCharacterCreation::InitCharacterComponent(&data, 0);
+            CCharacterCreation::SetSelectedSex(display->m_characterInfo.sexID);
+
+            // TODO: CNameGen::LoadNames
+            CCharacterCreation::Dress();
+            CCharacterCreation::Sub4E6AE0(CCharacterCreation::m_character, 1);
+            return;
+        }
+    }
+
+    auto raceID = CCharacterCreation::m_races[CCharacterCreation::m_raceIndex];
+    preferences = CCharacterCreation::m_charPreferences[2 * raceID + sexID];
+    if (preferences) {
+        data.m_info = *preferences;
+        CCharacterCreation::CalcClasses(data.m_info.raceID);
+        if (!CCharacterCreation::IsRaceClassValid(data.m_info.raceID, CCharacterCreation::m_selectedClassID)) {
+            CCharacterCreation::m_selectedClassID = CCharacterCreation::GetRandomClassID();
+        }
+        data.m_info.classID = CCharacterCreation::m_selectedClassID;
+        CCharacterComponent::ValidateComponentData(&data);
+        CCharacterCreation::InitCharacterComponent(&data, 0);
+    } else {
+        data.m_info.sexID = sexID;
+        data.m_info.raceID = raceID;
+        CCharacterCreation::CalcClasses(data.m_info.raceID);
+        if (!CCharacterCreation::IsRaceClassValid(data.m_info.raceID, CCharacterCreation::m_selectedClassID)) {
+            CCharacterCreation::SetSelectedClass(CCharacterCreation::GetRandomClassID());
+        }
+        data.m_info.classID = CCharacterCreation::m_selectedClassID;
+        CCharacterCreation::InitCharacterComponent(&data, 1);
+    }
+
+    // TODO: CNameGen::LoadNames
+    CCharacterCreation::Dress();
+    CCharacterCreation::Sub4E6AE0(CCharacterCreation::m_character, 1);
 }
 
 void CCharacterCreation::SetSelectedSex(int32_t sexID) {
