@@ -46,6 +46,7 @@ class CCharacterSelection {
         static void UpdateCharacterList();
         static void OnGetCharacterList();
         static uint32_t GetNumCharacters();
+        static CharacterSelectionDisplay* GetCharacterDisplay(uint32_t index);
 };
 
 #endif

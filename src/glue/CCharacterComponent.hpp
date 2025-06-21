@@ -60,6 +60,7 @@ class CCharacterComponent {
     bool Init(ComponentData* data, const char* a3);
     bool RenderPrep(int32_t a2);
     void GeosRenderPrep(int32_t a2);
+    void GetInfo(CHARACTER_CREATE_INFO* info);
 
     public:
     uint32_t m_handle;

@@ -1,5 +1,6 @@
 #include "glue/CCharacterCreation.hpp"
 #include "glue/CCharacterComponent.hpp"
+#include "glue/CCharacterSelection.hpp"
 #include "ui/CSimpleModelFFX.hpp"
 #include "model/CM2Model.hpp"
 #include "model/CM2Shared.hpp"
@@ -8,6 +9,7 @@
 
 int32_t CCharacterCreation::m_selectedClassID;
 int32_t CCharacterCreation::m_existingCharacterIndex;
+CHARACTER_CREATE_INFO* CCharacterCreation::m_charPreferences[44];
 int32_t CCharacterCreation::m_raceIndex;
 CSimpleModelFFX* CCharacterCreation::m_charCustomizeFrame;
 float CCharacterCreation::m_charFacing;
@@ -25,7 +27,9 @@ void CCharacterCreation::Initialize() {
     int32_t factionSwitch = 0;
     CCharacterCreation::m_charCustomizeFrame = nullptr;
     CCharacterCreation::m_existingCharacterIndex = -1;
-    // TODO: memset
+
+    memset(CCharacterCreation::m_charPreferences, 0, sizeof(CCharacterCreation::m_charPreferences));
+
     int32_t factionSwitch2 = 0;
 
     bool weirdCondition = false;
@@ -65,6 +69,19 @@ void CCharacterCreation::Initialize() {
         weirdCondition = factionSwitch++ == -1;
         factionSwitch2 = factionSwitch;
     } while (weirdCondition || factionSwitch == 1);
+}
+
+void CCharacterCreation::Shutdown() {
+    if (CCharacterCreation::m_character) {
+        CCharacterComponent::FreeComponent(CCharacterCreation::m_character);
+        CCharacterCreation::m_character = nullptr;
+    }
+
+    // TODO
+
+    for (size_t i = 0; i < 44; ++i) {
+        DEL(CCharacterCreation::m_charPreferences[i]);
+    }
 }
 
 void CCharacterCreation::SetCharCustomizeFrame(CSimpleModelFFX* frame) {
@@ -193,6 +210,9 @@ void CCharacterCreation::InitCharacterComponent(ComponentData* data, int32_t ran
         return;
     }
 
+    // TODO: LightingCallback + particles
+    data->m_model->SetBoneSequence(0xFFFFFFFF, 0, 0, 0, 1.0f, 1, 1);
+
     data->m_unkFlag |= 2u;
     CCharacterCreation::m_character->Init(data, nullptr);
 
@@ -207,7 +227,16 @@ void CCharacterCreation::InitCharacterComponent(ComponentData* data, int32_t ran
     CCharacterCreation::m_prevHairStyleIndex = info.hairStyleID;
     CCharacterCreation::m_prevFacialFeatureIndex = info.facialFeatureID;
 
-    // TODO
+    CCharacterCreation::SetCharFacing(CCharacterCreation::m_charFacing);
+    CCharacterCreation::Dress();
+
+    CCharacterCreation::m_character->RenderPrep(0);
+
+    auto frameModel = CCharacterCreation::m_charCustomizeFrame->m_model;
+    if (frameModel) {
+        auto model = CCharacterCreation::m_character->m_data.m_model;
+        model->AttachToParent(frameModel, 0, nullptr, 0);
+    }
 }
 
 void CCharacterCreation::RandomizeCharFeatures() {
@@ -230,7 +259,67 @@ void CCharacterCreation::SetSelectedRace(int32_t raceID) {
 }
 
 void CCharacterCreation::SetSelectedSex(int32_t sexID) {
-    // TODO
+    if (sexID < 0 || sexID >= 3) {
+        return;
+    }
+
+    auto previousSex = CCharacterCreation::m_character->m_data.m_info.sexID;
+
+    if (sexID == previousSex) {
+        return;
+    }
+
+    auto raceID = CCharacterCreation::m_races[CCharacterCreation::m_raceIndex];
+
+    auto preferences = CCharacterCreation::m_charPreferences[2 * raceID + previousSex];
+    if (!preferences) {
+        preferences = NEW(CHARACTER_CREATE_INFO);
+        CCharacterCreation::m_charPreferences[2 * raceID + previousSex] = preferences;
+    }
+
+    CCharacterCreation::m_character->GetInfo(preferences);
+
+    ComponentData data;
+    data.m_info.raceID = CCharacterCreation::m_character->m_data.m_info.raceID;
+    data.m_info.sexID = sexID;
+    data.m_info.classID = CCharacterCreation::m_selectedClassID;
+
+    if (CCharacterCreation::m_existingCharacterIndex >= 0) {
+        auto display = CCharacterSelection::GetCharacterDisplay(CCharacterCreation::m_existingCharacterIndex);
+        if (display && display->m_characterInfo.sexID == sexID &&
+            (display->m_characterInfo.customizeFlags & 1)) {
+            data.m_info.raceID = display->m_characterInfo.raceID;
+            data.m_info.sexID = display->m_characterInfo.sexID;
+            data.m_info.classID = display->m_characterInfo.classID;
+            data.m_info.skinID = display->m_characterInfo.skinID;
+            data.m_info.hairStyleID = display->m_characterInfo.hairStyleID;
+            data.m_info.hairColorID = display->m_characterInfo.hairColorID;
+            data.m_info.facialFeatureID = display->m_characterInfo.facialHairStyleID;
+            data.m_info.faceID = display->m_characterInfo.faceID;
+
+            CCharacterCreation::InitCharacterComponent(&data, 0);
+
+            // TODO: CNameGen::LoadNames
+            CCharacterCreation::Sub4E6AE0(CCharacterCreation::m_character, 1);
+            return;
+        }
+    }
+
+    preferences = CCharacterCreation::m_charPreferences[2 * raceID + sexID];
+    if (preferences) {
+        data.m_info = *preferences;
+        data.m_info.classID = CCharacterCreation::m_selectedClassID;
+        CCharacterComponent::ValidateComponentData(&data);
+        CCharacterCreation::InitCharacterComponent(&data, 0);
+    } else {
+        data.m_info.raceID = CCharacterCreation::m_character->m_data.m_info.raceID;
+        data.m_info.sexID = sexID;
+        data.m_info.classID = CCharacterCreation::m_selectedClassID;
+        CCharacterCreation::InitCharacterComponent(&data, 1);
+    }
+
+    // TODO: CNameGen::LoadNames
+    CCharacterCreation::Sub4E6AE0(CCharacterCreation::m_character, 1);
 }
 
 void CCharacterCreation::SetSelectedClass(int32_t classID) {
@@ -245,6 +334,7 @@ void CCharacterCreation::SetSelectedClass(int32_t classID) {
     CCharacterComponent::ValidateComponentData(&data);
     CCharacterCreation::InitCharacterComponent(&data, 0);
     CCharacterCreation::Dress();
+
     CCharacterCreation::Sub4E6AE0(CCharacterCreation::m_character, 1);
 }
 
@@ -254,7 +344,8 @@ void CCharacterCreation::CycleCharCustomization(CHAR_CUSTOMIZATION_TYPE customiz
 
 void CCharacterCreation::RandomizeCharCustomization() {
     CCharacterCreation::RandomizeCharFeatures();
-    // TODO
+    CCharacterCreation::Dress();
+    CCharacterCreation::Sub4E6AE0(CCharacterCreation::m_character, 1);
 }
 
 void CCharacterCreation::SetCharFacing(float facing) {
@@ -299,7 +390,7 @@ int32_t CCharacterCreation::IsRaceClassValid(int32_t raceID, int32_t classID) {
 }
 
 int32_t CCharacterCreation::IsClassValid(int32_t classID) {
-    for (uint32_t i = 0; i < CCharacterCreation::m_classes.Count(); i) {
+    for (uint32_t i = 0; i < CCharacterCreation::m_classes.Count(); ++i) {
         auto record = CCharacterCreation::m_classes[i];
         if (record && record->m_ID == classID) {
             return 1;

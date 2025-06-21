@@ -279,3 +279,11 @@ void CCharacterSelection::OnGetCharacterList() {
 uint32_t CCharacterSelection::GetNumCharacters() {
     return CCharacterSelection::s_characterList.Count();
 }
+
+CharacterSelectionDisplay* CCharacterSelection::GetCharacterDisplay(uint32_t index) {
+    if (index >= CCharacterSelection::s_characterList.Count()) {
+        return nullptr;
+    } else {
+        return CCharacterSelection::s_characterList.Ptr() + index;
+    }
+}

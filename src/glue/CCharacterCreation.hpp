@@ -26,6 +26,7 @@ class CCharacterCreation {
     // Static variables
     static int32_t m_selectedClassID;
     static int32_t m_existingCharacterIndex;
+    static CHARACTER_CREATE_INFO* m_charPreferences[44];
     static int32_t m_raceIndex;
     static CSimpleModelFFX* m_charCustomizeFrame;
     static float m_charFacing;
@@ -40,6 +41,7 @@ class CCharacterCreation {
 
     // Static functions
     static void Initialize();
+    static void Shutdown();
     static void SetCharCustomizeFrame(CSimpleModelFFX* frame);
     static void SetCharCustomizeModel(char const* filename);
     static void ResetCharCustomizeInfo();

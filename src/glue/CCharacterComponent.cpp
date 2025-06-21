@@ -209,3 +209,9 @@ void CCharacterComponent::GeosRenderPrep(int32_t a2) {
         }
     }
 }
+
+void CCharacterComponent::GetInfo(CHARACTER_CREATE_INFO* info) {
+    if (info) {
+        *info = this->m_data.m_info;
+    }
+}
