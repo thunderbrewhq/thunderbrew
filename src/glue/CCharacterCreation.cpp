@@ -2,6 +2,7 @@
 #include "glue/CCharacterComponent.hpp"
 #include "ui/CSimpleModelFFX.hpp"
 #include "model/CM2Model.hpp"
+#include "model/CM2Shared.hpp"
 #include "clientobject/Player_C.hpp"
 #include "db/Db.hpp"
 
@@ -75,8 +76,29 @@ void CCharacterCreation::SetCharCustomizeModel(char const* filename) {
         return;
     }
 
-    // TODO
+    auto model = CCharacterCreation::m_charCustomizeFrame->m_model;
+    if (model) {
+        if (!SStrCmpI(filename, model->m_shared->m_filePath, STORM_MAX_STR)) {
+            return;
+        }
+    }
+
     CCharacterCreation::m_charCustomizeFrame->SetModel(filename);
+    // BYTE1(CCharacterCreation::m_charCustomizeFrame[1].m_onAttributeChange.unk) = 1;
+
+    model = CCharacterCreation::m_charCustomizeFrame->m_model;
+    if (!model) {
+        return;
+    }
+
+    // LOBYTE(CCharacterCreation::m_charCustomizeFrame[1].m_onEnable.unk) = 1;
+    // TODO: LightingCallback + Particles
+    model->IsDrawable(1, 1);
+
+    auto characterModel = CCharacterCreation::m_character->m_data.m_model;
+    if (characterModel) {
+        characterModel->AttachToParent(model, 0, nullptr, 0);
+    }
 }
 
 void CCharacterCreation::ResetCharCustomizeInfo() {
@@ -86,14 +108,18 @@ void CCharacterCreation::ResetCharCustomizeInfo() {
 
     CCharacterCreation::m_existingCharacterIndex = -1;
 
-    // TODO: CM2Model__DetachAllChildrenById
+    auto model = CCharacterCreation::m_charCustomizeFrame->m_model;
+    if (model) {
+        model->DetachAllChildrenById(0);
+    }
 
     ComponentData data;
     CCharacterCreation::GetRandomRaceAndSex(&data);
     CCharacterCreation::CalcClasses(data.m_info.raceID);
     CCharacterCreation::InitCharacterComponent(&data, 1);
 
-    CCharacterCreation::SetSelectedClass(CCharacterCreation::GetRandomClassID());
+    auto classID = CCharacterCreation::GetRandomClassID();
+    CCharacterCreation::SetSelectedClass(classID);
 
     data.m_info.classID = CCharacterCreation::m_selectedClassID;
 
@@ -106,11 +132,13 @@ void CCharacterCreation::ResetCharCustomizeInfo() {
     }
 
     // TODO: CNameGen::LoadNames
+    CCharacterCreation::Sub4E6AE0(CCharacterCreation::m_character, 1);
 }
 
 void CCharacterCreation::GetRandomRaceAndSex(ComponentData* data) {
     // TODO
     // WORKAROUND
+    data->m_info.sexID = 0;
     data->m_info.raceID = 1;
 }
 
@@ -137,6 +165,10 @@ void CCharacterCreation::CalcClasses(uint32_t raceID) {
         CCharacterCreation::m_classes[index] = g_chrClassesDB.GetRecord(record->m_classID);
         ++index;
     }
+}
+
+void CCharacterCreation::Dress() {
+    // TODO
 }
 
 void CCharacterCreation::InitCharacterComponent(ComponentData* data, int32_t randomize) {
@@ -167,6 +199,13 @@ void CCharacterCreation::InitCharacterComponent(ComponentData* data, int32_t ran
     if (randomize) {
         CCharacterCreation::RandomizeCharFeatures();
     }
+
+    const auto& info = CCharacterCreation::m_character->m_data.m_info;
+    CCharacterCreation::m_prevSkinIndex = info.skinID;
+    CCharacterCreation::m_prevFaceIndex = info.faceID;
+    CCharacterCreation::m_prevHairColorIndex = info.hairColorID;
+    CCharacterCreation::m_prevHairStyleIndex = info.hairStyleID;
+    CCharacterCreation::m_prevFacialFeatureIndex = info.facialFeatureID;
 
     // TODO
 }
@@ -205,8 +244,8 @@ void CCharacterCreation::SetSelectedClass(int32_t classID) {
     data.m_info.classID = classID;
     CCharacterComponent::ValidateComponentData(&data);
     CCharacterCreation::InitCharacterComponent(&data, 0);
-    // TODO: sub_4E0FD0
-    // TODO: sub_4E6AE0((int)CCharacterCreation::m_character, 1);
+    CCharacterCreation::Dress();
+    CCharacterCreation::Sub4E6AE0(CCharacterCreation::m_character, 1);
 }
 
 void CCharacterCreation::CycleCharCustomization(CHAR_CUSTOMIZATION_TYPE customization, int32_t delta) {
@@ -219,7 +258,11 @@ void CCharacterCreation::RandomizeCharCustomization() {
 }
 
 void CCharacterCreation::SetCharFacing(float facing) {
-    // TODO
+    CCharacterCreation::m_charFacing = facing;
+    auto model = CCharacterCreation::m_character->m_data.m_model;
+    if (model) {
+        model->SetWorldTransform(C3Vector(), facing, 1.0f);
+    }
 }
 
 void CCharacterCreation::CreateCharacter(const char* name) {
@@ -228,6 +271,20 @@ void CCharacterCreation::CreateCharacter(const char* name) {
 
 void CCharacterCreation::SetToExistingCharacter(uint32_t index) {
     // TODO
+}
+
+void CCharacterCreation::Sub4E6AE0(CCharacterComponent* component, int32_t a2) {
+    // This method can be an analogue of CGlueLoading::StartLoad
+
+    if (SFile::IsTrial) {
+        // TODO
+        return;
+    }
+
+    if (component) {
+        component->RenderPrep(1);
+        component->m_data.m_model->IsDrawable(1, 1);
+    }
 }
 
 int32_t CCharacterCreation::IsRaceClassValid(int32_t raceID, int32_t classID) {

@@ -45,6 +45,7 @@ class CCharacterCreation {
     static void ResetCharCustomizeInfo();
     static void GetRandomRaceAndSex(ComponentData* data);
     static void CalcClasses(uint32_t raceID);
+    static void Dress();
     static void InitCharacterComponent(ComponentData* data, int32_t randomize);
     static void RandomizeCharFeatures();
     static void SetSelectedRace(int32_t raceID);
@@ -55,6 +56,7 @@ class CCharacterCreation {
     static void SetCharFacing(float facing);
     static void CreateCharacter(const char* name);
     static void SetToExistingCharacter(uint32_t index);
+    static void Sub4E6AE0(CCharacterComponent* component, int32_t a2);
     static int32_t IsRaceClassValid(int32_t raceID, int32_t classID);
     static int32_t IsClassValid(int32_t classID);
     static int32_t GetRandomClassID();

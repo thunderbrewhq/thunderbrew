@@ -190,7 +190,7 @@ void CCharacterSelection::SetCharFacing(float facing) {
     auto index = CCharacterSelection::m_selectionIndex;
     auto component = CCharacterSelection::s_characterList[index].m_component;
     if (component && component->m_data.m_model) {
-        component->m_data.m_model->SetWorldTransform(C3Vector(), facing, 1.0);
+        component->m_data.m_model->SetWorldTransform(C3Vector(), facing, 1.0f);
     }
 }
 
