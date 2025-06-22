@@ -248,6 +248,11 @@ void ClientServices::CharacterDelete(uint64_t guid) {
     ClientServices::s_currentConnection->DeleteCharacter(guid);
 }
 
+void ClientServices::RequestCharacterCreate(const CHARACTER_CREATE_INFO* info) {
+    STORM_ASSERT(ClientServices::s_currentConnection);
+    ClientServices::s_currentConnection->CharacterCreate(info);
+}
+
 void ClientServices::Initialize() {
     if (!g_clientConnection) {
         ClientServices::s_clientRealmResponse = NEW(ClientRealmResponseAdapter);
@@ -425,6 +430,16 @@ bool ClientServices::LoadCDKey() {
 
 int32_t ClientServices::GetExpansionLevel() {
     return ClientServices::Connection()->GetExpansionLevel();
+}
+
+uint32_t ClientServices::CharacterValidateName(const char* name) {
+    // WORKAROUND:
+    if (!name || *name == '\0') {
+        return CHAR_NAME_RESULT_START + NAME_NO_NAME;
+    }
+
+    // TODO
+    return CHAR_NAME_SUCCESS;
 }
 
 void ClientServices::InitLoginServerCVars(int32_t overwrite, const char* locale) {

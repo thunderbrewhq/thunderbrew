@@ -65,6 +65,28 @@ void ClientConnection::DeleteCharacter(uint64_t guid) {
     }
 }
 
+void ClientConnection::CharacterCreate(const CHARACTER_CREATE_INFO* info) {
+    this->Initiate(COP_CREATE_CHARACTER, 46, nullptr);
+    if (this->m_connected) {
+        CDataStore msg;
+        msg.Put(static_cast<uint32_t>(CMSG_CREATE_CHARACTER));
+        msg.PutString(info->name);
+        msg.Put(info->raceID);
+        msg.Put(info->classID);
+        msg.Put(info->sexID);
+        msg.Put(info->skinID);
+        msg.Put(info->faceID);
+        msg.Put(info->hairStyleID);
+        msg.Put(info->hairColorID);
+        msg.Put(info->facialHairStyleID);
+        msg.Put(info->outfitID);
+        msg.Finalize();
+        this->Send(&msg);
+    } else {
+        this->Cancel(4);
+    }
+}
+
 void ClientConnection::Cancel(int32_t errorCode) {
     this->Complete(0, errorCode);
 }

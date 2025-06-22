@@ -1092,6 +1092,20 @@ void CGlueMgr::DeleteCharacter(uint64_t guid) {
     ClientServices::CharacterDelete(guid);
 }
 
+void CGlueMgr::CreateCharacter(const CHARACTER_CREATE_INFO* character) {
+    if (!character) {
+        return;
+    }
+
+    CGlueMgr::m_idleState = IDLE_CREATE_CHARACTER;
+    CGlueMgr::m_showedDisconnect = 0;
+
+    auto errorText = ClientServices::GetErrorToken(46);
+    auto text = FrameScript_GetText(errorText, -1, GENDER_NOT_APPLICABLE);
+    FrameScript_SignalEvent(3u, "%s%s", "CANCEL", text);
+    ClientServices::RequestCharacterCreate(character);
+}
+
 void CGlueMgr::PollEnterWorld() {
     //if (!LoadingScreenDrawing())
     //    return;

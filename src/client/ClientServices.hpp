@@ -46,6 +46,7 @@ class ClientServices : public LoginResponse {
         static const char* GetSelectedRealmName();
         static const REALM_INFO* GetSelectedRealm();
         static void CharacterDelete(uint64_t guid);
+        static void RequestCharacterCreate(const CHARACTER_CREATE_INFO* info);
         static void Initialize();
         static Login* LoginConnection();
         static void Logon(const char* accountName, const char* password);
@@ -57,6 +58,7 @@ class ClientServices : public LoginResponse {
         static const char* GetDefaultPatchListString();
         static bool LoadCDKey();
         static int32_t GetExpansionLevel();
+        static uint32_t CharacterValidateName(const char* name);
 
         // Virtual member functions
         virtual int32_t GetLoginServerType();

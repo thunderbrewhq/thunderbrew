@@ -20,7 +20,7 @@ int32_t RealmConnection::MessageHandler(void* param, NETMESSAGE msgId, uint32_t 
     }
 
     case SMSG_CREATE_CHAR: {
-        // TODO
+        result = connection->HandleCharacterCreate(msgId, time, msg);
         break;
     }
 
@@ -273,6 +273,13 @@ int32_t RealmConnection::HandleCharEnum(uint32_t msgId, uint32_t time, CDataStor
 }
 
 int32_t RealmConnection::HandleCharacterDelete(uint32_t msgId, uint32_t time, CDataStore* msg) {
+    uint8_t result;
+    msg->Get(result);
+    static_cast<ClientConnection*>(this)->Complete(1, result);
+    return 1;
+}
+
+int32_t RealmConnection::HandleCharacterCreate(uint32_t msgId, uint32_t time, CDataStore* msg) {
     uint8_t result;
     msg->Get(result);
     static_cast<ClientConnection*>(this)->Complete(1, result);

@@ -17,7 +17,7 @@ class ComponentData {
     void DefaultGeosets();
 
     public:
-    CHARACTER_CREATE_INFO m_info;
+    CHARACTER_PREFERENCES m_info;
     CM2Model* m_model;
     uint32_t m_unkFlag;
     uint32_t m_geosets[19];
@@ -60,7 +60,7 @@ class CCharacterComponent {
     bool Init(ComponentData* data, const char* a3);
     bool RenderPrep(int32_t a2);
     void GeosRenderPrep(int32_t a2);
-    void GetInfo(CHARACTER_CREATE_INFO* info);
+    void GetInfo(CHARACTER_PREFERENCES* info);
 
     public:
     uint32_t m_handle;

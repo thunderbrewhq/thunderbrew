@@ -104,6 +104,7 @@ class CGlueMgr {
         static void UpdateCurrentScreen(const char* screen);
         static bool HandleBattlenetDisconnect();
         static void DeleteCharacter(uint64_t guid);
+        static void CreateCharacter(const CHARACTER_CREATE_INFO* character);
 
         static void PollEnterWorld();
 

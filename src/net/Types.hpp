@@ -1218,6 +1218,34 @@ enum WOWCS_OPS {
     COP_WAIT_QUEUE          = 10,
 };
 
+enum VALIDATE_NAME_RESULT {
+    NAME_SUCCESS = 0,
+    NAME_FAILURE,
+    NAME_NO_NAME,
+    NAME_TOO_SHORT,
+    NAME_TOO_LONG,
+    NAME_INVALID_CHARACTER,
+    NAME_MIXED_LANGUAGES,
+    NAME_PROFANE,
+    NAME_RESERVED,
+    NAME_INVALID_APOSTROPHE,
+    NAME_MULTIPLE_APOSTROPHES,
+    NAME_THREE_CONSECUTIVE,
+    NAME_INVALID_SPACE,
+    NAME_CONSECUTIVE_SPACES,
+    NAME_RUSSIAN_CONSECUTIVE_SILENT_CHARACTERS,
+    NAME_RUSSIAN_SILENT_CHARACTER_AT_BEGINNING_OR_END,
+    NAME_DECLENSION_DOESNT_MATCH_BASE_NAME,
+    NUM_NAME_RESULTS,
+};
+
+enum CHAR_NAME_RESULT {
+    CHAR_NAME_RESULT_START = 87,
+    CHAR_NAME_SUCCESS      = 87,
+    CHAR_NAME_NO_NAME      = 89,
+    LAST_CHAR_NAME_RESULT  = 103,
+};
+
 struct LoginData {
     char m_account[1280];
     int32_t m_loginServerID;
@@ -1286,15 +1314,28 @@ struct CHARACTER_INFO {
     uint8_t firstLogin;
 };
 
-struct CHARACTER_CREATE_INFO {
+struct CHARACTER_PREFERENCES {
     uint32_t raceID;
     uint32_t sexID;
     uint32_t classID;
     uint32_t hairColorID;
     uint32_t skinID;
     uint32_t faceID;
-    uint32_t facialFeatureID;
+    uint32_t facialHairStyleID;
     uint32_t hairStyleID;
+};
+
+struct CHARACTER_CREATE_INFO {
+    char name[48];
+    uint8_t raceID;
+    uint8_t classID;
+    uint8_t sexID;
+    uint8_t skinID;
+    uint8_t faceID;
+    uint8_t hairStyleID;
+    uint8_t hairColorID;
+    uint8_t facialHairStyleID;
+    uint8_t outfitID;
 };
 
 struct CLIENT_NETSTATS {

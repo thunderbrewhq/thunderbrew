@@ -40,7 +40,7 @@ ComponentData::ComponentData(const CHARACTER_INFO& info) {
     this->m_info.faceID = info.faceID;
     this->m_info.hairStyleID = info.hairStyleID;
     this->m_info.hairColorID = info.hairColorID;
-    this->m_info.facialFeatureID = info.facialHairStyleID;
+    this->m_info.facialHairStyleID = info.facialHairStyleID;
 
     DefaultGeosets();
 }
@@ -210,7 +210,7 @@ void CCharacterComponent::GeosRenderPrep(int32_t a2) {
     }
 }
 
-void CCharacterComponent::GetInfo(CHARACTER_CREATE_INFO* info) {
+void CCharacterComponent::GetInfo(CHARACTER_PREFERENCES* info) {
     if (info) {
         *info = this->m_data.m_info;
     }

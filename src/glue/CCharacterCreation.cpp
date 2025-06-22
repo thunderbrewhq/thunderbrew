@@ -1,15 +1,17 @@
 #include "glue/CCharacterCreation.hpp"
 #include "glue/CCharacterComponent.hpp"
 #include "glue/CCharacterSelection.hpp"
+#include "glue/CGlueMgr.hpp"
 #include "ui/CSimpleModelFFX.hpp"
 #include "model/CM2Model.hpp"
 #include "model/CM2Shared.hpp"
 #include "clientobject/Player_C.hpp"
+#include "client/ClientServices.hpp"
 #include "db/Db.hpp"
 
 int32_t CCharacterCreation::m_selectedClassID;
 int32_t CCharacterCreation::m_existingCharacterIndex;
-CHARACTER_CREATE_INFO* CCharacterCreation::m_charPreferences[44];
+CHARACTER_PREFERENCES* CCharacterCreation::m_charPreferences[44];
 int32_t CCharacterCreation::m_raceIndex;
 CSimpleModelFFX* CCharacterCreation::m_charCustomizeFrame;
 float CCharacterCreation::m_charFacing;
@@ -225,7 +227,7 @@ void CCharacterCreation::InitCharacterComponent(ComponentData* data, int32_t ran
     CCharacterCreation::m_prevFaceIndex = info.faceID;
     CCharacterCreation::m_prevHairColorIndex = info.hairColorID;
     CCharacterCreation::m_prevHairStyleIndex = info.hairStyleID;
-    CCharacterCreation::m_prevFacialFeatureIndex = info.facialFeatureID;
+    CCharacterCreation::m_prevFacialFeatureIndex = info.facialHairStyleID;
 
     CCharacterCreation::SetCharFacing(CCharacterCreation::m_charFacing);
     CCharacterCreation::Dress();
@@ -251,7 +253,7 @@ void CCharacterCreation::RandomizeCharFeatures() {
     CCharacterCreation::m_prevFaceIndex = info.faceID;
     CCharacterCreation::m_prevHairColorIndex = info.hairColorID;
     CCharacterCreation::m_prevHairStyleIndex = info.hairStyleID;
-    CCharacterCreation::m_prevFacialFeatureIndex = info.facialFeatureID;
+    CCharacterCreation::m_prevFacialFeatureIndex = info.facialHairStyleID;
 }
 
 void CCharacterCreation::SetSelectedRace(int32_t raceIndex) {
@@ -266,7 +268,7 @@ void CCharacterCreation::SetSelectedRace(int32_t raceIndex) {
 
     auto preferences = CCharacterCreation::m_charPreferences[2 * previousRace + sexID];
     if (!preferences) {
-        preferences = NEW(CHARACTER_CREATE_INFO);
+        preferences = NEW(CHARACTER_PREFERENCES);
         CCharacterCreation::m_charPreferences[2 * previousRace + sexID] = preferences;
     }
 
@@ -285,7 +287,7 @@ void CCharacterCreation::SetSelectedRace(int32_t raceIndex) {
             data.m_info.skinID = display->m_characterInfo.skinID;
             data.m_info.hairStyleID = display->m_characterInfo.hairStyleID;
             data.m_info.hairColorID = display->m_characterInfo.hairColorID;
-            data.m_info.facialFeatureID = display->m_characterInfo.facialHairStyleID;
+            data.m_info.facialHairStyleID = display->m_characterInfo.facialHairStyleID;
             data.m_info.faceID = display->m_characterInfo.faceID;
 
             CCharacterCreation::InitCharacterComponent(&data, 0);
@@ -340,7 +342,7 @@ void CCharacterCreation::SetSelectedSex(int32_t sexID) {
 
     auto preferences = CCharacterCreation::m_charPreferences[2 * raceID + previousSex];
     if (!preferences) {
-        preferences = NEW(CHARACTER_CREATE_INFO);
+        preferences = NEW(CHARACTER_PREFERENCES);
         CCharacterCreation::m_charPreferences[2 * raceID + previousSex] = preferences;
     }
 
@@ -361,7 +363,7 @@ void CCharacterCreation::SetSelectedSex(int32_t sexID) {
             data.m_info.skinID = display->m_characterInfo.skinID;
             data.m_info.hairStyleID = display->m_characterInfo.hairStyleID;
             data.m_info.hairColorID = display->m_characterInfo.hairColorID;
-            data.m_info.facialFeatureID = display->m_characterInfo.facialHairStyleID;
+            data.m_info.facialHairStyleID = display->m_characterInfo.facialHairStyleID;
             data.m_info.faceID = display->m_characterInfo.faceID;
 
             CCharacterCreation::InitCharacterComponent(&data, 0);
@@ -424,7 +426,52 @@ void CCharacterCreation::SetCharFacing(float facing) {
 }
 
 void CCharacterCreation::CreateCharacter(const char* name) {
-    // TODO
+    uint64_t guid = 0;
+    CharacterSelectionDisplay* display = nullptr;
+
+    auto index = CCharacterCreation::m_existingCharacterIndex;
+    if (index >= 0) {
+        display = CCharacterSelection::GetCharacterDisplay(index);
+        if (!display) {
+            return;
+        }
+
+        guid = display->m_characterInfo.guid;
+
+        if (display->m_characterInfo.name) {
+            if (SStrCmpI(name, display->m_characterInfo.name, STORM_MAX_STR)) {
+                name = display->m_characterInfo.name;
+            }
+        }
+    }
+
+    auto validationResult = ClientServices::CharacterValidateName(name);
+    if (validationResult != CHAR_NAME_SUCCESS) {
+        auto token = ClientServices::GetErrorToken(validationResult);
+        auto text = FrameScript_GetText(token, -1, GENDER_NOT_APPLICABLE);
+        FrameScript_SignalEvent(3, "%s%s", "OKAY", text);
+        return;
+    }
+
+    const auto& info = CCharacterCreation::m_character->m_data.m_info;
+
+    CHARACTER_CREATE_INFO character;
+    SStrCopy(character.name, name, sizeof(character.name));
+    character.raceID = info.raceID;
+    character.classID = CCharacterCreation::m_selectedClassID;
+    character.sexID = info.sexID;
+    character.skinID = info.skinID;
+    character.hairColorID = info.hairColorID;
+    character.hairStyleID = info.hairStyleID;
+    character.facialHairStyleID = info.facialHairStyleID;
+    character.faceID = info.faceID;
+    character.outfitID = 0;
+
+    if (guid && display) {
+        // TODO
+    } else {
+        CGlueMgr::CreateCharacter(&character);
+    }
 }
 
 void CCharacterCreation::SetToExistingCharacter(uint32_t index) {
