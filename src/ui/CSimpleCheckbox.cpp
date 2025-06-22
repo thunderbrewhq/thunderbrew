@@ -1,9 +1,14 @@
 #include "ui/CSimpleCheckbox.hpp"
 #include "ui/CSimpleCheckboxScript.hpp"
 #include "ui/CSimpleTexture.hpp"
+#include "ui/LoadXML.hpp"
+#include "util/StringTo.hpp"
+#include <common/XML.hpp>
+
 
 int32_t CSimpleCheckbox::s_metatable;
 int32_t CSimpleCheckbox::s_objectType;
+
 
 void CSimpleCheckbox::CreateScriptMetaTable() {
     lua_State* L = FrameScript_GetContext();
@@ -30,6 +35,27 @@ CSimpleCheckbox::CSimpleCheckbox(CSimpleFrame* parent)
 
 int32_t CSimpleCheckbox::GetScriptMetaTable() {
     return CSimpleCheckbox::s_metatable;
+}
+
+void CSimpleCheckbox::LoadXML(XMLNode* node, CStatus* status) {
+    CSimpleButton::LoadXML(node, status);
+
+    const char* checked = node->GetAttributeByName("checked");
+
+    if (checked && *checked) {
+        this->SetChecked(StringToBOOL(checked), 0);
+    }
+
+    for (XMLNode* child = node->m_child; child; child = child->m_next) {
+        if (!SStrCmpI(child->GetName(), "CheckedTexture", STORM_MAX_STR)) {
+            CSimpleTexture* texture = LoadXML_Texture(child, this, status);
+            this->SetCheckedTexture(texture);
+
+        } else if (!SStrCmpI(child->GetName(), "DisabledCheckedTexture", STORM_MAX_STR)) {
+            CSimpleTexture* texture = LoadXML_Texture(child, this, status);
+            this->SetDisabledCheckedTexture(texture);
+        }
+    }
 }
 
 void CSimpleCheckbox::Enable(int32_t enabled) {
@@ -64,6 +90,74 @@ void CSimpleCheckbox::SetChecked(int32_t state, int32_t force) {
 
 int32_t CSimpleCheckbox::GetChecked() {
     return this->m_checked;
+}
+
+void CSimpleCheckbox::SetCheckedTexture(const char* texFile) {
+    if (this->m_checkedTexture) {
+        this->m_checkedTexture->SetTexture(texFile, false, false, GxTex_Linear, ImageMode_UI);
+        return;
+    }
+
+    // TODO: CDataAllocator__GetData(CSimpleTexture::s_allocator, 0, ".?AVCSimpleTexture@@", -2);
+    auto texture = NEW(CSimpleTexture, nullptr, DRAWLAYER_ARTWORK, 0);
+    if (texture->SetTexture(texFile, false, false, GxTex_Linear, ImageMode_UI)) {
+        texture->SetAllPoints(this, 1);
+        texture->SetBlendMode(GxBlend_Add);
+        this->SetCheckedTexture(texture);
+    } else if (texture) {
+        // TODO: FrameScript_Object::LookupScriptMethod(texture, 1);
+    }
+}
+
+void CSimpleCheckbox::SetCheckedTexture(CSimpleTexture* texture) {
+    if (texture == this->m_checkedTexture) {
+        return;
+    }
+
+    if (this->m_checkedTexture) {
+        // TODO: FrameScript_Object::LookupScriptMethod(this->m_checkedTexture, 1);
+    }
+
+    if (texture) {
+        texture->SetFrame(this, 3, 0);
+    }
+
+    this->m_checkedTexture = texture;
+    this->SetChecked(this->m_checked, 1);
+}
+
+void CSimpleCheckbox::SetDisabledCheckedTexture(const char* texFile) {
+    if (this->m_disabledTexture) {
+        this->m_disabledTexture->SetTexture(texFile, false, false, GxTex_Linear, ImageMode_UI);
+        return;
+    }
+
+    // TODO: CDataAllocator__GetData(CSimpleTexture::s_allocator, 0, ".?AVCSimpleTexture@@", -2);
+    auto texture = NEW(CSimpleTexture, nullptr, DRAWLAYER_ARTWORK, 0);
+    if (texture->SetTexture(texFile, false, false, GxTex_Linear, ImageMode_UI)) {
+        texture->SetAllPoints(this, 1);
+        texture->SetBlendMode(GxBlend_Add);
+        this->SetDisabledCheckedTexture(texture);
+    } else if (texture) {
+        // TODO: FrameScript_Object::LookupScriptMethod(texture, 1);
+    }
+}
+
+void CSimpleCheckbox::SetDisabledCheckedTexture(CSimpleTexture* texture) {
+    if (texture == this->m_disabledTexture) {
+        return;
+    }
+
+    if (this->m_disabledTexture) {
+        // TODO: FrameScript_Object::LookupScriptMethod(this->m_disabledTexture, 1);
+    }
+
+    if (texture) {
+        texture->SetFrame(this, 3, 0);
+    }
+
+    this->m_disabledTexture = texture;
+    this->SetChecked(this->m_checked, 1);
 }
 
 void CSimpleCheckbox::OnClick(const char* btn, int32_t a3) {

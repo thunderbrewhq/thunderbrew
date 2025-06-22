@@ -22,9 +22,14 @@ class CSimpleCheckbox : public CSimpleButton {
         // Virtual member functions
         virtual bool IsA(int32_t type);
         virtual int32_t GetScriptMetaTable();
+        virtual void LoadXML(XMLNode* node, CStatus* status);
         virtual void Enable(int32_t enabled);
         virtual void SetChecked(int32_t state, int32_t force);
         virtual int32_t GetChecked();
+        virtual void SetCheckedTexture(const char* texFile);
+        virtual void SetCheckedTexture(CSimpleTexture* texture);
+        virtual void SetDisabledCheckedTexture(const char* texFile);
+        virtual void SetDisabledCheckedTexture(CSimpleTexture* texture);
         virtual void OnClick(const char* btn, int32_t a3);
 
         // Member functions
