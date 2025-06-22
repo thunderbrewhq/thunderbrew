@@ -1,4 +1,7 @@
-file(GLOB PRIVATE_SOURCES "*.cpp")
+file(GLOB PRIVATE_SOURCES
+    "*.cpp"
+    "camera/*.cpp"
+)
 
 add_library(gameui STATIC
     ${PRIVATE_SOURCES}

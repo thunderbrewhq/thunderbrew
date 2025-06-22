@@ -1,6 +1,8 @@
 #include "gameui/CGWorldFrame.hpp"
 
 #include "gx/Transform.hpp"
+#include "gx/Draw.hpp"
+#include "gx/Shader.hpp"
 
 #include <bc/Memory.hpp>
 #include <tempest/Matrix.hpp>
@@ -36,15 +38,27 @@ void CGWorldFrame::RenderWorld(void* param) {
     GxXformView(saved_view);
 
     CGWorldFrame::OnWorldUpdate();
+
+    // TODO: PlayerNameUpdateWorldText();
+
     CGWorldFrame::OnWorldRender();
 
-    //PlayerNameRenderWorldText();
+    // TODO: PlayerNameRenderWorldText();
 
     GxXformSetProjection(saved_proj);
     GxXformSetView(saved_view);
+
+    CShaderEffect::UpdateProjMatrix();
 }
 
 void CGWorldFrame::OnWorldUpdate() {
+    GxXformSetViewport(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f);
+    CImVector clearColor = { 0x00, 0x00, 0x00, 0xFF };
+    GxSceneClear(3, clearColor);
+    C44Matrix matrix;
+    GxuXformCreateOrtho(0.0, 1.0, -0.5, 0.5, 0.0, 500.0, matrix);
+    GxXformSetView(C44Matrix());
+    GxXformSetProjection(matrix);
 }
 
 void CGWorldFrame::OnWorldRender() {
