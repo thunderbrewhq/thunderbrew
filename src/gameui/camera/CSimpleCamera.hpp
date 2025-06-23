@@ -19,9 +19,9 @@ class CSimpleCamera {
     float FOV() { this->m_fov; };
     float Aspect() { this->m_aspect; };
 
-    C3Vector Forward();
-    C3Vector Right();
-    C3Vector Up();
+    virtual C3Vector Forward();
+    virtual C3Vector Right();
+    virtual C3Vector Up();
 
     void SetPosition(const C3Vector& position) { this->m_position = position; };
     void SetPosition(float x, float y, float z) { this->m_position = C3Vector(x, y, z); };
