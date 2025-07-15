@@ -808,5 +808,12 @@ void ClientInitializeGame(int32_t continentID, const C3Vector& position) {
     ClientServices::SetMessageHandler(SMSG_NEW_WORLD, &NewWorldHandler, nullptr);
     ClientServices::SetMessageHandler(SMSG_LOGIN_VERIFY_WORLD, &LoginVerifyWorldHandler, nullptr);
 
+    auto record = g_mapDB.GetRecord(continentID);
+    if (!record) {
+        return;
+    }
+
+    CWorld::LoadMap(record->m_directory, position, continentID);
+
     // TODO
 }

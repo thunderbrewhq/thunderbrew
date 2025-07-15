@@ -5,12 +5,8 @@
 
 #include "console/Console.hpp"
 #include "world/World.hpp"
-
-
-uint32_t s_newZoneID = 0;
-C3Vector s_newPosition;
-float s_newFacing = 0.0f;
-const char* s_newMapname = nullptr;
+#include "db/Db.hpp"
+#include "event/Timer.hpp"
 
 
 int32_t NewWorldHandler(void* param, NETMESSAGE msgId, uint32_t time, CDataStore* msg) {
@@ -23,7 +19,16 @@ int32_t NewWorldHandler(void* param, NETMESSAGE msgId, uint32_t time, CDataStore
     msg->Get(s_newFacing);
 
     if (msg->IsRead()) {
-        // TODO
+        auto record = g_mapDB.GetRecord(s_newZoneID);
+        if (!record) {
+            ConsoleWrite("Bad SMSG_NEW_WORLD zoneID\n", DEFAULT_COLOR);
+            return 0;
+        }
+
+        s_newMapname = record->m_directory;
+        // TODO: EventSetTimer(0, LoadNewWorld, 1);
+        // WORKAROUND:
+        LoadNewWorld(nullptr);
         return 1;
     } else {
         ConsoleWrite("Bad SMSG_NEW_WORLD\n", DEFAULT_COLOR);
@@ -45,17 +50,19 @@ int32_t LoginVerifyWorldHandler(void* param, NETMESSAGE msgId, uint32_t time, CD
 
     float facing;
     msg->Get(facing);
-    // zoneID != ClntObjMgrGetMapID()
-    if (false) {
+
+    if (false /* zoneID != ClntObjMgrGetMapID() */) {
         s_newFacing = facing;
         s_newPosition = position;
         s_newZoneID = zoneID;
-        //if (zoneID < dword_AD4170 || zoneID > dword_AD416C || (v0 = *(_DWORD*)(dword_AD4180 + 4 * (zoneID - dword_AD4170))) == 0) {
-        //    ConsoleWrite("Bad SMSG_NEW_WORLD zoneID\n", 0);
-        //    return 0;
-        //}
-        //s_newMapname = *(_DWORD*)(v0 + 4);
-        LoadNewWorld();
+        auto record = g_mapDB.GetRecord(s_newZoneID);
+        if (!record) {
+            ConsoleWrite("Bad SMSG_NEW_WORLD zoneID\n", DEFAULT_COLOR);
+            return 0;
+        }
+
+        s_newMapname = record->m_directory;
+        LoadNewWorld(nullptr);
     }
     return 1;
 }

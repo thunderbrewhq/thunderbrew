@@ -3,6 +3,7 @@
 #include "gx/Transform.hpp"
 #include "gx/Draw.hpp"
 #include "gx/Shader.hpp"
+#include "world/CWorld.hpp"
 
 #include <bc/Memory.hpp>
 #include <tempest/Matrix.hpp>
@@ -62,4 +63,5 @@ void CGWorldFrame::OnWorldUpdate() {
 }
 
 void CGWorldFrame::OnWorldRender() {
+    CWorld::Render();
 }

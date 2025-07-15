@@ -2,6 +2,8 @@
 #include "gx/Device.hpp"
 #include "gx/Shader.hpp"
 #include "model/Model2.hpp"
+#include "world/map/CMap.hpp"
+#include "world/daynight/DayNight.hpp"
 
 uint32_t CWorld::s_enables;
 uint32_t CWorld::s_enables2;
@@ -41,4 +43,12 @@ void CWorld::Initialize() {
     );
 
     // TODO
+}
+
+void CWorld::LoadMap(const char* mapName, const C3Vector& position, int32_t zoneID) {
+    CMap::Load(mapName, zoneID);
+}
+
+void CWorld::Render() {
+    DayNight::RenderSky();
 }

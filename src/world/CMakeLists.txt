@@ -1,4 +1,8 @@
-file(GLOB PRIVATE_SOURCES "*.cpp")
+file(GLOB PRIVATE_SOURCES
+    "daynight/*.cpp"
+    "map/*.cpp"
+    "*.cpp"
+)
 
 add_library(world STATIC
     ${PRIVATE_SOURCES}
@@ -13,4 +17,9 @@ target_link_libraries(world
     PRIVATE
         gx
         model
+    PUBLIC
+        bc
+        common
+        storm
+        tempest
 )
