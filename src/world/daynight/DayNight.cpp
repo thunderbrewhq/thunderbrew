@@ -61,10 +61,20 @@ void LoadMap(int32_t zoneID) {
     g_stars.Initialize();
 }
 
+void SetColors() {
+    // TODO
+    g_sky.SetColors();
+}
+
+void UpdateLighting() {
+    // TODO
+    SetColors();
+}
+
 void Update() {
     // TODO
+    UpdateLighting();
     g_stars.Update();
-    g_sky.Render();
 }
 
 void RenderSky() {
@@ -82,10 +92,11 @@ void RenderSky() {
 
     GxXformSetViewport(minX, maxX, minY, maxY, 0.99902344f, 1.0f);
     GxRsSet(GxRs_ScissorTest, 1);
-    CImVector color { 0xFF000000 };
-    GxSceneClear(3, color);
+    CImVector clearColor = { 124, 125, 61, 0xFF };
+    GxSceneClear(3, clearColor);
 
-    g_stars.Render();
+    //g_stars.Render();
+    g_sky.Render();
 }
 
 DNInfo* GetInfo() {

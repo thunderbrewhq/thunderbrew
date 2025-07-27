@@ -2165,7 +2165,7 @@ void CGxDeviceD3d::SceneClear(uint32_t mask, CImVector color) {
         this->IXformSetViewport();
     }
 
-    D3DCOLOR d3dColor = color.b | (color.g | (color.r << 8) << 8);
+    D3DCOLOR d3dColor = D3DCOLOR_RGBA(color.r, color.g, color.b, color.a);
 
     this->m_d3dDevice->Clear(0, nullptr, flags, d3dColor, 1.0f, 0);
 }

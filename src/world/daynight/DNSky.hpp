@@ -15,6 +15,7 @@ class DNSky {
 
     void Render();
     void GenSphere(float sphRadius);
+    void SetColors();
 
     static float m_stripSizes[SKY_NUMBANDS];
     static float m_fadeAngle[SKY_NUMBANDS];

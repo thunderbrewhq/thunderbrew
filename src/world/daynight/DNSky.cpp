@@ -23,13 +23,15 @@ void DNSky::Render() {
     GxRsSet(GxRs_DepthWrite, 0);
     GxRsSet(GxRs_BlendingMode, GxBlend_Add);
     GxRsSetAlphaRef();
-    GxPrimVertexPtr(
-        this->m_nVerts, this->m_geoVerts.Ptr(), 12,
+    GxPrimLockVertexPtrs(
+        this->m_nVerts, this->m_geoVerts.Ptr(), sizeof(C3Vector),
         nullptr, 0,
-        this->m_clrVerts.Ptr(), 4,
+        this->m_clrVerts.Ptr(), sizeof(CImVector),
+        nullptr, 0,
         nullptr, 0,
         nullptr, 0);
     GxDrawLockedElements(GxPrim_TriangleStrip, this->m_nIndices, this->m_indices.Ptr());
+    GxPrimUnlockVertexPtrs();
     GxXformPop(GxXform_World);
     GxRsPop();
 }
@@ -74,10 +76,10 @@ void DNSky::GenSphere(float sphRadius) {
         for (int32_t j = 0; j < geoSize; ++j) {
             auto& vertex = this->m_geoVerts[lastGeoIndex++];
 
-            float v19 = static_cast<float>(j) * 0.041666668f * 6.2831855f;
-            vertex.x = CMath::sinf(v19) * v16 * sphRadius;
-            vertex.y = v16 * CMath::cosf(v19) * sphRadius0;
-            vertex.z = sphRadius * v12 - CMath::cosf(0.7853981852531433f);
+            float v19 = static_cast<float>(j) * 0.041666668f * CMath::TWO_PI;
+            vertex.x = CMath::sin(v19) * v16 * sphRadius;
+            vertex.y = v16 * CMath::cos(v19) * sphRadius;
+            vertex.z = sphRadius * v12 - CMath::cos(0.7853981852531433f);
 
             if (CMath::fequal(phi, 0.0f) || CMath::fequal(phi, CMath::PI)) {
                 break;
@@ -96,6 +98,13 @@ void DNSky::GenSphere(float sphRadius) {
 
     this->m_nVerts = lastGeoIndex;
     this->m_nIndices = lastIndex; // Should be always equal to 300
+}
+
+void DNSky::SetColors() {
+    // TODO
+    for (uint32_t i = 0; i < this->m_clrVerts.Count(); ++i) {
+        this->m_clrVerts[i] = { 0xFF, 0, 0xFF, 0xFF };
+    }
 }
 
 } // namespace DayNight
