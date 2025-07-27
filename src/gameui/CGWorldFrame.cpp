@@ -3,7 +3,10 @@
 #include "gx/Transform.hpp"
 #include "gx/Draw.hpp"
 #include "gx/Shader.hpp"
+#include "gx/Device.hpp"
+#include "gx/RenderState.hpp"
 #include "world/CWorld.hpp"
+#include "gameui/camera/CSimpleCamera.hpp"
 
 #include <bc/Memory.hpp>
 #include <tempest/Matrix.hpp>
@@ -53,15 +56,34 @@ void CGWorldFrame::RenderWorld(void* param) {
 }
 
 void CGWorldFrame::OnWorldUpdate() {
-    GxXformSetViewport(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f);
-    CImVector clearColor = { 0x00, 0x00, 0x00, 0xFF };
-    GxSceneClear(3, clearColor);
-    C44Matrix matrix;
-    GxuXformCreateOrtho(0.0, 1.0, -0.5, 0.5, 0.0, 500.0, matrix);
-    GxXformSetView(C44Matrix());
-    GxXformSetProjection(matrix);
+
 }
 
 void CGWorldFrame::OnWorldRender() {
+    CRect windowSize;
+    GxCapsWindowSize(windowSize);
+    if (windowSize.maxY - windowSize.minY == 0.0f || windowSize.maxX - windowSize.minX == 0.0f) {
+        return;
+    }
+
+    // TODO
+
+    GxRsPush();
+
+    C3Vector saveMin;
+    C3Vector saveMax;
+
+    GxXformViewport(saveMin.x, saveMax.x, saveMin.y, saveMax.y, saveMin.z, saveMax.z);
+
+    // TODO
+
+    // WORKAROUND:
+    float maxZ = saveMax.z - (saveMax.z - saveMin.z) * 0.050000001;
+    GxXformSetViewport(saveMin.x, saveMax.x, saveMin.y, saveMax.y, saveMin.z, maxZ);
+
+    CShaderEffect::UpdateProjMatrix();
+
     CWorld::Render();
+
+    GxRsPop();
 }

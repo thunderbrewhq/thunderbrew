@@ -6,7 +6,7 @@ namespace DayNight {
 
 void DNStars::Initialize() {
     this->m_scene = M2CreateScene();
-    this->m_model = this->m_scene->CreateModel("Environments\\Stars\\stars.mdl", 0);
+    this->m_model = this->m_scene->CreateModel("Spells\\ErrorCube.mdx" /* "Environments\\Stars\\stars.mdl" */, 0);
     this->m_time = OsGetAsyncTimeMs();
 }
 
@@ -32,8 +32,9 @@ void DNStars::Render() {
     }
 
     this->m_model->SetAnimating(1);
+    this->m_model->SetVisible(1);
 
-    // TODO
+    // TODO: this->m_model->SetSomething(1);
 
     uint32_t elapsed = OsGetAsyncTimeMs() - this->m_time;
     this->m_time += elapsed;

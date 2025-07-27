@@ -5,6 +5,7 @@
 #include <tempest/matrix/C44Matrix.hpp>
 
 #include "gx/Transform.hpp"
+#include "gx/Shader.hpp"
 
 
 static void FaceDirection(const C3Vector& direction, C3Vector* xprime, C3Vector* yprime, C3Vector* zprime) {
@@ -145,8 +146,10 @@ void CSimpleCamera::SetGxProjectionAndView(const CRect& projectionRect) {
     this->m_aspect = (projectionRect.maxX - projectionRect.minX) / (projectionRect.maxY - projectionRect.minY);
 
     C44Matrix mProj;
+    GxXformProjection(mProj);
+
     GxuXformCreateProjection_SG(this->m_fov, this->m_aspect, this->m_nearZ, this->m_farZ, mProj);
-    GxXformSetProjection(mProj);
+    //GxXformSetProjection(mProj);
 
     C44Matrix mView;
     GxuXformCreateLookAtSgCompat(C3Vector(), Forward(), Up(), mView);

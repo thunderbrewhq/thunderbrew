@@ -1,9 +1,13 @@
 #include "world/CWorld.hpp"
 #include "gx/Device.hpp"
 #include "gx/Shader.hpp"
+#include "gx/RenderState.hpp"
 #include "model/Model2.hpp"
+#include "world/World.hpp"
 #include "world/map/CMap.hpp"
 #include "world/daynight/DayNight.hpp"
+#include "gameui/camera/CSimpleCamera.hpp"
+#include "gameui/CGWorldFrame.hpp"
 
 uint32_t CWorld::s_enables;
 uint32_t CWorld::s_enables2;
@@ -50,5 +54,13 @@ void CWorld::LoadMap(const char* mapName, const C3Vector& position, int32_t zone
 }
 
 void CWorld::Render() {
+    GxRsPush();
+    CSimpleCamera camera;
+    camera.SetPosition(s_newPosition);
+    camera.SetFacing(s_newFacing, 0.0f, 0.0f);
+    CRect rect;
+    CGWorldFrame::s_currentWorldFrame->GetRect(&rect);
+    camera.SetGxProjectionAndView(rect);
     DayNight::RenderSky();
+    GxRsPop();
 }

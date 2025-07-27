@@ -5,6 +5,7 @@
 
 #include "client/Client.hpp"
 #include "gameui/CGWorldFrame.hpp"
+#include "gameui/GameScriptFunctions.hpp"
 #include "gx/Coordinate.hpp"
 #include "gx/Device.hpp"
 #include "ui/FrameScript.hpp"
@@ -72,7 +73,7 @@ void CGGameUI::Initialize() {
     //CGInputControl::UpdateMouseMode((int)Active, 1);
     
     FrameScript_Flush();
-    //LoadScriptFunctions();
+    LoadScriptFunctions();
     FrameScript_CreateEvents(g_scriptEvents, 722);
     //CGGameUI::RegisterGameCVars();
     //CGUIBindings::Initialize();

@@ -17,6 +17,7 @@ target_link_libraries(world
     PRIVATE
         gx
         model
+        gameui
     PUBLIC
         bc
         common
