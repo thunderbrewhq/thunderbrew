@@ -6,7 +6,8 @@
 #include "gx/Device.hpp"
 #include "gx/RenderState.hpp"
 #include "world/CWorld.hpp"
-#include "gameui/camera/CSimpleCamera.hpp"
+#include "gameui/camera/CGCamera.hpp"
+#include "event/EvtKeyDown.hpp"
 
 #include <bc/Memory.hpp>
 #include <tempest/Matrix.hpp>
@@ -17,7 +18,14 @@ CGWorldFrame* CGWorldFrame::s_currentWorldFrame = nullptr;
 
 CGWorldFrame::CGWorldFrame(CSimpleFrame* parent) : CSimpleFrame(parent) {
     // TODO
+
+    this->m_camera = NEW(CGCamera);
+
     s_currentWorldFrame = this;
+
+    this->EnableEvent(SIMPLE_EVENT_KEY, -1);
+    this->EnableEvent(SIMPLE_EVENT_MOUSE, -1);
+    this->EnableEvent(SIMPLE_EVENT_MOUSEWHEEL, -1);
 }
 
 void CGWorldFrame::OnFrameRender(CRenderBatch* batch, uint32_t layer) {
@@ -25,6 +33,42 @@ void CGWorldFrame::OnFrameRender(CRenderBatch* batch, uint32_t layer) {
     if (!layer) {
         batch->QueueCallback(&CGWorldFrame::RenderWorld, this);
     }
+}
+
+int32_t CGWorldFrame::OnLayerKeyDown(const CKeyEvent& evt) {
+    if (CSimpleFrame::OnLayerKeyDown(evt)) {
+        return 1;
+    }
+
+    // WORKAROUND: Camera testing
+    C3Vector& position = this->m_camera->m_position;
+
+    float step = 0.1f;
+
+    switch (evt.key) {
+    case KEY_W:
+        position.z -= step;
+        break;
+    case KEY_A:
+        position.y -= step;
+        break;
+    case KEY_S:
+        position.z += step;
+        break;
+    case KEY_D:
+        position.y += step;
+        break;
+    case KEY_PLUS:
+        position.x += step;
+        break;
+    case KEY_MINUS:
+        position.x -= step;
+        break;
+    default:
+        break;
+    }
+
+    return 0;
 }
 
 CSimpleFrame* CGWorldFrame::Create(CSimpleFrame* parent) {
@@ -86,4 +130,10 @@ void CGWorldFrame::OnWorldRender() {
     CWorld::Render();
 
     GxRsPop();
+}
+
+CGCamera* CGWorldFrame::GetActiveCamera() {
+    STORM_ASSERT(CGWorldFrame::s_currentWorldFrame);
+    STORM_ASSERT(CGWorldFrame::s_currentWorldFrame->m_camera);
+    return CGWorldFrame::s_currentWorldFrame->m_camera;
 }

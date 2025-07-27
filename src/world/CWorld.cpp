@@ -6,7 +6,7 @@
 #include "world/World.hpp"
 #include "world/map/CMap.hpp"
 #include "world/daynight/DayNight.hpp"
-#include "gameui/camera/CSimpleCamera.hpp"
+#include "gameui/camera/CGCamera.hpp"
 #include "gameui/CGWorldFrame.hpp"
 
 uint32_t CWorld::s_enables;
@@ -55,12 +55,9 @@ void CWorld::LoadMap(const char* mapName, const C3Vector& position, int32_t zone
 
 void CWorld::Render() {
     GxRsPush();
-    CSimpleCamera camera;
-    camera.SetPosition(s_newPosition);
-    camera.SetFacing(s_newFacing, 0.0f, 0.0f);
     CRect rect;
     CGWorldFrame::s_currentWorldFrame->GetRect(&rect);
-    camera.SetGxProjectionAndView(rect);
+    CGWorldFrame::GetActiveCamera()->SetGxProjectionAndView(rect);
     DayNight::RenderSky();
     GxRsPop();
 }
