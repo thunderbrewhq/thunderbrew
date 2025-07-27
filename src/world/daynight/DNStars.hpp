@@ -19,6 +19,8 @@ class DNStars {
     void Update();
     void Render();
 
+    static C2Vector m_fadeTable[4];
+
     CM2Scene* m_scene = nullptr;
     CM2Model* m_model = nullptr;
     CImVector m_color { 0 };

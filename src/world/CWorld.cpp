@@ -58,6 +58,7 @@ void CWorld::Render() {
     CRect rect;
     CGWorldFrame::s_currentWorldFrame->GetRect(&rect);
     CGWorldFrame::GetActiveCamera()->SetGxProjectionAndView(rect);
+    DayNight::Update();
     DayNight::RenderSky();
     GxRsPop();
 }

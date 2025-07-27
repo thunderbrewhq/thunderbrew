@@ -1,8 +1,17 @@
 #include "world/daynight/DNStars.hpp"
+#include "world/daynight/DayNight.hpp"
+#include "world/daynight/DNInfo.hpp"
 #include "model/Model2.hpp"
 #include <common/Time.hpp>
 
 namespace DayNight {
+
+C2Vector DNStars::m_fadeTable[4] = {
+    { 0.1250f, 1.0f },
+    { 0.1875f, 0.0f },
+    { 0.9375f, 0.0f },
+    { 1.0000f, 1.0f }
+};
 
 void DNStars::Initialize() {
     this->m_scene = M2CreateScene();
@@ -23,18 +32,26 @@ void DNStars::Destroy() {
 }
 
 void DNStars::Update() {
-    // TODO
+    auto info = DayNight::GetInfo();
+
+    this->m_pos = info->cameraPos;
+
+    auto fade = DayNight::InterpTable(DNStars::m_fadeTable, 4, info->dayProgression);
+    this->m_color.a = static_cast<uint8_t>(fade * 254.0 + 1.0);
 }
 
 void DNStars::Render() {
     if (this->m_color.a < 2) {
-        //return;
+        return;
     }
 
     this->m_model->SetAnimating(1);
     this->m_model->SetVisible(1);
 
     // TODO: this->m_model->SetSomething(1);
+
+    float alpha = static_cast<float>(this->m_color.a);
+    // TODO: this->m_model->SetAlpha(alpha * 0.0039215689f)
 
     uint32_t elapsed = OsGetAsyncTimeMs() - this->m_time;
     this->m_time += elapsed;
