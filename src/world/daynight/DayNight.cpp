@@ -95,7 +95,7 @@ void RenderSky() {
     CImVector clearColor = { 124, 125, 61, 0xFF };
     GxSceneClear(3, clearColor);
 
-    //g_stars.Render();
+    g_stars.Render();
     g_sky.Render();
 }
 

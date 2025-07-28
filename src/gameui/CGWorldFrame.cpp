@@ -44,6 +44,11 @@ int32_t CGWorldFrame::OnLayerKeyDown(const CKeyEvent& evt) {
     C3Vector& position = this->m_camera->m_position;
 
     float step = 0.1f;
+    float astep = 0.1f;
+
+    static float pitch = 0.0f;
+    static float yaw = 0.0f;
+    static float roll = 0.0f;
 
     switch (evt.key) {
     case KEY_W:
@@ -64,9 +69,51 @@ int32_t CGWorldFrame::OnLayerKeyDown(const CKeyEvent& evt) {
     case KEY_MINUS:
         position.x -= step;
         break;
+
+    case KEY_P:
+        position.Set(0.0f, 0.0f, 0.0f);
+        break;
+
+    case KEY_R:
+        pitch = 0.0f;
+        yaw = 0.0f;
+        roll = 0.0f;
+        break;
+
+    case KEY_Z:
+        position.Set(0.0f, 0.0f, 0.0f);
+        pitch = 0.0f;
+        yaw = 0.0f;
+        roll = 0.0f;
+        break;
+
+    case KEY_LEFT:
+        roll -= astep;
+        break;
+    case KEY_RIGHT:
+        roll += astep;
+        break;
+
+    case KEY_DOWN:
+        pitch -= astep;
+        break;
+    case KEY_UP:
+        pitch += astep;
+        break;
+
+    case KEY_PAGEUP:
+        yaw += astep;
+        break;
+    case KEY_PAGEDOWN:
+        yaw -= astep;
+        break;
+
+
     default:
         break;
     }
+
+    this->m_camera->SetFacing(yaw, pitch, roll);
 
     return 0;
 }

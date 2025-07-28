@@ -37,49 +37,37 @@ void DNSky::Render() {
 }
 
 void DNSky::GenSphere(float sphRadius) {
-    const int32_t geoSize = 24;
-    const int32_t idxSize = 25 * 2;
+    const uint16_t totalSlices = 24;
+    const uint16_t totalIndices = (totalSlices + 1) * 2;
 
-    this->m_sphThetaTess = geoSize;
-    this->m_geoVerts.SetCount(SKY_NUMBANDS * geoSize); // 168
-    this->m_clrVerts.SetCount(SKY_NUMBANDS * geoSize); // 168
-    this->m_indices.SetCount(idxSize * (SKY_NUMBANDS - 1)); // 300
+    this->m_sphThetaTess = totalSlices;
+    this->m_geoVerts.SetCount(SKY_NUMBANDS * totalSlices); // 168
+    this->m_clrVerts.SetCount(SKY_NUMBANDS * totalSlices); // 168
+    this->m_indices.SetCount((SKY_NUMBANDS - 1) * totalIndices); // 300
 
-    uint16_t lastGeoIndex = 0;
     uint16_t lastIndex = 0;
+
+    uint16_t lastRowIndex = 0;
+    uint16_t thisRowIndex = 0;
+    uint16_t prevRowIndex = 0;
+
+    float prevPhi = 0.0f;
 
     for (int32_t i = 0; i < SKY_NUMBANDS; ++i) {
         float phi = DNSky::m_stripSizes[i] * CMath::PI;
 
-        float v10 = 0.31830987f * phi;
-        int64_t v11 = static_cast<int64_t>(v10);
-        if (v10 <= 0.0f) {
-            v11 -= 1;
-        }
+        float cosPhi = CMath::cos(phi);
+        float sinPhi = CMath::sin(phi);
 
-        float v12 = 1.0f - (v10 - v11) * ((6.0f - (v10 - v11) * 4.0f) * (v10 - v11));
-        if (v11 & 1) {
-            v12 = -v12;
-        }
+        thisRowIndex = lastRowIndex;
 
-        float v13 = 0.31830987f * phi - 0.5f;
-        int64_t v14 = static_cast<int64_t>(v13);
-        if (v13 <= 0.0f) {
-            v14 -= 1;
-        }
+        for (uint16_t j = 0; j < totalSlices; ++j) {
+            auto& vertex = this->m_geoVerts[lastRowIndex++];
 
-        float v16 = 1.0f - (6.0f - 4.0f * (v13 - v14)) * (v13 - v14) * (v13 - v14);
-        if (v14 & 1) {
-            v16 = -v16;
-        }
-
-        for (int32_t j = 0; j < geoSize; ++j) {
-            auto& vertex = this->m_geoVerts[lastGeoIndex++];
-
-            float v19 = static_cast<float>(j) * 0.041666668f * CMath::TWO_PI;
-            vertex.x = CMath::sin(v19) * v16 * sphRadius;
-            vertex.y = v16 * CMath::cos(v19) * sphRadius;
-            vertex.z = sphRadius * v12 - CMath::cos(0.7853981852531433f);
+            float theta = static_cast<float>(j) / static_cast<float>(totalSlices) * CMath::TWO_PI;
+            vertex.x = CMath::sin(theta) * sinPhi * sphRadius;
+            vertex.y = CMath::cos(theta) * sinPhi * sphRadius;
+            vertex.z = cosPhi * sphRadius;
 
             if (CMath::fequal(phi, 0.0f) || CMath::fequal(phi, CMath::PI)) {
                 break;
@@ -87,16 +75,19 @@ void DNSky::GenSphere(float sphRadius) {
         }
 
         if (i > 0) {
-            for (uint16_t k = 0; k < 25; ++k) {
-                uint16_t idx1 = CMath::fequal(phi, 0.0f) ? 0 : (k % 24);
-                uint16_t idx2 = CMath::fequal(phi, CMath::PI) ? 0 : (k % 24);
-                this->m_indices[lastIndex++] = idx1 + lastGeoIndex;
-                this->m_indices[lastIndex++] = idx2 + lastGeoIndex;
+            for (uint16_t k = 0; k < totalIndices / 2; ++k) {
+                uint16_t idx1 = CMath::fequal(prevPhi, 0.0f) ? 0 : (k % totalSlices);
+                uint16_t idx2 = CMath::fequal(phi, CMath::PI) ? 0 : (k % totalSlices);
+                this->m_indices[lastIndex++] = idx1 + prevRowIndex;
+                this->m_indices[lastIndex++] = idx2 + thisRowIndex;
             }
         }
+
+        prevPhi = phi;
+        prevRowIndex = thisRowIndex;
     }
 
-    this->m_nVerts = lastGeoIndex;
+    this->m_nVerts = lastRowIndex;
     this->m_nIndices = lastIndex; // Should be always equal to 300
 }
 
