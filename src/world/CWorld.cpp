@@ -8,9 +8,13 @@
 #include "world/daynight/DayNight.hpp"
 #include "gameui/camera/CGCamera.hpp"
 #include "gameui/CGWorldFrame.hpp"
+#include "util/SFile.hpp"
 
 uint32_t CWorld::s_enables;
 uint32_t CWorld::s_enables2;
+float CWorld::s_farClip;
+float CWorld::s_nearClip;
+float CWorld::prevFarClip;
 
 void CWorld::Initialize() {
     CWorld::s_enables |=
@@ -50,6 +54,18 @@ void CWorld::Initialize() {
 }
 
 void CWorld::LoadMap(const char* mapName, const C3Vector& position, int32_t zoneID) {
+    // TODO: calculate far clip
+    CWorld::s_farClip = 1583.3334f;
+    CWorld::s_nearClip = 0.2f;
+    CWorld::prevFarClip = CWorld::s_farClip;
+
+    if (SFile::IsTrial()) {
+        // TODO: sub_420AA0(zoneID);
+    }
+
+    // TODO: CWorld::PrepareAreaOfInterest(position);
+    // TODO
+
     CMap::Load(mapName, zoneID);
 }
 

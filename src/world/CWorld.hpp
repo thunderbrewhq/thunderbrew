@@ -45,6 +45,9 @@ class CWorld {
         // Static variables
         static uint32_t s_enables;
         static uint32_t s_enables2;
+        static float s_farClip;
+        static float s_nearClip;
+        static float prevFarClip;
 
         // Static functions
         static void Initialize(void);

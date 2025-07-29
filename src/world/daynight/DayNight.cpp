@@ -59,6 +59,7 @@ void LoadMap(int32_t zoneID) {
     // TODO
     g_sky.GenSphere(1.0f);
     g_stars.Initialize();
+    g_dnInfo.showSky = 1;
 }
 
 void SetColors() {
@@ -78,7 +79,9 @@ void Update() {
 }
 
 void RenderSky() {
-    // TODO
+    if (!g_dnInfo.showSky) {
+        return;
+    }
 
     float minX;
     float maxX;
@@ -97,6 +100,9 @@ void RenderSky() {
 
     g_stars.Render();
     g_sky.Render();
+
+    GxRsSet(GxRs_ScissorTest, 0);
+    GxXformSetViewport(minX, maxX, minY, maxY, minZ, maxZ);
 }
 
 DNInfo* GetInfo() {

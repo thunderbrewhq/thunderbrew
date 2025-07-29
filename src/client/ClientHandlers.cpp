@@ -51,7 +51,7 @@ int32_t LoginVerifyWorldHandler(void* param, NETMESSAGE msgId, uint32_t time, CD
     float facing;
     msg->Get(facing);
 
-    if (false /* zoneID != ClntObjMgrGetMapID() */) {
+    if (true /* zoneID != ClntObjMgrGetMapID() */) {
         s_newFacing = facing;
         s_newPosition = position;
         s_newZoneID = zoneID;
