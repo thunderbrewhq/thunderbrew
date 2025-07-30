@@ -189,6 +189,11 @@ void ClientServices::SetMessageHandler(NETMESSAGE msgId, MESSAGE_HANDLER handler
     s_currentConnection->SetMessageHandler(msgId, handler, param);
 }
 
+void ClientServices::ClearMessageHandler(NETMESSAGE msgId) {
+    STORM_ASSERT(ClientServices::s_currentConnection);
+    s_currentConnection->ClearMessageHandler(msgId);
+}
+
 void ClientServices::GetRealmList() {
     STORM_ASSERT(ClientServices::s_currentConnection);
     ClientServices::s_currentConnection->Initiate(COP_GET_REALMS, 35, nullptr);

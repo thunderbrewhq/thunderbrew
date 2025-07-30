@@ -50,6 +50,8 @@ void CWorld::Initialize() {
         (CWorld::s_enables2 & Enables2::Enable_HwPcf) != 0
     );
 
+    CMap::Initialize();
+
     // TODO
 }
 

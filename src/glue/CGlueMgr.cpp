@@ -1062,8 +1062,12 @@ void CGlueMgr::Suspend() {
     // TODO
 
     FrameXML_FreeHashNodes();
-
-    // TODO
+    ClientServices::ClearMessageHandler(SMSG_CHARACTER_RENAME_RESULT);
+    ClientServices::ClearMessageHandler(SMSG_SET_PLAYER_DECLINED_NAMES_RESULT);
+    ClientServices::ClearMessageHandler(SMSG_CHAR_CUSTOMIZE);
+    ClientServices::ClearMessageHandler(SMSG_REALM_SPLIT);
+    ClientServices::ClearMessageHandler(SMSG_KICK_REASON);
+    // TODO: ClientServices::ClearMessageHandler(1242);
 }
 
 void CGlueMgr::UpdateCurrentScreen(const char* screen) {
@@ -1121,9 +1125,9 @@ void CGlueMgr::PollEnterWorld() {
 
     auto info = CGlueMgr::m_characterInfo;
 
-    //if (*(_BYTE*)(info + 385))
-    //    sub_4D9660(*(_BYTE*)(info + 377), (int)v51, *(_BYTE*)(info + 376), (int)&v68);
-
+    if (info->firstLogin) {
+        // sub_4D9660(info->classID, mapID, info->raceID, info->position);
+    }
 
     CGlueMgr::Suspend();
     ClientInitializeGame(info->mapID, info->position);

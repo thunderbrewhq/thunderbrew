@@ -554,6 +554,11 @@ void NetClient::SetMessageHandler(NETMESSAGE msgId, MESSAGE_HANDLER handler, voi
     this->m_handlerParams[msgId] = param;
 }
 
+void NetClient::ClearMessageHandler(NETMESSAGE msgId) {
+    this->m_handlers[msgId] = nullptr;
+    this->m_handlerParams[msgId] = nullptr;
+}
+
 void NetClient::WCCantConnect(WowConnection* conn, uint32_t timeStamp, NETCONNADDR* addr) {
     if (conn == this->m_redirectConnection) {
         // TODO

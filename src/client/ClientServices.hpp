@@ -38,6 +38,7 @@ class ClientServices : public LoginResponse {
         static ClientConnection* Connection();
         static ClientServices* GetInstance();
         static void SetMessageHandler(NETMESSAGE msgId, MESSAGE_HANDLER handler, void* param);
+        static void ClearMessageHandler(NETMESSAGE msgId);
         static void GetRealmList();
         static void GetCharacterList();
         static void EnumerateCharacters(ENUMERATE_CHARACTERS_CALLBACK fcn, void* param);

@@ -23,7 +23,7 @@ struct SMAreaInfo {
 
 struct SMMapObjDef {
     uint32_t nameId;
-    uint32_t uniqueId;
+    int32_t uniqueId;
     C3Vector pos;
     C3Vector rot;
     CAaBox extents;
