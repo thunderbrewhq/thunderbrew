@@ -18,6 +18,7 @@ target_link_libraries(world
         gx
         model
         gameui
+        cursor
     PUBLIC
         bc
         common

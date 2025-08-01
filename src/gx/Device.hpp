@@ -26,6 +26,8 @@ void* GxDevWindow();
 
 int32_t GxMasterEnable(EGxMasterEnables state);
 
+void GxMasterEnableSet(EGxMasterEnables state, int32_t enable);
+
 void GxDevOverride(EGxOverride override, uint32_t value);
 
 int32_t GxAdapterDesktopMode(CGxMonitorMode& mode);

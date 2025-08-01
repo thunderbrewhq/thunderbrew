@@ -1,13 +1,13 @@
 #include "world/CWorld.hpp"
-#include "gx/Device.hpp"
-#include "gx/Shader.hpp"
-#include "gx/RenderState.hpp"
-#include "model/Model2.hpp"
-#include "world/World.hpp"
+#include "world/CWorldScene.hpp"
 #include "world/map/CMap.hpp"
 #include "world/daynight/DayNight.hpp"
-#include "gameui/camera/CGCamera.hpp"
-#include "gameui/CGWorldFrame.hpp"
+
+#include "gx/Device.hpp"
+#include "gx/Shader.hpp"
+
+#include "model/Model2.hpp"
+
 #include "util/SFile.hpp"
 
 uint32_t CWorld::s_enables;
@@ -15,6 +15,7 @@ uint32_t CWorld::s_enables2;
 float CWorld::s_farClip;
 float CWorld::s_nearClip;
 float CWorld::prevFarClip;
+
 
 void CWorld::Initialize() {
     CWorld::s_enables |=
@@ -50,6 +51,7 @@ void CWorld::Initialize() {
         (CWorld::s_enables2 & Enables2::Enable_HwPcf) != 0
     );
 
+    CWorldScene::Initialize();
     CMap::Initialize();
 
     // TODO
@@ -71,12 +73,11 @@ void CWorld::LoadMap(const char* mapName, const C3Vector& position, int32_t zone
     CMap::Load(mapName, zoneID);
 }
 
-void CWorld::Render() {
-    GxRsPush();
-    CRect rect;
-    CGWorldFrame::s_currentWorldFrame->GetRect(&rect);
-    CGWorldFrame::GetActiveCamera()->SetGxProjectionAndView(rect);
-    DayNight::Update();
-    DayNight::RenderSky();
-    GxRsPop();
+void CWorld::Render(const C3Vector& cameraPos, float time) {
+    CWorldScene::Render(cameraPos, time);
+    // TODO: BotDetectionRoutine();
+}
+
+uint32_t CWorld::GetEnables() {
+    return CWorld::s_enables;
 }

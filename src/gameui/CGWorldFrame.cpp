@@ -6,8 +6,11 @@
 #include "gx/Device.hpp"
 #include "gx/RenderState.hpp"
 #include "world/CWorld.hpp"
+#include "world/CWorldScene.hpp"
 #include "gameui/camera/CGCamera.hpp"
 #include "event/EvtKeyDown.hpp"
+
+#include "model/Model2.hpp"
 
 #include <bc/Memory.hpp>
 #include <tempest/Matrix.hpp>
@@ -160,6 +163,16 @@ void CGWorldFrame::OnWorldRender() {
     // TODO
 
     GxRsPush();
+    GxRsSet(GxRs_Multisample, 1);
+
+    if (true) {
+        CImVector clearColor = { 0, 0, 0, 0xFF };
+        GxSceneClear(3, clearColor);
+    }
+
+    if (CWorld::GetEnables() & 0x20000000) {
+        GxMasterEnableSet(GxMasterEnable_PolygonFill, 0);
+    }
 
     C3Vector saveMin;
     C3Vector saveMax;
@@ -174,7 +187,11 @@ void CGWorldFrame::OnWorldRender() {
 
     CShaderEffect::UpdateProjMatrix();
 
-    CWorld::Render();
+    CWorld::Render(C3Vector(), 0.0f);
+
+    if (CWorldScene::s_m2Scene) {
+        CWorldScene::s_m2Scene->Draw(M2PASS_0);
+    }
 
     GxRsPop();
 }

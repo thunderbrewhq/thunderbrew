@@ -216,3 +216,7 @@ void CursorSetMode(CURSORMODE mode) {
         FrameScript_SignalEvent(275, nullptr);
     }
 }
+
+void CursorResetCursor() {
+    // TODO
+}

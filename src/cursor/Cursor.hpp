@@ -7,7 +7,7 @@
 #include "cursor/Types.hpp"
 
 void CursorInitialize();
-
 void CursorSetMode(CURSORMODE mode);
+void CursorResetCursor();
 
 #endif

@@ -98,6 +98,10 @@ int32_t GxMasterEnable(EGxMasterEnables state) {
     return g_theGxDevicePtr->MasterEnable(state);
 }
 
+void GxMasterEnableSet(EGxMasterEnables state, int32_t enable) {
+    return g_theGxDevicePtr->MasterEnableSet(state, enable);
+}
+
 void GxDevOverride(EGxOverride override, uint32_t value) {
     // TODO
     // g_theGxDevicePtr->DeviceOverride(override, value);

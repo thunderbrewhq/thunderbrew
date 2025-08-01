@@ -49,10 +49,12 @@ class CWorld {
         static float s_nearClip;
         static float prevFarClip;
 
+
         // Static functions
-        static void Initialize(void);
+        static void Initialize();
         static void LoadMap(const char* mapName, const C3Vector& position, int32_t zoneID);
-        static void Render();
+        static void Render(const C3Vector& cameraPos, float time);
+        static uint32_t GetEnables();
 };
 
 #endif
