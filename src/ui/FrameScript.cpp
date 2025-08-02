@@ -156,7 +156,12 @@ void FrameScript_CreateEvents(const char* names[], uint32_t count) {
 }
 
 void FrameScript_Destroy() {
-    // TODO
+    lua_close(FrameScript::s_context);
+    FrameScript::s_context = nullptr;
+    luaM_freePool(FrameScript::s_mempool);
+    FrameScript::s_mempool = nullptr;
+    FrameScript::s_scriptEventsHash.Clear();
+    FrameScript::s_scriptEvents.Clear();
 }
 
 void FrameScript_Execute(const char* source, const char* filename, const char* a3) {

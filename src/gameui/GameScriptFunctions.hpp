@@ -6,9 +6,11 @@
 
 struct lua_State;
 
+#define NUM_SCRIPT_FUNCTIONS_GAME 310
 #define NUM_SCRIPT_FUNCTIONS_CAMERA 22
 
 namespace GameScript {
+    extern FrameScript_Method s_ScriptFunctions_Game[NUM_SCRIPT_FUNCTIONS_GAME];
     extern FrameScript_Method s_ScriptFunctions_Camera[NUM_SCRIPT_FUNCTIONS_CAMERA];
 }
 

@@ -30,6 +30,25 @@ void* luaM_initPool() {
     return pools;
 }
 
+void luaM_freePool(void* ptr) {
+    if (!ptr) {
+        return;
+    }
+
+    MemPool** pools = reinterpret_cast<MemPool**>(ptr);
+
+    for (uint32_t i = 0; i < 9; ++i) {
+        MemPool* pool = pools[i];
+        if (pool) {
+            // Is the sub_8556E0(pool) a desturctor?
+            pool->~MemPool();
+            SMemFree(pool, __FILE__, __LINE__, 0);
+        }
+    }
+
+    SMemFree(pools, __FILE__, __LINE__, 0);
+}
+
 void* luaM_reallocPool(void* ud, void* ptr, size_t osize, size_t nsize) {
     void* result; // eax
     signed int v5; // esi

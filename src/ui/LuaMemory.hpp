@@ -4,6 +4,7 @@
 #include <cstdlib>
 
 void* luaM_initPool();
+void luaM_freePool(void* ptr);
 void* luaM_reallocPool(void* ud, void* ptr, size_t osize, size_t nsize);
 
 #endif
