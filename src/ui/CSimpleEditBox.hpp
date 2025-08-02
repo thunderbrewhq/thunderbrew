@@ -72,6 +72,7 @@ class CSimpleEditBox : public CSimpleFrame, CSimpleFontedFrame {
         virtual void OnFrameSizeChanged(float width, float height);
         virtual int32_t OnLayerChar(const CCharEvent& evt);
         virtual int32_t OnLayerKeyDown(const CKeyEvent& evt);
+        virtual int32_t OnLayerKeyDownRepeat(const CKeyEvent& evt);
         virtual int32_t OnLayerMouseDown(const CMouseEvent& evt, const char* btn);
         virtual int32_t OnLayerMouseUp(const CMouseEvent& evt, const char* btn);
         virtual void FontUpdated(CSimpleFontedFrameFont* font, int32_t a3);
