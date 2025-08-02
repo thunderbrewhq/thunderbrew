@@ -1091,6 +1091,10 @@ int32_t CSimpleFrame::OnLayerKeyUp(const CKeyEvent& evt) {
     return 1;
 }
 
+int32_t CSimpleFrame::OnLayerKeyDownRepeat(const CKeyEvent& evt) {
+    return 0;
+}
+
 int32_t CSimpleFrame::OnLayerMouseDown(const CMouseEvent& evt, const char* btn) {
     if (!btn) {
         if (this->m_lookForDrag & evt.button) {

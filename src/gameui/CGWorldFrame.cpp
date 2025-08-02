@@ -119,7 +119,17 @@ int32_t CGWorldFrame::OnLayerKeyDown(const CKeyEvent& evt) {
 
     this->m_camera->SetFacing(yaw, pitch, roll);
 
-    return 0;
+    return 1;
+}
+
+int32_t CGWorldFrame::OnLayerKeyDownRepeat(const CKeyEvent& evt) {
+    if (CSimpleFrame::OnLayerKeyDownRepeat(evt)) {
+        return 1;
+    }
+
+    this->OnLayerKeyDown(evt);
+
+    return 1;
 }
 
 CSimpleFrame* CGWorldFrame::Create(CSimpleFrame* parent) {

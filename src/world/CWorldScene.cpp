@@ -32,13 +32,16 @@ void CWorldScene::Initialize() {
     // TODO
     CWorldScene::s_m2Scene = M2CreateScene();
     g_models[0] = CWorldScene::s_m2Scene->CreateModel(R"(World\LORDAERON\Arathi\PassiveDoodads\Trees\ArathiStump01.m2)", 0);
-    g_models[0]->SetWorldTransform(C3Vector(1.0f, 0.0f, 0.0f), 0.0f, 0.1f);
+    g_models[0]->SetWorldTransform(C3Vector(0.0f, 1.0f, 0.0f), 180.0f, 0.1f);
 
     g_models[1] = CWorldScene::s_m2Scene->CreateModel(R"(World\NoDXT\Detail\ApkBus01.m2)", 0);
-    g_models[1]->SetWorldTransform(C3Vector(1.5f), 0.0f, 1.0f);
+    g_models[1]->SetWorldTransform(C3Vector(0.0f, 1.5f, 0.0f), 180.0f, 1.0f);
 
     g_models[2] = CWorldScene::s_m2Scene->CreateModel(R"(Creature\BloodElfGuard\BloodElfMale_Guard.m2)", 0);
-    g_models[2]->SetWorldTransform(C3Vector(0.0f), 0.0f, 1.0f);
+    g_models[2]->SetWorldTransform(C3Vector(0.0f), 180.0f, 1.0f);
+
+    g_models[3] = CWorldScene::s_m2Scene->CreateModel(R"(World\AZEROTH\ELWYNN\PASSIVEDOODADS\Trees\ElwynnTree01\ElwynnPine01.m2)", 0);
+    g_models[3]->SetWorldTransform(C3Vector(0.0f, -1.0f, 0.0f), 180.0f, 1.0f);
 
     for (size_t i = 0; i < 10; ++i) {
         if (!g_models[i])

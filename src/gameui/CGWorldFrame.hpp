@@ -12,6 +12,7 @@ class CGWorldFrame : public CSimpleFrame {
 
     virtual void OnFrameRender(CRenderBatch* batch, uint32_t layer);
     virtual int32_t OnLayerKeyDown(const CKeyEvent& evt);
+    virtual int32_t OnLayerKeyDownRepeat(const CKeyEvent& evt);
 
     static CSimpleFrame* Create(CSimpleFrame* parent);
     static void RenderWorld(void* param);
