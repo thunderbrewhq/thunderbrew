@@ -14,6 +14,7 @@
 
 #include <bc/Memory.hpp>
 #include <tempest/Matrix.hpp>
+#include <common/Time.hpp>
 
 
 CGWorldFrame* CGWorldFrame::s_currentWorldFrame = nullptr;
@@ -166,7 +167,7 @@ void CGWorldFrame::OnWorldRender() {
     GxRsSet(GxRs_Multisample, 1);
 
     if (true) {
-        CImVector clearColor = { 0, 0, 0, 0xFF };
+        CImVector clearColor = { 0x80, 0x80, 0x80, 0xFF };
         GxSceneClear(3, clearColor);
     }
 
@@ -187,7 +188,11 @@ void CGWorldFrame::OnWorldRender() {
 
     CShaderEffect::UpdateProjMatrix();
 
-    CWorld::Render(C3Vector(), 0.0f);
+    static auto s_time = 0;
+
+    float elapsed = static_cast<float>(OsGetAsyncTimeMs() - s_time) / 1000.0f;
+    s_time = OsGetAsyncTimeMs();
+    CWorld::Render(C3Vector(), elapsed);
 
     if (CWorldScene::s_m2Scene) {
         CWorldScene::s_m2Scene->Draw(M2PASS_0);
