@@ -1015,7 +1015,7 @@ void CGxDeviceD3d::ICursorClip(int32_t a1) {
     if (a1) {
         this->m_hwCursorNeedsUpdate = 1;
 
-        if (this->m_format.window) {
+        if (this->m_format.window == 0) {
             RECT windowRect;
             GetWindowRect(this->m_hwnd, &windowRect);
             ClipCursor(&windowRect);
