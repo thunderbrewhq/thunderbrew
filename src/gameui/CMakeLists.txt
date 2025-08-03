@@ -1,6 +1,7 @@
 file(GLOB PRIVATE_SOURCES
     "*.cpp"
     "camera/*.cpp"
+    "scripts/*.cpp"
 )
 
 add_library(gameui STATIC

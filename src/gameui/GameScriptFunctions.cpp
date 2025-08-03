@@ -1596,14 +1596,75 @@ FrameScript_Method GameScript::s_ScriptFunctions_Game[NUM_SCRIPT_FUNCTIONS_GAME]
 void LoadScriptFunctions() {
     RegisterSimpleFrameScriptMethods();
 
+    // TODO
+
     for (int32_t i = 0; i < NUM_SCRIPT_FUNCTIONS_GAME; ++i) {
         FrameScript_RegisterFunction(
             GameScript::s_ScriptFunctions_Game[i].name,
             GameScript::s_ScriptFunctions_Game[i].method);
     }
 
-    // TODO
-    CameraRegisterScriptFunctions();
-    ScriptEventsRegisterFunctions();
-    ChatRegisterScriptFunctions();
+    void UIBindingsRegisterScriptFunctions();
+    void UIMacrosRegisterScriptFunctions();
+    void InputControlRegisterScriptFunctions();
+    void CameraRegisterScriptFunctions();
+    void SoundRegisterScriptFunctions();
+    void SpellRegisterScriptFunctions();
+    void ScriptEventsRegisterFunctions();
+    void MinimapRegisterScriptFunctions();
+    void UnitCombatLogRegisterScriptFunctions();
+    void ActionBarRegisterScriptFunctions();
+    void PartyInfoRegisterScriptFunctions();
+    void ChatRegisterScriptFunctions();
+    void AutoCompleteRegisterScriptFunctions();
+    void SpellBookRegisterScriptFunctions();
+    void CharacterInfoRegisterScriptFunctions();
+    void LootInfoRegisterScriptFunctions();
+    void ItemTextRegisterScriptFunctions();
+    void GossipInfoRegisterScriptFunctions();
+    void QuestInfoRegisterScriptFunctions();
+    void QuestLogRegisterScriptFunctions();
+    void CGTaxiMapRegisterScriptFunctions();
+    void ClassTrainerRegisterScriptFunctions();
+    void TradeSkillRegisterScriptFunctions();
+    void MerchantRegisterScriptFunctions();
+    void TradeInfoRegisterScriptFunctions();
+    void ContainerRegisterScriptFunctions();
+    void BankRegisterScriptFunctions();
+    void FriendListRegisterScriptFunctions();
+    void PetInfoRegisterScriptFunctions();
+    void WorldMapRegisterScriptFunctions();
+    void ReputationInfoRegisterScriptFunctions();
+    void TabardCreationRegisterScriptFunctions();
+    void GuildRegistrarRegisterScriptFunctions();
+    void DuelInfoRegisterScriptFunctions();
+    void TutorialRegisterScriptFunctions();
+    void PetitionInfoRegisterScriptFunctions();
+    void SkillInfoRegisterScriptFunctions();
+    void GuildInfoRegisterScriptFunctions();
+    void MailInfoRegisterScriptFunctions();
+    void BattlefieldInfoRegisterScriptFunctions();
+    void TalentInfoRegisterScriptFunctions();
+    void AuctionHouseRegisterScriptFunctions();
+    void StableInfoRegisterScriptFunctions();
+    void RaidInfoRegisterScriptFunctions();
+    void WorldStateInfoRegisterScriptFunctions();
+    void MinigameInfoRegisterScriptFunctions();
+    void KnowledgeBaseRegisterScriptFunctions();
+    void ItemSocketInfoRegisterScriptFunctions();
+    void PetitionVendorRegisterScriptFunctions();
+    void ArenaTeamInfoRegisterScriptFunctions();
+    void LookingForGroupRegisterScriptFunctions();
+    void VoiceRegisterScriptFunctions();
+    void CalendarRegisterScriptFunctions();
+    void CGCommentatorRegisterScriptFunctions();
+    void CGBarberShopRegisterScriptFunctions();
+    void CGDanceStudioRegisterScriptFunctions();
+    void GuildBankRegisterScriptFunctions();
+    void GlyphInfoRegisterScriptFunctions();
+    void AchievementInfoRegisterScriptFunctions();
+    void CurrencyTypesRegisterScriptFunctions();
+    void EquipmentManagerRegisterScriptFunctions();
+    void GMTicketInfoRegisterScriptFunctions();
+    void BattlenetUIRegisterScriptFunctions();
 }
