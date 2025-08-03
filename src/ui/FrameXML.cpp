@@ -272,9 +272,10 @@ int32_t FrameXML_CreateFrames(const char* tocPath, const char* a2, MD5_CTX* md5,
         tocData = tocData + 3;
     }
 
-    CStatus v21;
+    CStatus frameStatus;
     char tocLine[1024];
     char tocEntryPath[260];
+    int32_t v25 = 0;
 
     do {
         SStrTokenize(&tocData, tocLine, 1024, "\r\n", 0);
@@ -307,7 +308,7 @@ int32_t FrameXML_CreateFrames(const char* tocPath, const char* a2, MD5_CTX* md5,
 
         *v12 = 0;
 
-        FrameXML_ProcessFile(tocEntryPath, a2, md5, &v21);
+        FrameXML_ProcessFile(tocEntryPath, a2, md5, &frameStatus);
 
         // TODO
         // if (s_progressCallback && s_progressFiles < s_progressTotal) {
@@ -324,13 +325,11 @@ int32_t FrameXML_CreateFrames(const char* tocPath, const char* a2, MD5_CTX* md5,
 
     SFile::Unload(tocBuffer);
 
-    // TODO
-    // if (s_debugLevel > 0 || v25 > 0) {
-    //     v21.Prepend(STATUS_INFO, "** Loading table of contents %s", v5);
-    // }
+    if (FrameXML::s_debugLevel > 0 || v25 > 0) {
+        frameStatus.Prepend(STATUS_INFO, "** Loading table of contents %s", v5);
+    }
 
-    // TODO
-    // status->Add(v21);
+    status->Add(frameStatus);
 
     return 1;
 }
@@ -417,7 +416,7 @@ int32_t FrameXML_ProcessFile(const char* filePath, const char* a2, MD5_CTX* md5,
         return 0;
     }
 
-    CStatus unkStatus;
+    CStatus fileStatus;
 
     XMLNode* node = XMLTree_GetRoot(tree)->m_child;
 
@@ -427,6 +426,8 @@ int32_t FrameXML_ProcessFile(const char* filePath, const char* a2, MD5_CTX* md5,
     // TODO
     // Should come from some kind of Lua headers
     const char* lua_tainted = nullptr;
+
+    int32_t v34 = 0;
 
     while (node) {
         // <Include>
@@ -448,9 +449,9 @@ int32_t FrameXML_ProcessFile(const char* filePath, const char* a2, MD5_CTX* md5,
                     SStrCopy(v27, v14, 260);
                 }
 
-                FrameXML_ProcessFile(v27, a2, md5, &unkStatus);
+                FrameXML_ProcessFile(v27, a2, md5, &fileStatus);
             } else {
-                unkStatus.Add(STATUS_ERROR, "Element 'Include' without file attribute");
+                fileStatus.Add(STATUS_ERROR, "Element 'Include' without file attribute");
             }
         // <Script>
         } else if (!SStrCmpI(node->GetName(), "Script", 0x7FFFFFFFu)) {
@@ -473,7 +474,7 @@ int32_t FrameXML_ProcessFile(const char* filePath, const char* a2, MD5_CTX* md5,
                     SStrCopy(v27, v16, 260);
                 }
 
-                FrameScript_ExecuteFile(v27, a2, md5, &unkStatus);
+                FrameScript_ExecuteFile(v27, a2, md5, &fileStatus);
             }
 
             char* v19 = node->m_body;
@@ -490,22 +491,22 @@ int32_t FrameXML_ProcessFile(const char* filePath, const char* a2, MD5_CTX* md5,
                 CSimpleFont* font = CSimpleFont::GetFont(fontName, 1);
                 font->LoadXML(node, status);
             } else {
-                unkStatus.Add(STATUS_WARNING, "Unnamed font node at top level");
+                fileStatus.Add(STATUS_WARNING, "Unnamed font node at top level");
             }
         // Everything else (frame nodes)
         } else {
             const char* v22 = node->GetAttributeByName("virtual");
 
             if (!v22 || SStrCmpI(v22, "true", 0x7FFFFFFFu)) {
-                FrameXML_CreateFrame(node, nullptr, &unkStatus);
+                FrameXML_CreateFrame(node, nullptr, &fileStatus);
                 CLayoutFrame::ResizePending();
             } else {
                 const char* v23 = node->GetAttributeByName("name");
 
                 if (v23 && *v23) {
-                    FrameXML_StoreHashNode(node, v23, lua_tainted, &unkStatus);
+                    FrameXML_StoreHashNode(node, v23, lua_tainted, &fileStatus);
                 } else {
-                    unkStatus.Add(STATUS_WARNING, "Unnamed virtual node at top level");
+                    fileStatus.Add(STATUS_WARNING, "Unnamed virtual node at top level");
                 }
             }
         }
@@ -515,13 +516,11 @@ int32_t FrameXML_ProcessFile(const char* filePath, const char* a2, MD5_CTX* md5,
 
     XMLTree_Free(tree);
 
-    // TODO
-    // if (s_debugLevel > 0 || v34 > 0) {
-    //     unkStatus.Prepend(STATUS_INFO, "++ Loading file %s", v5);
-    // }
+    if (FrameXML::s_debugLevel > 0 || v34 > 0) {
+        fileStatus.Prepend(STATUS_INFO, "++ Loading file %s", v5);
+    }
 
-    // TODO
-    // status->Unk8(unkStatus);
+    status->Add(fileStatus);
 
     return 1;
 }
@@ -612,4 +611,12 @@ int32_t FrameXML_GuessNumFiles(const char* data) {
         }
     }
     return result;
+}
+
+int32_t FrameXML_GetDebugLevel() {
+    return FrameXML::s_debugLevel;
+}
+
+void FrameXML_SetDebugLevel(int32_t level) {
+    FrameXML::s_debugLevel = level;
 }

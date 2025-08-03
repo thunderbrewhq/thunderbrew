@@ -1,5 +1,7 @@
 #include "gameui/GameScriptFunctions.hpp"
+#include "ui/FrameXML.hpp"
 #include "ui/FrameScript.hpp"
+#include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
 
 // External from "ui/ScriptFunctions.hpp"
@@ -7,7 +9,13 @@ void RegisterSimpleFrameScriptMethods();
 
 
 static int32_t Script_FrameXML_Debug(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t level = FrameXML_GetDebugLevel();
+    if (lua_isnumber(L, 1)) {
+        level = static_cast<int32_t>(lua_tonumber(L, 1));
+        FrameXML_SetDebugLevel(level);
+    }
+    lua_pushnumber(L, 1);
+    return 1;
 }
 
 static int32_t Script_GetBuildInfo(lua_State* L) {
@@ -115,7 +123,12 @@ static int32_t Script_GetDebugStats(lua_State* L) {
 }
 
 static int32_t Script_IsDebugBuild(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+#ifdef WHOA_BUILD_ASSERTIONS
+    lua_pushboolean(L, 1);
+#else
+    lua_pushboolean(L, 0);
+#endif
+    return 1;
 }
 
 static int32_t Script_RegisterCVar(lua_State* L) {
@@ -639,15 +652,30 @@ static int32_t Script_InCinematic(lua_State* L) {
 }
 
 static int32_t Script_IsWindowsClient(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+#ifdef WHOA_SYSTEM_WIN
+    lua_pushnumber(L, 1.0);
+#else
+    lua_pushnil(L);
+#endif
+    return 1;
 }
 
 static int32_t Script_IsMacClient(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+#ifdef WHOA_SYSTEM_MAC
+    lua_pushnumber(L, 1.0);
+#else
+    lua_pushnil(L);
+#endif
+    return 1;
 }
 
 static int32_t Script_IsLinuxClient(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+#ifdef WHOA_SYSTEM_LINUX
+    lua_pushnumber(L, 1.0);
+#else
+    lua_pushnil(L);
+#endif
+    return 1;
 }
 
 static int32_t Script_AcceptXPLoss(lua_State* L) {

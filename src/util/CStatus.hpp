@@ -27,6 +27,7 @@ class CStatus {
         // Member functions
         void Add(const CStatus&);
         void Add(STATUS_TYPE, const char*, ...);
+        void Prepend(STATUS_TYPE, const char*, ...);
 
     public:
         STORM_EXPLICIT_LIST(CStatus::STATUSENTRY, link) statusList;
