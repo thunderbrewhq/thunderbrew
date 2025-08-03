@@ -93,6 +93,14 @@ int32_t Script_VehicleCameraZoomOut(lua_State* L) {
 }
 
 
+void CameraRegisterScriptFunctions() {
+    for (int32_t i = 0; i < NUM_SCRIPT_FUNCTIONS_CAMERA; ++i) {
+        FrameScript_RegisterFunction(
+            GameScript::s_ScriptFunctions_Camera[i].name,
+            GameScript::s_ScriptFunctions_Camera[i].method);
+    }
+}
+
 FrameScript_Method GameScript::s_ScriptFunctions_Camera[NUM_SCRIPT_FUNCTIONS_CAMERA] = {
     { "CameraZoomIn", &Script_CameraZoomIn },
     { "CameraZoomOut", &Script_CameraZoomOut },

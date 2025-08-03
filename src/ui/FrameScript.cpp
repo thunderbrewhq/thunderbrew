@@ -6,6 +6,7 @@
 #include "util/CStatus.hpp"
 #include "util/Lua.hpp"
 #include "util/SFile.hpp"
+#include "os/Debug.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <common/Time.hpp>
@@ -760,9 +761,9 @@ int32_t FrameScript_HandleError(lua_State* L) {
     // TODO
     // Remove temporary console debug logging
     if (v2 && objName) {
-        printf("Error: %s%s\n", objName, v2 + 1);
+        OsOutputDebugString("Error: %s%s\n", objName, v2 + 1);
     } else {
-        printf("Error: %s\n", v1);
+        OsOutputDebugString("Error: %s\n", v1);
     }
 
     if (v2 && objName) {

@@ -16,13 +16,14 @@
 #include "util/SFile.hpp"
 
 
-bool CGGameUI::m_reloadUI = 0;
 CSimpleTop* CGGameUI::m_simpleTop = nullptr;
 CSimpleFrame* CGGameUI::m_UISimpleParent = nullptr;
+int32_t CGGameUI::m_reloadUIRequested = 0;
 int32_t CGGameUI::m_hasControl = 0;
 int32_t CGGameUI::m_screenWidth = 0;
 int32_t CGGameUI::m_screenHeight = 0;
 float CGGameUI::m_aspect = 0.0;
+char* CGGameUI::m_luaTainted = nullptr;
 
 
 void CGGameUI::InitializeGame() {
@@ -39,7 +40,7 @@ void CGGameUI::Initialize() {
     // s_scriptProfileCVar =
 
     //CGGameUI::s_loggingIn = 1;
-    //CGGameUI::m_reloadUIRequested = 0;
+    CGGameUI::m_reloadUIRequested = 0;
     //CGGameUI::m_repopTime = 0;
     //CGGameUI::m_deadNoRepopTimer = 0;
     //CGGameUI::m_corpseReclaimDelay = 0;
@@ -185,6 +186,14 @@ void CGGameUI::RegisterFrameFactories() {
     //FrameXML_RegisterFactory("DressUpModel", (int)sub_514300, 0);
     //FrameXML_RegisterFactory("TabardModel", (int)CGTabardModelFrame::Create, 0);
     //FrameXML_RegisterFactory("QuestPOIFrame", (int)sub_514260, 0);
+}
+
+void CGGameUI::Reload() {
+    if (CGGameUI::m_luaTainted && CGGameUI::m_simpleTop /* && !CGGameUI__m_simpleTop->dword1250 */) {
+        // TODO: CGGameUI::ShowBlockedActionFeedback
+    } else {
+        CGGameUI::m_reloadUIRequested = 1;
+    }
 }
 
 int32_t CGGameUI::HandleDisplaySizeChanged(const CSizeEvent& event) {

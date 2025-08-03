@@ -1,4 +1,5 @@
 #include "gameui/GameScriptFunctions.hpp"
+#include "gameui/CGGameUI.hpp"
 #include "ui/FrameXML.hpp"
 #include "ui/FrameScript.hpp"
 #include "util/Lua.hpp"
@@ -19,11 +20,16 @@ static int32_t Script_FrameXML_Debug(lua_State* L) {
 }
 
 static int32_t Script_GetBuildInfo(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    lua_pushstring(L, WHOA_VERSION_MAJOR "." WHOA_VERSION_MINOR "." WHOA_VERSION_PATCH);
+    lua_pushstring(L, WHOA_VERSION_BUILD);
+    lua_pushstring(L, __DATE__);
+    lua_pushnumber(L, 30300); // returned by GetCodeInterfaceVersion();
+    return 4;
 }
 
 static int32_t Script_ReloadUI(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    CGGameUI::Reload();
+    return 0;
 }
 
 static int32_t Script_RegisterForSave(lua_State* L) {
@@ -1598,12 +1604,6 @@ void LoadScriptFunctions() {
 
     // TODO
     CameraRegisterScriptFunctions();
-}
-
-void CameraRegisterScriptFunctions() {
-    for (int32_t i = 0; i < NUM_SCRIPT_FUNCTIONS_CAMERA; ++i) {
-        FrameScript_RegisterFunction(
-            GameScript::s_ScriptFunctions_Camera[i].name,
-            GameScript::s_ScriptFunctions_Camera[i].method);
-    }
+    ScriptEventsRegisterFunctions();
+    ChatRegisterScriptFunctions();
 }
