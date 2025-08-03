@@ -2,6 +2,39 @@
 #include "ui/FrameScript.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
+#include <common/Time.hpp>
+
+static int32_t Script_GetTime(lua_State* L) {
+    lua_pushnumber(L, static_cast<double>(OsGetAsyncTimeMs()) * 0.001);
+    return 1;
+}
+
+static int32_t Script_GetGameTime(lua_State* L) {
+    // TODO
+    lua_pushnumber(L, 1.0);
+    lua_pushnumber(L, 1.0);
+    return 2;
+}
+
+static int32_t Script_ConsoleExec(lua_State* L) {
+    WHOA_UNIMPLEMENTED(0);
+}
+
+static int32_t Script_ReadFile(lua_State* L) {
+    WHOA_UNIMPLEMENTED(0);
+}
+
+static int32_t Script_DeleteFile(lua_State* L) {
+    WHOA_UNIMPLEMENTED(0);
+}
+
+static int32_t Script_AppendToFile(lua_State* L) {
+    WHOA_UNIMPLEMENTED(0);
+}
+
+static int32_t Script_GetAccountExpansionLevel(lua_State* L) {
+    WHOA_UNIMPLEMENTED(0);
+}
 
 static int32_t Script_UnitExists(lua_State* L) {
     WHOA_UNIMPLEMENTED(0);
@@ -16,7 +49,10 @@ static int32_t Script_UnitIsUnit(lua_State* L) {
 }
 
 static int32_t Script_UnitIsPlayer(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    __debugbreak();
+    lua_pushnil(L);
+    return 1;
 }
 
 static int32_t Script_UnitIsInMyGuild(lua_State* L) {
@@ -208,7 +244,9 @@ static int32_t Script_UnitSex(lua_State* L) {
 }
 
 static int32_t Script_UnitLevel(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 1.0);
+    return 1;
 }
 
 static int32_t Script_GetMoney(lua_State* L) {
@@ -686,9 +724,25 @@ void ScriptEventsRegisterFunctions() {
             GameScript::s_ScriptFunctions_ScriptEvents[i].name,
             GameScript::s_ScriptFunctions_ScriptEvents[i].method);
     }
+
+    for (int32_t i = 0; i < NUM_SCRIPT_FUNCTIONS_SCRIPT_EVENTS_UNIT; ++i) {
+        FrameScript_RegisterFunction(
+            GameScript::s_ScriptFunctions_ScriptEventsUnit[i].name,
+            GameScript::s_ScriptFunctions_ScriptEventsUnit[i].method);
+    }
 }
 
 FrameScript_Method GameScript::s_ScriptFunctions_ScriptEvents[NUM_SCRIPT_FUNCTIONS_SCRIPT_EVENTS] = {
+    { "GetTime", &Script_GetTime },
+    { "GetGameTime", &Script_GetGameTime },
+    { "ConsoleExec", &Script_ConsoleExec },
+    { "ReadFile", &Script_ReadFile },
+    { "DeleteFile", &Script_DeleteFile },
+    { "AppendToFile", &Script_AppendToFile },
+    { "GetAccountExpansionLevel", &Script_GetAccountExpansionLevel },
+};
+
+FrameScript_Method GameScript::s_ScriptFunctions_ScriptEventsUnit[NUM_SCRIPT_FUNCTIONS_SCRIPT_EVENTS_UNIT] = {
     { "UnitExists", &Script_UnitExists },
     { "UnitIsVisible", &Script_UnitIsVisible },
     { "UnitIsUnit", &Script_UnitIsUnit },
