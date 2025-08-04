@@ -1,5 +1,6 @@
 #include "gameui/GameScriptFunctions.hpp"
 #include "gameui/CGGameUI.hpp"
+#include "gameui/CGTooltip.hpp"
 #include "ui/FrameXML.hpp"
 #include "ui/FrameScript.hpp"
 #include "util/Lua.hpp"
@@ -105,7 +106,9 @@ static int32_t Script_Screenshot(lua_State* L) {
 }
 
 static int32_t Script_GetFramerate(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO: v1 = sub_77F440();
+    lua_pushnumber(L, 60.0);
+    return 1;
 }
 
 static int32_t Script_TogglePerformanceDisplay(lua_State* L) {
@@ -626,7 +629,13 @@ static int32_t Script_GetCursorPosition(lua_State* L) {
 }
 
 static int32_t Script_GetNetStats(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // v1 = ClientServices__Connection();
+    // NetClient__GetNetStats(v1, &v5, &v4, (int*)&v3);
+    // TODO:
+    lua_pushnumber(L, 0.0);
+    lua_pushnumber(L, 0.0);
+    lua_pushnumber(L, 0.0);
+    return 3;
 }
 
 static int32_t Script_SitStandOrDescendStart(lua_State* L) {
@@ -949,7 +958,9 @@ static int32_t Script_IsItemInRange(lua_State* L) {
 }
 
 static int32_t Script_GetNumAddOns(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO: v2 = (double)(unsigned int)sub_5F4FF0(v1);
+    lua_pushnumber(L, 0.0);
+    return 1;
 }
 
 static int32_t Script_GetAddOnInfo(lua_State* L) {
@@ -1595,6 +1606,7 @@ FrameScript_Method GameScript::s_ScriptFunctions_Game[NUM_SCRIPT_FUNCTIONS_GAME]
 
 void LoadScriptFunctions() {
     RegisterSimpleFrameScriptMethods();
+    CGTooltip::CreateScriptMetaTable();
 
     // TODO
 
