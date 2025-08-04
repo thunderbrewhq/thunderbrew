@@ -493,7 +493,9 @@ static int32_t Script_ForceQuit(lua_State* L) {
 }
 
 static int32_t Script_GetCursorMoney(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 0.0);
+    return 1;
 }
 
 static int32_t Script_DropCursorMoney(lua_State* L) {

@@ -41,11 +41,15 @@ static int32_t Script_CancelTradeAccept(lua_State* L) {
 }
 
 static int32_t Script_GetPlayerTradeMoney(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 0.0);
+    return 1;
 }
 
 static int32_t Script_GetTargetTradeMoney(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 0.0);
+    return 1;
 }
 
 static int32_t Script_PickupTradeMoney(lua_State* L) {

@@ -250,7 +250,9 @@ static int32_t Script_UnitLevel(lua_State* L) {
 }
 
 static int32_t Script_GetMoney(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 10.0);
+    return 1;
 }
 
 static int32_t Script_GetHonorCurrency(lua_State* L) {

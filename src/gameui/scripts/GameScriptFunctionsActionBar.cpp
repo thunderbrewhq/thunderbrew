@@ -93,7 +93,9 @@ static int32_t Script_ChangeActionBarPage(lua_State* L) {
 }
 
 static int32_t Script_GetActionBarPage(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushinteger(L, 1);
+    return 1;
 }
 
 static int32_t Script_GetActionBarToggles(lua_State* L) {
