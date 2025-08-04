@@ -418,7 +418,15 @@ int32_t FrameScript_ExecuteFile(const char* filePath, const char* a2, MD5_CTX* m
             MD5Update(md5, static_cast<unsigned char*>(fileBuffer), fileBytes);
         }
 
-        int32_t v10 = FrameScript_ExecuteBuffer(static_cast<char*>(fileBuffer), fileBytes, v11, status, a2);
+        char* cleanBuffer = static_cast<char*>(fileBuffer);
+
+        // Skip UTF8 BOM
+        if (fileBytes >= 3 && memcmp(fileBuffer, "\xEF\xBB\xBF", 3) == 0) {
+            cleanBuffer += 3;
+            fileBytes -= 3;
+        }
+
+        int32_t v10 = FrameScript_ExecuteBuffer(cleanBuffer, fileBytes, v11, status, a2);
 
         SFile::Unload(fileBuffer);
 

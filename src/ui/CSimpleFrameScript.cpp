@@ -1,10 +1,14 @@
 #include "ui/CSimpleFrameScript.hpp"
-#include "gx/Coordinate.hpp"
 #include "ui/CSimpleFrame.hpp"
+#include "ui/CSimpleTexture.hpp"
+#include "gx/Coordinate.hpp"
 #include "ui/FrameScript.hpp"
+#include "ui/FrameXML.hpp"
 #include "ui/CBackdropGenerator.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
+#include "util/StringTo.hpp"
+#include <bc/Memory.hpp>
 #include <algorithm>
 #include <cstdint>
 #include <limits>
@@ -19,7 +23,57 @@ int32_t CSimpleFrame_CreateTitleRegion(lua_State* L) {
 }
 
 int32_t CSimpleFrame_CreateTexture(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CSimpleFrame::GetObjectType();
+    CSimpleFrame* frame = static_cast<CSimpleFrame*>(FrameScript_GetObjectThis(L, type));
+
+    const char* name = lua_isstring(L, 2) ? lua_tolstring(L, 2, nullptr) : nullptr;
+
+    int32_t drawLayer = 2;
+    if (lua_isstring(L, 3)) {
+        StringToDrawLayer(lua_tolstring(L, 3, nullptr), drawLayer);
+    }
+
+    XMLNode* frameNode = nullptr;
+
+    if (lua_type(L, 4) == LUA_TSTRING) {
+        const char* tainted;
+        bool locked;
+
+        const char* inheritName = lua_tolstring(L, 4, nullptr);
+        const char* frameName = frame->GetName();
+        if (!frameName) {
+            frameName = "<unnamed>";
+        }
+
+        frameNode = FrameXML_AcquireHashNode(inheritName, tainted, locked);
+        if (!frameNode) {
+            luaL_error(L, "%s:CreateTexture(): Couldn't find inherited node \"%s\"", frameName, inheritName);
+        }
+
+        if (locked) {
+            luaL_error(L, "%s:CreateTexture(): Recursively inherited node \"%s\"", frameName, inheritName);
+        }
+    }
+
+    auto texture = NEW(CSimpleTexture, frame, drawLayer, 1);
+    if (name && *name) {
+        texture->SetName(name);
+    }
+
+    if (frameNode) {
+        CStatus status;
+        texture->PostLoadXML(frameNode, &status);
+        FrameXML_ReleaseHashNode(lua_tolstring(L, 4, nullptr));
+    }
+
+    // TODO
+
+    if (!texture->lua_registered) {
+        texture->RegisterScriptObject(nullptr);
+    }
+
+    lua_rawgeti(L, LUA_REGISTRYINDEX, texture->lua_objectRef);
+    return 1;
 }
 
 int32_t CSimpleFrame_CreateFontString(lua_State* L) {
