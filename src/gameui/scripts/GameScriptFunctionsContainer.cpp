@@ -9,7 +9,9 @@ static int32_t Script_ContainerIDToInventoryID(lua_State* L) {
 }
 
 static int32_t Script_GetContainerNumSlots(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 16.0);
+    return 1;
 }
 
 static int32_t Script_GetContainerItemInfo(lua_State* L) {

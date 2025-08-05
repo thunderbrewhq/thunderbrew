@@ -9,7 +9,10 @@ static int32_t Script_BNGetInfo(lua_State* L) {
 }
 
 static int32_t Script_BNGetNumFriends(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 0.0);
+    lua_pushnumber(L, 0.0);
+    return 2;
 }
 
 static int32_t Script_BNGetFriendInfo(lua_State* L) {
@@ -49,7 +52,9 @@ static int32_t Script_BNGetSelectedFriend(lua_State* L) {
 }
 
 static int32_t Script_BNGetNumFriendInvites(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 0.0);
+    return 1;
 }
 
 static int32_t Script_BNGetFriendInviteInfo(lua_State* L) {

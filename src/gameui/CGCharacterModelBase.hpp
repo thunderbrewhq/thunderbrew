@@ -1,10 +1,10 @@
 #ifndef GAME_UI_CGCHARACTER_MODEL_BASE_HPP
 #define GAME_UI_CGCHARACTER_MODEL_BASE_HPP
 
-#include "ui/CSimpleFrame.hpp"
+#include "ui/CSimpleModel.hpp"
 #include "ui/CSimpleTop.hpp"
 
-class CGCharacterModelBase : public CSimpleFrame {
+class CGCharacterModelBase : public CSimpleModel {
     public:
     // Static variables
     static int32_t s_metatable;

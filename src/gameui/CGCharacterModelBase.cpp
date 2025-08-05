@@ -16,7 +16,7 @@ void CGCharacterModelBase::CreateScriptMetaTable() {
 }
 
 void CGCharacterModelBase::RegisterScriptMethods(lua_State* L) {
-    CSimpleFrame::RegisterScriptMethods(L);
+    CSimpleModel::RegisterScriptMethods(L);
     FrameScript_Object::FillScriptMethodTable(L, CGCharacterModelBaseMethods, NUM_CGCHARACTER_MODEL_BASE_SCRIPT_METHODS);
 }
 
@@ -24,6 +24,5 @@ int32_t CGCharacterModelBase::GetScriptMetaTable() {
     return CGCharacterModelBase::s_metatable;
 }
 
-CGCharacterModelBase::CGCharacterModelBase(CSimpleFrame* parent)
-    : CSimpleFrame(parent) {
+CGCharacterModelBase::CGCharacterModelBase(CSimpleFrame* parent) : CSimpleModel(parent) {
 }

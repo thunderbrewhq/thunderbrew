@@ -14,6 +14,8 @@
 
 // External from "ui/ScriptFunctions.hpp"
 void RegisterSimpleFrameScriptMethods();
+int32_t Script_GetScreenWidth(lua_State* L);
+int32_t Script_GetScreenHeight(lua_State* L);
 
 
 static int32_t Script_FrameXML_Debug(lua_State* L) {
@@ -577,14 +579,6 @@ static int32_t Script_ArenaTeamSetLeaderByName(lua_State* L) {
 }
 
 static int32_t Script_ArenaTeamDisband(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
-}
-
-static int32_t Script_GetScreenWidth(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
-}
-
-static int32_t Script_GetScreenHeight(lua_State* L) {
     WHOA_UNIMPLEMENTED(0);
 }
 

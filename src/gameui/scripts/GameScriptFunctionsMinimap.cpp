@@ -5,7 +5,9 @@
 
 
 static int32_t Script_GetNumTrackingTypes(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 0.0);
+    return 1;
 }
 
 static int32_t Script_GetTrackingInfo(lua_State* L) {

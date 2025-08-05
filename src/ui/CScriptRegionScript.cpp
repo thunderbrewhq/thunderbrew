@@ -3,6 +3,7 @@
 #include "ui/FrameScript_Object.hpp"
 #include "ui/CScriptRegion.hpp"
 #include "ui/CSimpleTop.hpp"
+#include "ui/CFramePoint.hpp"
 #include "util/Lua.hpp"
 #include "util/StringTo.hpp"
 #include "util/Unimplemented.hpp"
@@ -10,11 +11,20 @@
 #include <tempest/Rect.hpp>
 
 int32_t CScriptRegion_IsProtected(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CScriptRegion::GetObjectType();
+    auto region = static_cast<CScriptRegion*>(FrameScript_GetObjectThis(L, type));
+    // TODO
+    lua_pushnil(L);
+    lua_pushnil(L);
+    return 2;
 }
 
 int32_t CScriptRegion_CanChangeProtectedState(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CScriptRegion::GetObjectType();
+    auto region = static_cast<CScriptRegion*>(FrameScript_GetObjectThis(L, type));
+    // TODO
+    lua_pushnil(L);
+    return 1;
 }
 
 int32_t CScriptRegion_SetParent(lua_State* L) {
@@ -22,7 +32,31 @@ int32_t CScriptRegion_SetParent(lua_State* L) {
 }
 
 int32_t CScriptRegion_GetRect(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CScriptRegion::GetObjectType();
+    auto region = static_cast<CScriptRegion*>(FrameScript_GetObjectThis(L, type));
+
+    if (region->IsResizePending()) {
+        region->Resize(1);
+    }
+
+    CRect rect;
+
+    if (!region->GetRect(&rect)) {
+        return 0;
+    }
+    float left = CoordinateGetAspectCompensation() * 1024.0f * rect.minX / region->m_layoutScale;
+    lua_pushnumber(L, DDCToNDCWidth(left));
+
+    float top = CoordinateGetAspectCompensation() * 1024.0f * rect.minY / region->m_layoutScale;
+    lua_pushnumber(L, DDCToNDCWidth(top));
+
+    float width = CoordinateGetAspectCompensation() * 1024.0f * (rect.maxX - rect.minX) / region->m_layoutScale;
+    lua_pushnumber(L, DDCToNDCWidth(width));
+
+    float height = CoordinateGetAspectCompensation() * 1024.0f * (rect.maxY - rect.minY) / region->m_layoutScale;
+    lua_pushnumber(L, DDCToNDCWidth(height));
+
+    return 4;
 }
 
 int32_t CScriptRegion_GetCenter(lua_State* L) {
@@ -54,19 +88,83 @@ int32_t CScriptRegion_GetCenter(lua_State* L) {
 }
 
 int32_t CScriptRegion_GetLeft(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CScriptRegion::GetObjectType();
+    auto region = static_cast<CScriptRegion*>(FrameScript_GetObjectThis(L, type));
+
+    if (region->IsResizePending()) {
+        region->Resize(1);
+    }
+
+    CRect rect;
+
+    if (region->GetRect(&rect)) {
+        float value = CoordinateGetAspectCompensation() * 1024.0f * rect.minX / region->m_layoutScale;
+        lua_pushnumber(L, DDCToNDCWidth(value));
+    } else {
+        lua_pushnil(L);
+    }
+
+    return 1;
 }
 
 int32_t CScriptRegion_GetRight(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CScriptRegion::GetObjectType();
+    auto region = static_cast<CScriptRegion*>(FrameScript_GetObjectThis(L, type));
+
+    if (region->IsResizePending()) {
+        region->Resize(1);
+    }
+
+    CRect rect;
+
+    if (region->GetRect(&rect)) {
+        float value = CoordinateGetAspectCompensation() * 1024.0f * rect.maxX / region->m_layoutScale;
+        lua_pushnumber(L, DDCToNDCWidth(value));
+    } else {
+        lua_pushnil(L);
+    }
+
+    return 1;
 }
 
 int32_t CScriptRegion_GetTop(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CScriptRegion::GetObjectType();
+    auto region = static_cast<CScriptRegion*>(FrameScript_GetObjectThis(L, type));
+
+    if (region->IsResizePending()) {
+        region->Resize(1);
+    }
+
+    CRect rect;
+
+    if (region->GetRect(&rect)) {
+        float value = CoordinateGetAspectCompensation() * 1024.0f * rect.maxY / region->m_layoutScale;
+        lua_pushnumber(L, DDCToNDCWidth(value));
+    } else {
+        lua_pushnil(L);
+    }
+
+    return 1;
 }
 
 int32_t CScriptRegion_GetBottom(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CScriptRegion::GetObjectType();
+    auto region = static_cast<CScriptRegion*>(FrameScript_GetObjectThis(L, type));
+
+    if (region->IsResizePending()) {
+        region->Resize(1);
+    }
+
+    CRect rect;
+
+    if (region->GetRect(&rect)) {
+        float value = CoordinateGetAspectCompensation() * 1024.0f * rect.minY / region->m_layoutScale;
+        lua_pushnumber(L, DDCToNDCWidth(value));
+    } else {
+        lua_pushnil(L);
+    }
+
+    return 1;
 }
 
 int32_t CScriptRegion_GetWidth(lua_State* L) {
@@ -168,15 +266,80 @@ int32_t CScriptRegion_SetHeight(lua_State* L) {
 }
 
 int32_t CScriptRegion_SetSize(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CScriptRegion::GetObjectType();
+    auto region = static_cast<CScriptRegion*>(FrameScript_GetObjectThis(L, type));
+
+    if (!region->ProtectedFunctionsAllowed()) {
+        // TODO
+        // - disallowed logic
+
+        return 0;
+    }
+
+    if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+        return luaL_error(L, "Usage: %s:SetSize(width, height)", region->GetDisplayName());
+    }
+
+    float width = lua_tonumber(L, 2);
+    float ndcWidth = width / (CoordinateGetAspectCompensation() * 1024.0f);
+    float ddcWidth = NDCToDDCWidth(ndcWidth);
+
+    float height = lua_tonumber(L, 3);
+    float ndcHeight = height / (CoordinateGetAspectCompensation() * 1024.0f);
+    float ddcHeight = NDCToDDCWidth(ndcHeight);
+
+    region->SetSize(width, height);
+
+    return 0;
 }
 
 int32_t CScriptRegion_GetSize(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CScriptRegion::GetObjectType();
+    auto region = static_cast<CScriptRegion*>(FrameScript_GetObjectThis(L, type));
+
+    float width = region->GetWidth();
+    float height = region->GetHeight();
+
+    if ((width == 0.0f || height == 0.0f) && !StringToBOOL(L, 2, 0)) {
+        if (region->IsResizePending()) {
+            region->Resize(1);
+        }
+
+        CRect rect = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+        if (region->GetRect(&rect)) {
+            width = (rect.maxX - rect.minX) / region->m_layoutScale;
+            height = (rect.maxY - rect.minY) / region->m_layoutScale;
+        }
+    }
+
+    float ddcWidth = CoordinateGetAspectCompensation() * 1024.0f * width;
+    float ndcWidth = DDCToNDCWidth(ddcWidth);
+    lua_pushnumber(L, ndcWidth);
+
+    float ddcHeight = CoordinateGetAspectCompensation() * 1024.0f * height;
+    float ndcHeight = DDCToNDCWidth(ddcHeight);
+    lua_pushnumber(L, ndcHeight);
+
+    return 2;
 }
 
 int32_t CScriptRegion_GetNumPoints(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CScriptRegion::GetObjectType();
+    auto region = static_cast<CScriptRegion*>(FrameScript_GetObjectThis(L, type));
+
+    int32_t count = 0;
+
+    for (int32_t i = 0; i < FRAMEPOINT_NUMPOINTS; i++) {
+        auto point = region->m_points[i];
+
+        if (point && !(point->m_flags & 0x8)) {
+            ++count;
+        }
+    }
+
+    lua_pushnumber(L, count);
+    return 1;
 }
 
 int32_t CScriptRegion_GetPoint(lua_State* L) {

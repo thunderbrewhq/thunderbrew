@@ -2,6 +2,7 @@
 #include "ui/FrameScript.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
+#include "client/ClientServices.hpp"
 #include <common/Time.hpp>
 
 static int32_t Script_GetTime(lua_State* L) {
@@ -33,7 +34,8 @@ static int32_t Script_AppendToFile(lua_State* L) {
 }
 
 static int32_t Script_GetAccountExpansionLevel(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    lua_pushnumber(L, ClientServices::GetExpansionLevel());
+    return 1;
 }
 
 static int32_t Script_UnitExists(lua_State* L) {
@@ -245,7 +247,7 @@ static int32_t Script_UnitSex(lua_State* L) {
 
 static int32_t Script_UnitLevel(lua_State* L) {
     // TODO
-    lua_pushnumber(L, 1.0);
+    lua_pushnumber(L, 25.0);
     return 1;
 }
 

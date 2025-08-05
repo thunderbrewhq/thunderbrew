@@ -5,7 +5,10 @@
 
 
 static int32_t Script_GetNumFriends(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 10.0);
+    lua_pushnumber(L, 0.0);
+    return 2;
 }
 
 static int32_t Script_GetFriendInfo(lua_State* L) {
