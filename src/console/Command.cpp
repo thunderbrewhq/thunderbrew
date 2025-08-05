@@ -231,7 +231,7 @@ void ConsoleInitializeCommonCommand() {
 }
 
 void ConsoleInitializeDebugCommand() {
-    // TODO
+    ConsoleCommandRegister("script", ConsoleCommand_Script, DEFAULT, nullptr);
 }
 
 int32_t ConsoleCommandComplete(const char* partial, const char** previous, int32_t direction) {

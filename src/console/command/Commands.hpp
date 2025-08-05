@@ -12,6 +12,7 @@ int32_t CCGxRestart(const char* command, const char* argument);
 DECLARE_COMMAND(Quit);
 DECLARE_COMMAND(Ver);
 DECLARE_COMMAND(SetMap);
+DECLARE_COMMAND(Script);
 
 DECLARE_COMMAND(Help);
 DECLARE_COMMAND(FontColor);

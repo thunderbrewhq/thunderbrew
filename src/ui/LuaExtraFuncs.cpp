@@ -60,7 +60,37 @@ int32_t strsplit(lua_State* L) {
 }
 
 int32_t strjoin(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    size_t length = 0;
+    auto v9 = luaL_checklstring(L, 1, &length);
+    int32_t v1 = lua_gettop(L);
+    int32_t v2 = v1 - 1;
+    if (length) {
+        if (v1 == 1) {
+            lua_pushstring(L, "");
+            return 1;
+        } else {
+            int32_t v4 = 2 * v2;
+            int32_t v8 = 2 * v2;
+            if (!lua_checkstack(L, 2 * v2))
+                return luaL_error(L, "strjoin(): Stack overflow");
+            if (v2 > 1) {
+                int32_t v5 = 3;
+                int32_t v6 = v2 - 1;
+                do {
+                    lua_pushlstring(L, v9, length);
+                    lua_insert(L, v5);
+                    v5 += 2;
+                    --v6;
+                } while (v6);
+                v4 = v8;
+            }
+            lua_concat(L, v4 - 1);
+            return 1;
+        }
+    } else {
+        lua_concat(L, v1);
+        return 1;
+    }
 }
 
 int32_t sub_816C40(lua_State* L) {

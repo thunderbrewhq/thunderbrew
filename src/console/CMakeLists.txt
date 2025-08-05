@@ -17,6 +17,7 @@ target_link_libraries(console
     PUBLIC
         common
         gx
+        ui
         storm
     PRIVATE
         client

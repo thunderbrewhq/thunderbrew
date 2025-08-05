@@ -7,6 +7,7 @@
 #include "gameui/CGDressUpModelFrame.hpp"
 #include "gameui/CGTabardModelFrame.hpp"
 #include "gameui/CGQuestPOIFrame.hpp"
+#include "console/Console.hpp"
 #include "ui/FrameXML.hpp"
 #include "ui/FrameScript.hpp"
 #include "util/Lua.hpp"
@@ -1262,7 +1263,14 @@ static int32_t Script_IsThreatWarningEnabled(lua_State* L) {
 }
 
 static int32_t Script_ConsoleAddMessage(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1)) {
+        return luaL_error(L, "Usage: ConsoleAddMessage(string)");
+    }
+    auto text = lua_tolstring(L, 1, 0);
+    if (text && *text) {
+        ConsolePrintf("%s", text);
+    }
+    return 0;
 }
 
 static int32_t Script_GetItemUniqueness(lua_State* L) {

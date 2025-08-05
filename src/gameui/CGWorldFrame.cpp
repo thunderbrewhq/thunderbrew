@@ -9,6 +9,7 @@
 #include "world/CWorldScene.hpp"
 #include "gameui/camera/CGCamera.hpp"
 #include "event/EvtKeyDown.hpp"
+#include "console/Console.hpp"
 
 #include "model/Model2.hpp"
 
