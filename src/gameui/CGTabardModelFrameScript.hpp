@@ -1,0 +1,10 @@
+#ifndef GAME_UI_CGTABARD_MODEL_FRAME_SCRIPT_HPP
+#define GAME_UI_CGTABARD_MODEL_FRAME_SCRIPT_HPP
+
+#include "ui/FrameScript.hpp"
+
+#define NUM_CGTABARD_MODEL_FRAME_SCRIPT_METHODS 10
+
+extern FrameScript_Method CGTabardModelFrameMethods[NUM_CGTABARD_MODEL_FRAME_SCRIPT_METHODS];
+
+#endif

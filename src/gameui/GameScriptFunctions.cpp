@@ -1,6 +1,12 @@
 #include "gameui/GameScriptFunctions.hpp"
 #include "gameui/CGGameUI.hpp"
 #include "gameui/CGTooltip.hpp"
+#include "gameui/CGCooldown.hpp"
+#include "gameui/CGMinimapFrame.hpp"
+#include "gameui/CGCharacterModelBase.hpp"
+#include "gameui/CGDressUpModelFrame.hpp"
+#include "gameui/CGTabardModelFrame.hpp"
+#include "gameui/CGQuestPOIFrame.hpp"
 #include "ui/FrameXML.hpp"
 #include "ui/FrameScript.hpp"
 #include "util/Lua.hpp"
@@ -1609,8 +1615,12 @@ FrameScript_Method GameScript::s_ScriptFunctions_Game[NUM_SCRIPT_FUNCTIONS_GAME]
 void LoadScriptFunctions() {
     RegisterSimpleFrameScriptMethods();
     CGTooltip::CreateScriptMetaTable();
-
-    // TODO
+    CGCooldown::CreateScriptMetaTable();
+    CGMinimapFrame::CreateScriptMetaTable();
+    CGCharacterModelBase::CreateScriptMetaTable();
+    CGDressUpModelFrame::CreateScriptMetaTable();
+    CGTabardModelFrame::CreateScriptMetaTable();
+    CGQuestPOIFrame::CreateScriptMetaTable();
 
     for (int32_t i = 0; i < NUM_SCRIPT_FUNCTIONS_GAME; ++i) {
         FrameScript_RegisterFunction(

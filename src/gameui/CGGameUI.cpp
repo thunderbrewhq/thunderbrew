@@ -4,9 +4,15 @@
 #include <storm/Log.hpp>
 
 #include "client/Client.hpp"
+#include "gameui/GameScriptFunctions.hpp"
 #include "gameui/CGWorldFrame.hpp"
 #include "gameui/CGTooltip.hpp"
-#include "gameui/GameScriptFunctions.hpp"
+#include "gameui/CGCooldown.hpp"
+#include "gameui/CGMinimapFrame.hpp"
+#include "gameui/CGCharacterModelBase.hpp"
+#include "gameui/CGDressUpModelFrame.hpp"
+#include "gameui/CGTabardModelFrame.hpp"
+#include "gameui/CGQuestPOIFrame.hpp"
 #include "gx/Coordinate.hpp"
 #include "gx/Device.hpp"
 #include "ui/FrameScript.hpp"
@@ -181,12 +187,12 @@ void CGGameUI::Initialize() {
 void CGGameUI::RegisterFrameFactories() {
     FrameXML_RegisterFactory("WorldFrame", CGWorldFrame::Create, 1);
     FrameXML_RegisterFactory("GameTooltip", CGTooltip::Create, 0);
-    //FrameXML_RegisterFactory("Cooldown", (int)sub_51A380, 0);
-    //FrameXML_RegisterFactory("Minimap", (int)CGMinimapFrame::Create, 0);
-    //FrameXML_RegisterFactory("PlayerModel", (int)CGCharacterModelBase::Create, 0);
-    //FrameXML_RegisterFactory("DressUpModel", (int)sub_514300, 0);
-    //FrameXML_RegisterFactory("TabardModel", (int)CGTabardModelFrame::Create, 0);
-    //FrameXML_RegisterFactory("QuestPOIFrame", (int)sub_514260, 0);
+    FrameXML_RegisterFactory("Cooldown", CGCooldown::Create, 0);
+    FrameXML_RegisterFactory("Minimap", CGMinimapFrame::Create, 0);
+    FrameXML_RegisterFactory("PlayerModel", CGCharacterModelBase::Create, 0);
+    FrameXML_RegisterFactory("DressUpModel", CGDressUpModelFrame::Create, 0);
+    FrameXML_RegisterFactory("TabardModel", CGTabardModelFrame::Create, 0);
+    FrameXML_RegisterFactory("QuestPOIFrame", CGQuestPOIFrame::Create, 0);
 }
 
 void CGGameUI::Reload() {

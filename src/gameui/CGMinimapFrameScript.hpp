@@ -1,0 +1,10 @@
+#ifndef GAME_UI_CGMINIMAP_FRAME_SCRIPT_HPP
+#define GAME_UI_CGMINIMAP_FRAME_SCRIPT_HPP
+
+#include "ui/FrameScript.hpp"
+
+#define NUM_CGMINIMAP_FRAME_SCRIPT_METHODS 15
+
+extern FrameScript_Method CGMinimapFrameMethods[NUM_CGMINIMAP_FRAME_SCRIPT_METHODS];
+
+#endif
