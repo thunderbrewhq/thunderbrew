@@ -12,6 +12,7 @@
 #include "ui/CSimpleScrollFrame.hpp"
 #include "ui/CSimpleSlider.hpp"
 #include "ui/CSimpleTexture.hpp"
+#include "ui/CSimpleMessageScrollFrame.hpp"
 #include "ui/FrameScript.hpp"
 
 void CharacterCreateRegisterScriptFunctions() {
@@ -79,7 +80,7 @@ void RegisterSimpleFrameScriptMethods() {
 
     // TODO
     // CSimpleMessageFrame::CreateScriptMetaTable();
-    // CSimpleMessageScrollFrame::CreateScriptMetaTable();
+    CSimpleMessageScrollFrame::CreateScriptMetaTable();
 
     CSimpleModel::CreateScriptMetaTable();
     CSimpleModelFFX::CreateScriptMetaTable();

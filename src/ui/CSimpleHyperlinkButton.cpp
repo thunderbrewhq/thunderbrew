@@ -40,10 +40,16 @@ void CSimpleHyperlinkButton::SetHyperlink(CSimpleFontString* string, const GXUFO
 }
 
 void CSimpleHyperlinkButton::OnLayerCursorEnter(int32_t a2) {
+    auto frame = static_cast<CSimpleHyperlinkedFrame*>(this->m_parent);
+    frame->OnHyperlinkEnter(this->m_hyperlink, this->m_hyperlink);
 }
 
 void CSimpleHyperlinkButton::OnLayerCursorExit(int32_t a2, int32_t a3) {
+    auto frame = static_cast<CSimpleHyperlinkedFrame*>(this->m_parent);
+    frame->OnHyperlinkLeave(this->m_hyperlink, this->m_hyperlink);
 }
 
 void CSimpleHyperlinkButton::OnClick(const char* btn, int32_t a3) {
+    auto frame = static_cast<CSimpleHyperlinkedFrame*>(this->m_parent);
+    frame->OnHyperlinkClick(this->m_hyperlink, this->m_hyperlink, btn);
 }

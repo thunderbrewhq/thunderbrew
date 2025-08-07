@@ -28,31 +28,32 @@ FrameScript_Object::ScriptIx* CSimpleHyperlinkedFrame::GetScriptByName(const cha
     return nullptr;
 }
 
-void CSimpleHyperlinkedFrame::OnHyperlinkClick(const char* a2, const char* a3, const char* a4) {
+void CSimpleHyperlinkedFrame::OnHyperlinkClick(const char* link, const char* text, const char* button) {
     if (this->m_onHyperlinkClick.luaRef) {
         auto L = FrameScript_GetContext();
-        lua_pushstring(L, a2);
-        lua_pushstring(L, a3);
+        lua_pushstring(L, link);
+        lua_pushstring(L, text);
+        lua_pushstring(L, button);
 
-        this->RunScript(this->m_onHyperlinkClick, 2, 0);
+        this->RunScript(this->m_onHyperlinkClick, 3, 0);
     }
 }
 
-void CSimpleHyperlinkedFrame::OnHyperlinkLeave(const char* a2, const char* a3) {
+void CSimpleHyperlinkedFrame::OnHyperlinkLeave(const char* link, const char* text) {
     if (this->m_onHyperlinkLeave.luaRef) {
         auto L = FrameScript_GetContext();
-        lua_pushstring(L, a2);
-        lua_pushstring(L, a3);
+        lua_pushstring(L, link);
+        lua_pushstring(L, text);
 
         this->RunScript(this->m_onHyperlinkLeave, 2, 0);
     }
 }
 
-void CSimpleHyperlinkedFrame::OnHyperlinkEnter(const char* a2, const char* a3) {
+void CSimpleHyperlinkedFrame::OnHyperlinkEnter(const char* link, const char* text) {
     if (this->m_onHyperlinkEnter.luaRef) {
         auto L = FrameScript_GetContext();
-        lua_pushstring(L, a2);
-        lua_pushstring(L, a3);
+        lua_pushstring(L, link);
+        lua_pushstring(L, text);
 
         this->RunScript(this->m_onHyperlinkEnter, 2, 0);
     }
