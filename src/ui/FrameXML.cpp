@@ -8,6 +8,7 @@
 #include "ui/CSimpleModel.hpp"
 #include "ui/CSimpleMovieFrame.hpp"
 #include "ui/CSimpleScrollFrame.hpp"
+#include "ui/CSimpleMessageScrollFrame.hpp"
 #include "ui/CSimpleSlider.hpp"
 #include "util/CStatus.hpp"
 #include "util/SFile.hpp"
@@ -77,7 +78,8 @@ CSimpleFrame* Create_SimpleScrollFrame(CSimpleFrame* parent) {
 CSimpleFrame* Create_SimpleScrollingMessageFrame(CSimpleFrame* parent) {
     // TODO
 
-    return nullptr;
+    auto m = SMemAlloc(sizeof(CSimpleMessageScrollFrame), __FILE__, __LINE__, 0x0);
+    return new (m) CSimpleMessageScrollFrame(parent);
 }
 
 CSimpleFrame* Create_SimpleSlider(CSimpleFrame* parent) {

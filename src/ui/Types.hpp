@@ -2,6 +2,7 @@
 #define UI_TYPES_HPP
 
 #include <cstdint>
+#include <tempest/Rect.hpp>
 
 struct lua_State;
 class CSimpleFrame;
@@ -102,5 +103,12 @@ struct FrameScript_Method {
     const char* name;
     int32_t (*method)(lua_State*);
 };
+
+struct GXUFONTHYPERLINKINFO {
+    CRect extent;
+    const char* link;
+    uint32_t linkLength;
+};
+
 
 #endif
