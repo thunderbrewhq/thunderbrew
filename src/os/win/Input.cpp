@@ -671,11 +671,22 @@ int32_t OsWindowProc(void* window, uint32_t message, uintptr_t wparam, intptr_t 
         auto keyDown = message == WM_KEYDOWN || message == WM_SYSKEYDOWN;
 
         if (wparam == VK_SHIFT) {
-            // TODO
+            if (!keyDown) {
+                OsQueuePut(OS_INPUT_KEY_UP, 0, 0, 0, 0);
+                OsQueuePut(OS_INPUT_KEY_UP, 1, 0, 0, 0);
+                return 0;
+            }
+
+            static uint32_t scanCode = 0;
+            if (scanCode == 256) {
+                scanCode = MapVirtualKeyA(VK_RSHIFT, MAPVK_VK_TO_VSC);
+            }
+
+            wparam = ((lparam >> 24) & 0xFF) != scanCode ? VK_LSHIFT : VK_RSHIFT;
         } else if (wparam == VK_CONTROL) {
-            // TODO
+            wparam = ((lparam >> 24) & 0x01) | 0xA2;
         } else if (wparam == VK_MENU) {
-            // TODO
+            wparam = ((lparam >> 24) & 0x01) | 0xA4;
         }
 
         KEY key;
