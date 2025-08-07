@@ -20,7 +20,14 @@ void* OsGuiGetWindow(int32_t type) {
 }
 
 bool OsGuiIsModifierKeyDown(int32_t key) {
-    // TODO
+    switch (key) {
+    case 0:
+        return (GetKeyState(17) & 0xF000) != 0;
+    case 1:
+        return (GetKeyState(16) & 0xF000) != 0;
+    case 2:
+        return (GetKeyState(18) & 0xF000) != 0;
+    }
     return false;
 }
 
