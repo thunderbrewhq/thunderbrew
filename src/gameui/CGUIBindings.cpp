@@ -13,6 +13,7 @@
 
 static CStatus s_nullStatus;
 static uint16_t s_initRound = 0;
+static uint32_t s_loadPendingMask = 0;
 
 CGUIBindings* CGUIBindings::s_bindings = nullptr;
 
@@ -114,7 +115,7 @@ static bool ValidateKeyString(const char* key) {
     return true;
 }
 
-void MODIFIEDCLICK::SetBinding(BINDING_SET a1, const char* binding) {
+void MODIFIEDCLICK::SetBinding(BINDING_SET set, const char* binding) {
 }
 
 
@@ -123,6 +124,63 @@ void CGUIBindings::Initialize() {
     while (!s_initRound) {
         ++s_initRound;
     }
+}
+
+void CGUIBindings::LoadBindings() {
+    char* buffer = nullptr;
+    if (SFile::Load(nullptr, "WTF\\DefaultBindings.wtf", reinterpret_cast<void**>(&buffer), nullptr, 1, 1, nullptr)) {
+        CGUIBindings::LoadBindings(BINDING_DEFAULT, buffer);
+        SFile::Unload(buffer);
+        // TODO: LoadJoystickConfig
+    }
+    s_loadPendingMask = 6;
+    // TODO: LoadAccountData
+}
+
+void CGUIBindings::LoadBindings(BINDING_SET set, const char* buffer) {
+    auto bindings = CGUIBindings::s_bindings;
+
+    if (!CGUIBindings::s_bindings) {
+        return;
+    }
+
+    if (set != BINDING_DEFAULT) {
+        // TODO: bindings->CopyBindings(BINDING_DEFAULT, set);
+    }
+
+    BINDING_MODE mode = BINDING_MODE_0;
+
+    while (*buffer) {
+        char token[1024];
+        SStrTokenize(&buffer, token, sizeof(token), "\r\n", nullptr);
+
+        char* line = token;
+        while (*line == ' ' || *line == '\t') {
+            ++line;
+        }
+
+        if (!SStrCmpI(line, "BINDINGMODE ", 12)) {
+            auto value = SStrToInt(&line[12]);
+            if (value <= BINDING_MODE_3) {
+                mode = static_cast<BINDING_MODE>(value);
+            }
+        } else if (!SStrCmpI(line, "bind ", 5)) {
+            const char* command = &line[5];
+            char keystring[32];
+            SStrTokenize(&command, keystring, sizeof(keystring), " ", nullptr);
+            bindings->Bind(set, mode, keystring, command);
+        } else if (!SStrCmpI(line, "modifiedclick ", 14)) {
+            const char* command = &line[14];
+            char keystring[32];
+            SStrTokenize(&command, keystring, sizeof(keystring), " ", nullptr);
+            if (command) {
+                auto modifiedClick = bindings->m_modifiedClicks.Ptr(command);
+                if (modifiedClick)
+                    modifiedClick->SetBinding(set, keystring);
+            }
+        }
+    }
+
 }
 
 bool CGUIBindings::Load(const char* commandsFile, MD5_CTX* md5, CStatus* status) {

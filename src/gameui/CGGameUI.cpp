@@ -163,7 +163,7 @@ void CGGameUI::Initialize() {
     //CGGameUI::SomeSavedAccountVariables((int)v23);
     //LoadAccountData(6, (int(__cdecl*)(int, int, int))sub_5183A0, 0);
     //CGGameUI::UpdateInitCounter();
-    //CGUIBindings::LoadBindings();
+    CGUIBindings::LoadBindings();
     //CGUIMacros::Initialize();
     //CGUIMacros::LoadMacros();
     //CGChat::LoadChatSettings();

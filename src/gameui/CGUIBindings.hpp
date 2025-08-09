@@ -43,7 +43,7 @@ class KEYCOMMAND : public TSHashObject<KEYCOMMAND, HASHKEY_STRI> {
 
 class MODIFIEDCLICK : public TSHashObject<MODIFIEDCLICK, HASHKEY_STRI> {
     public:
-    void SetBinding(BINDING_SET a1, const char* binding);
+    void SetBinding(BINDING_SET set, const char* binding);
 
     int32_t index;
 };
@@ -53,6 +53,8 @@ class CGUIBindings {
     static CGUIBindings* s_bindings;
 
     static void Initialize();
+    static void LoadBindings();
+    static void LoadBindings(BINDING_SET set, const char* buffer);
 
 
     CGUIBindings() = default;
