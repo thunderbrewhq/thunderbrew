@@ -1,4 +1,5 @@
 #include "gameui/GameScriptFunctions.hpp"
+#include "gameui/CGUIBindings.hpp"
 #include "ui/FrameScript.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
@@ -13,23 +14,144 @@ static int32_t Script_GetBinding(lua_State* L) {
 }
 
 static int32_t Script_SetBinding(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1)) {
+        return luaL_error(L, "Usage: SetBinding(\"KEY\"[, \"COMMAND\"][, mode])");
+    }
+
+    int32_t mode = BINDING_MODE_0;
+    if (lua_isnumber(L, 3)) {
+        mode = static_cast<int32_t>(lua_tonumber(L, 3)) - 1;
+        if (mode < BINDING_MODE_0 || mode > BINDING_MODE_3) {
+            mode = BINDING_MODE_0;
+        }
+    }
+    auto key = lua_tolstring(L, 1, 0);
+    auto command = lua_tolstring(L, 2, 0);
+    if (CGUIBindings::s_bindings->Bind(BINDING_SCRIPT, static_cast<BINDING_MODE>(mode), key, command)) {
+        FrameScript_SignalEvent(0x177u, 0);
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 static int32_t Script_SetBindingSpell(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+        return luaL_error(L, "Usage: SetBindingSpell(\"KEY\", \"spellname\"[, mode])");
+    }
+
+    int32_t mode = BINDING_MODE_0;
+    if (lua_isnumber(L, 3)) {
+        mode = static_cast<int32_t>(lua_tonumber(L, 3)) - 1;
+        if (mode < BINDING_MODE_0 || mode > BINDING_MODE_3) {
+            mode = BINDING_MODE_0;
+        }
+    }
+    auto key = lua_tolstring(L, 1, 0);
+
+    auto spellName = lua_tolstring(L, 2, 0);
+    auto length = SStrLen(spellName) + 7;
+    auto command = static_cast<char*>(alloca(length));
+    SStrPrintf(command, length, "SPELL %s", spellName);
+
+    if (CGUIBindings::s_bindings->Bind(BINDING_SCRIPT, static_cast<BINDING_MODE>(mode), key, command)) {
+        FrameScript_SignalEvent(0x177u, 0);
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 static int32_t Script_SetBindingItem(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+        return luaL_error(L, "Usage: SetBindingItem(\"KEY\", \"itemname\"[, mode])");
+    }
+
+    int32_t mode = BINDING_MODE_0;
+    if (lua_isnumber(L, 3)) {
+        mode = static_cast<int32_t>(lua_tonumber(L, 3)) - 1;
+        if (mode < BINDING_MODE_0 || mode > BINDING_MODE_3) {
+            mode = BINDING_MODE_0;
+        }
+    }
+    auto key = lua_tolstring(L, 1, 0);
+
+    auto itemName = lua_tolstring(L, 2, 0);
+    auto length = SStrLen(itemName) + 7;
+    auto command = static_cast<char*>(alloca(length));
+    SStrPrintf(command, length, "ITEM %s", itemName);
+
+    if (CGUIBindings::s_bindings->Bind(BINDING_SCRIPT, static_cast<BINDING_MODE>(mode), key, command)) {
+        FrameScript_SignalEvent(0x177u, 0);
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 static int32_t Script_SetBindingMacro(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+        return luaL_error(L, "Usage: SetBindingMacro(\"KEY\", \"macroname\"|macroid[, mode])");
+    }
+
+    int32_t mode = BINDING_MODE_0;
+    if (lua_isnumber(L, 3)) {
+        mode = static_cast<int32_t>(lua_tonumber(L, 3)) - 1;
+        if (mode < BINDING_MODE_0 || mode > BINDING_MODE_3) {
+            mode = BINDING_MODE_0;
+        }
+    }
+    auto key = lua_tolstring(L, 1, 0);
+
+    auto macroName = lua_tolstring(L, 2, 0);
+    auto length = SStrLen(macroName) + 7;
+    auto command = static_cast<char*>(alloca(length));
+    SStrPrintf(command, length, "MACRO %s", macroName);
+
+    if (CGUIBindings::s_bindings->Bind(BINDING_SCRIPT, static_cast<BINDING_MODE>(mode), key, command)) {
+        FrameScript_SignalEvent(0x177u, 0);
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 static int32_t Script_SetBindingClick(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+        return luaL_error(L, "Usage: SetBindingClick(\"KEY\", \"buttonName\"[, \"mouseButton\"][, mode])");
+    }
+
+    int32_t mode = BINDING_MODE_0;
+    if (lua_isnumber(L, 4)) {
+        mode = static_cast<int32_t>(lua_tonumber(L, 4)) - 1;
+        if (mode < BINDING_MODE_0 || mode > BINDING_MODE_3) {
+            mode = BINDING_MODE_0;
+        }
+    }
+    auto key = lua_tolstring(L, 1, 0);
+
+    auto buttonName = lua_tolstring(L, 2, 0);
+
+    auto mouseButton = lua_tolstring(L, 3, 0);
+    if (!mouseButton) {
+        mouseButton = "LeftButton";
+    }
+
+    auto length = SStrLen(buttonName) + SStrLen(mouseButton) + 8;
+    auto command = static_cast<char*>(alloca(length));
+    SStrPrintf(command, length, "CLICK %s:%s", buttonName, mouseButton);
+
+    if (CGUIBindings::s_bindings->Bind(BINDING_SCRIPT, static_cast<BINDING_MODE>(mode), key, command)) {
+        FrameScript_SignalEvent(0x177u, 0);
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 static int32_t Script_SetOverrideBinding(lua_State* L) {

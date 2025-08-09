@@ -13,6 +13,7 @@
 #include "gameui/CGDressUpModelFrame.hpp"
 #include "gameui/CGTabardModelFrame.hpp"
 #include "gameui/CGQuestPOIFrame.hpp"
+#include "gameui/CGUIBindings.hpp"
 #include "gx/Coordinate.hpp"
 #include "gx/Device.hpp"
 #include "ui/FrameScript.hpp"
@@ -84,8 +85,8 @@ void CGGameUI::Initialize() {
     LoadScriptFunctions();
     FrameScript_CreateEvents(g_scriptEvents, 722);
     //CGGameUI::RegisterGameCVars();
-    //CGUIBindings::Initialize();
 
+    CGUIBindings::Initialize();
     CGGameUI::RegisterFrameFactories();
 
     // STORM_ASSERT(GetDataInterfaceVersion() == GetCodeInterfaceVersion())
@@ -139,8 +140,9 @@ void CGGameUI::Initialize() {
     FrameXML_FreeHashNodes();
     FrameXML_CreateFrames("Interface\\FrameXML\\FrameXML.toc", 0, &md5, &status);
 
-    //if (SFile__FileExistsEx((void*)"Interface\\FrameXML\\Bindings.xml", 1))
-    //    CGUIBindings::Load("Interface\\FrameXML\\Bindings.xml", &md5, &status);
+    if (SFile::FileExistsEx("Interface\\FrameXML\\Bindings.xml", 1)) {
+        CGUIBindings::s_bindings->Load("Interface\\FrameXML\\Bindings.xml", &md5, &status);
+    }
 
     unsigned char digest2[16];
     MD5Final(digest2, &md5);

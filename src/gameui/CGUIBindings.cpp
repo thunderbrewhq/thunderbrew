@@ -7,10 +7,15 @@
 
 #include <common/XML.hpp>
 #include <common/Unicode.hpp>
+#include <bc/Memory.hpp>
 #include <utility>
 
 
 static CStatus s_nullStatus;
+static uint16_t s_initRound = 0;
+
+CGUIBindings* CGUIBindings::s_bindings = nullptr;
+
 
 static bool ValidateKeyString(const char* key) {
     static std::pair<const char*, size_t> s_prefixes[3] = {
@@ -112,6 +117,13 @@ static bool ValidateKeyString(const char* key) {
 void MODIFIEDCLICK::SetBinding(BINDING_SET a1, const char* binding) {
 }
 
+
+void CGUIBindings::Initialize() {
+    CGUIBindings::s_bindings = NEW(CGUIBindings);
+    while (!s_initRound) {
+        ++s_initRound;
+    }
+}
 
 bool CGUIBindings::Load(const char* commandsFile, MD5_CTX* md5, CStatus* status) {
     if (!status) {
@@ -232,8 +244,8 @@ void CGUIBindings::LoadBinding(const char* commandsFile, XMLNode* node, CStatus*
 
     const char* binding = node->GetAttributeByName("default");
     if (binding && *binding) {
-        if (!this->m_bindings.Ptr(binding)) {
-            this->Bind(BINDING_SET_0, BINDING_MODE_0, binding, name);
+        if (!this->m_bindings[BINDING_DEFAULT].Ptr(binding)) {
+            this->Bind(BINDING_DEFAULT, BINDING_MODE_0, binding, name);
         }
     }
 }
@@ -255,7 +267,7 @@ void CGUIBindings::LoadModifiedClick(const char* commandsFile, XMLNode* node, CS
 
     const char* binding = node->GetAttributeByName("default");
     if (binding && *binding) {
-        modifiedClick->SetBinding(BINDING_SET_0, binding);
+        modifiedClick->SetBinding(BINDING_DEFAULT, binding);
     }
 }
 
@@ -311,12 +323,12 @@ bool CGUIBindings::Bind(BINDING_SET set, BINDING_MODE mode, const char* keystrin
         return false;
     }
 
-    auto binding = this->m_bindings.Ptr(key);
+    auto binding = this->m_bindings[set].Ptr(key);
     if (!binding) {
-        binding = this->m_bindings.New(key, 0, 0);
+        binding = this->m_bindings[set].New(key, 0, 0);
     }
 
-    if (set != BINDING_SET_0) {
+    if (set != BINDING_DEFAULT) {
         binding->flags &= ~1u;
     } else {
         binding->flags |= 1u;
@@ -366,8 +378,7 @@ int32_t CGUIBindings::GetBindingIndex(KEYBINDING* binding, BINDING_MODE mode) co
 }
 
 int32_t CGUIBindings::GetNumCommandKeys(BINDING_SET set, BINDING_MODE mode, const char* command) {
-    // TODO: Check set argument
-    auto binding = this->m_bindings.Head();
+    auto binding = this->m_bindings[set].Head();
 
     int32_t result = 0;
 
@@ -377,15 +388,14 @@ int32_t CGUIBindings::GetNumCommandKeys(BINDING_SET set, BINDING_MODE mode, cons
             ++result;
         }
 
-        binding = this->m_bindings.Next(binding);
+        binding = this->m_bindings[set].Next(binding);
     }
 
     return result;
 }
 
 void CGUIBindings::AdjustCommandKeyIndices(BINDING_SET set, BINDING_MODE mode, const char* command, int32_t index) {
-    // TODO: Check set argument
-    auto binding = this->m_bindings.Head();
+    auto binding = this->m_bindings[set].Head();
 
     int32_t result = 0;
 
@@ -398,6 +408,6 @@ void CGUIBindings::AdjustCommandKeyIndices(BINDING_SET set, BINDING_MODE mode, c
             }
         }
 
-        binding = this->m_bindings.Next(binding);
+        binding = this->m_bindings[set].Next(binding);
     }
 }

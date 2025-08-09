@@ -9,10 +9,10 @@ class CStatus;
 class XMLNode;
 
 enum BINDING_SET {
-    BINDING_SET_0 = 0,
+    BINDING_DEFAULT = 0,
     BINDING_SET_1,
     BINDING_SET_2,
-    BINDING_SET_3,
+    BINDING_SCRIPT,
 };
 
 enum BINDING_MODE {
@@ -50,6 +50,11 @@ class MODIFIEDCLICK : public TSHashObject<MODIFIEDCLICK, HASHKEY_STRI> {
 
 class CGUIBindings {
     public:
+    static CGUIBindings* s_bindings;
+
+    static void Initialize();
+
+
     CGUIBindings() = default;
 
     bool Load(const char* commandsFile, MD5_CTX* md5, CStatus* status);
@@ -64,7 +69,7 @@ class CGUIBindings {
     int32_t m_numCommands;
     int32_t m_numHiddenCommands;
     int32_t m_numModifiedClicks;
-    TSHashTable<KEYBINDING, HASHKEY_STRI> m_bindings;
+    TSHashTable<KEYBINDING, HASHKEY_STRI> m_bindings[4];
     TSHashTable<KEYCOMMAND, HASHKEY_STRI> m_commands;
     TSHashTable<MODIFIEDCLICK, HASHKEY_STRI> m_modifiedClicks;
 };
