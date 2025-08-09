@@ -1,4 +1,5 @@
 #include "gameui/CGUIBindings.hpp"
+#include "gameui/CGGameUI.hpp"
 #include "ui/FrameScript.hpp"
 #include "util/CStatus.hpp"
 #include "util/SFile.hpp"
@@ -6,7 +7,12 @@
 
 #include <common/XML.hpp>
 
+
 static CStatus s_nullStatus;
+
+
+void MODIFIEDCLICK::SetBinding(BINDING_SET a1, const char* binding) {
+}
 
 
 bool CGUIBindings::Load(const char* commandsFile, MD5_CTX* md5, CStatus* status) {
@@ -126,13 +132,97 @@ void CGUIBindings::LoadBinding(const char* commandsFile, XMLNode* node, CStatus*
     const char* angle = node->GetAttributeByName("angle");
     command->angle = StringToBOOL(angle);
 
-    const char* defaultValue = node->GetAttributeByName("default");
-    if (defaultValue && *defaultValue) {
-        if (!this->m_commands.Ptr(defaultValue)) {
-            // TODO: CGUIBindings::Bind(0, 0, defaultValue, name);
+    const char* binding = node->GetAttributeByName("default");
+    if (binding && *binding) {
+        if (!this->m_bindings.Ptr(binding)) {
+            this->Bind(BINDING_SET_0, BINDING_MODE_0, binding, name);
         }
     }
 }
 
 void CGUIBindings::LoadModifiedClick(const char* commandsFile, XMLNode* node, CStatus* status) {
+    const char* action = node->GetAttributeByName("action");
+    if (!action || !*action) {
+        status->Add(STATUS_WARNING, "Found modified click with no action in %s", commandsFile);
+        return;
+    }
+
+    if (this->m_modifiedClicks.Ptr(action)) {
+        status->Add(STATUS_WARNING, "Modified click %s is defined more than once in %s", action, commandsFile);
+        return;
+    }
+
+    auto modifiedClick = this->m_modifiedClicks.New(action, 0, 0);
+    this->m_numModifiedClicks++;
+
+    const char* binding = node->GetAttributeByName("default");
+    if (binding && *binding) {
+        modifiedClick->SetBinding(BINDING_SET_0, binding);
+    }
+}
+
+bool CGUIBindings::Bind(BINDING_SET set, BINDING_MODE mode, const char* keystring, const char* command) {
+    if (!CGGameUI::CanPerformAction(13) || !keystring) {
+        return false;
+    }
+
+    if (!command || !*command) {
+        command = "NONE";
+    }
+
+    static char s_character[2] = {};
+
+    const char* key = keystring;
+
+    if (!SStrCmpI(keystring, "LEFTBRACKET", STORM_MAX_STR)) {
+        s_character[0] = '[';
+        key = s_character;
+    } else if (!SStrCmpI(keystring, "RIGHTBRACKET", STORM_MAX_STR)) {
+        s_character[0] = ']';
+        key = s_character;
+    } else if (!SStrCmpI(keystring, "SLASH", STORM_MAX_STR)) {
+        s_character[0] = '/';
+        key = s_character;
+    } else if (!SStrCmpI(keystring, "BACKSLASH", STORM_MAX_STR)) {
+        s_character[0] = '\\';
+        key = s_character;
+    } else if (!SStrCmpI(keystring, "SEMICOLON", STORM_MAX_STR)) {
+        s_character[0] = ';';
+        key = s_character;
+    } else if (!SStrCmpI(keystring, "APOSTROPHE", STORM_MAX_STR)) {
+        s_character[0] = '\'';
+        key = s_character;
+    } else if (!SStrCmpI(keystring, "COMMA", STORM_MAX_STR)) {
+        s_character[0] = ',';
+        key = s_character;
+    } else if (!SStrCmpI(keystring, "PERIOD", STORM_MAX_STR)) {
+        s_character[0] = '.';
+        key = s_character;
+    } else if (!SStrCmpI(keystring, "TILDE", STORM_MAX_STR)) {
+        s_character[0] = '`';
+        key = s_character;
+    } else if (!SStrCmpI(keystring, "PLUS", STORM_MAX_STR)) {
+        s_character[0] = '=';
+        key = s_character;
+    } else if (!SStrCmpI(keystring, "MINUS", STORM_MAX_STR)) {
+        s_character[0] = '-';
+        key = s_character;
+    }
+
+    // TODO: if (!sub_55DAB0)
+
+    auto binding = this->m_bindings.Ptr(key);
+    if (!binding) {
+        binding = this->m_bindings.New(key, 0, 0);
+    }
+
+    if (set != BINDING_SET_0) {
+        binding->flags &= ~1u;
+    } else {
+        binding->flags |= 1u;
+    }
+
+    // TODO
+
+    return true;
 }

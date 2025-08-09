@@ -206,3 +206,8 @@ void CGGameUI::Reload() {
 int32_t CGGameUI::HandleDisplaySizeChanged(const CSizeEvent& event) {
     return 0;
 }
+
+bool CGGameUI::CanPerformAction(int32_t action) {
+    // TODO
+    return true;
+}

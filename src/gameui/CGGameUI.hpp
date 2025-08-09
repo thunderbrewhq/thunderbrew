@@ -13,6 +13,7 @@ class CGGameUI {
         static void RegisterFrameFactories();
         static void Reload();
         static int32_t HandleDisplaySizeChanged(const CSizeEvent& event);
+        static bool CanPerformAction(int32_t action);
 
     public:
         static CSimpleTop* m_simpleTop;

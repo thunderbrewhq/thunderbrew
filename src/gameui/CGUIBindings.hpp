@@ -7,9 +7,23 @@
 class CStatus;
 class XMLNode;
 
+enum BINDING_SET {
+    BINDING_SET_0 = 0,
+    BINDING_SET_1,
+    BINDING_SET_2,
+    BINDING_SET_3,
+};
+
+enum BINDING_MODE {
+    BINDING_MODE_0 = 0,
+    BINDING_MODE_1,
+    BINDING_MODE_2,
+    BINDING_MODE_3
+};
+
 class KEYBINDING : public TSHashObject<KEYBINDING, HASHKEY_STRI> {
     public:
-    int32_t index;
+    uint32_t flags;
     char* command;
 };
 
@@ -22,6 +36,13 @@ class KEYCOMMAND : public TSHashObject<KEYCOMMAND, HASHKEY_STRI> {
     int32_t angle;
 };
 
+class MODIFIEDCLICK : public TSHashObject<MODIFIEDCLICK, HASHKEY_STRI> {
+    public:
+    void SetBinding(BINDING_SET a1, const char* binding);
+
+    int32_t index;
+};
+
 class CGUIBindings {
     public:
     CGUIBindings() = default;
@@ -29,11 +50,14 @@ class CGUIBindings {
     bool Load(const char* commandsFile, MD5_CTX* md5, CStatus* status);
     void LoadBinding(const char* commandsFile, XMLNode* node, CStatus* status);
     void LoadModifiedClick(const char* commandsFile, XMLNode* node, CStatus* status);
+    bool Bind(BINDING_SET set, BINDING_MODE mode, const char* keystring, const char* command);
 
     int32_t m_numCommands;
     int32_t m_numHiddenCommands;
+    int32_t m_numModifiedClicks;
     TSHashTable<KEYBINDING, HASHKEY_STRI> m_bindings;
     TSHashTable<KEYCOMMAND, HASHKEY_STRI> m_commands;
+    TSHashTable<MODIFIEDCLICK, HASHKEY_STRI> m_modifiedClicks;
 };
 
 #endif // GAME_UI_CGUIBINDINGS_HPP
