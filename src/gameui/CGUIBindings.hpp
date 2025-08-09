@@ -68,9 +68,9 @@ class CGUIBindings {
     int32_t GetNumCommandKeys(BINDING_SET set, BINDING_MODE mode, const char* command);
     void AdjustCommandKeyIndices(BINDING_SET set, BINDING_MODE mode, const char* command, int32_t index);
 
-    int32_t m_numCommands;
-    int32_t m_numHiddenCommands;
-    int32_t m_numModifiedClicks;
+    int32_t m_numCommands = 0;
+    int32_t m_numHiddenCommands = 0;
+    int32_t m_numModifiedClicks = 0;
     TSHashTable<KEYBINDING, HASHKEY_STRI> m_bindings[4];
     TSHashTable<KEYCOMMAND, HASHKEY_STRI> m_commands;
     TSHashTable<MODIFIEDCLICK, HASHKEY_STRI> m_modifiedClicks;
