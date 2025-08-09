@@ -3,6 +3,7 @@
 
 #include <storm/Hash.hpp>
 #include <common/MD5.hpp>
+#include <common/String.hpp>
 
 class CStatus;
 class XMLNode;
@@ -18,13 +19,17 @@ enum BINDING_MODE {
     BINDING_MODE_0 = 0,
     BINDING_MODE_1,
     BINDING_MODE_2,
-    BINDING_MODE_3
+    BINDING_MODE_3,
+    BINDING_MODE_4
 };
 
 class KEYBINDING : public TSHashObject<KEYBINDING, HASHKEY_STRI> {
     public:
     uint32_t flags;
-    char* command;
+    struct {
+        int32_t index;
+        RCString command;
+    } data[4];
 };
 
 class KEYCOMMAND : public TSHashObject<KEYCOMMAND, HASHKEY_STRI> {
@@ -51,6 +56,10 @@ class CGUIBindings {
     void LoadBinding(const char* commandsFile, XMLNode* node, CStatus* status);
     void LoadModifiedClick(const char* commandsFile, XMLNode* node, CStatus* status);
     bool Bind(BINDING_SET set, BINDING_MODE mode, const char* keystring, const char* command);
+    const char* GetBindingCommand(KEYBINDING* binding, BINDING_MODE mode) const;
+    int32_t GetBindingIndex(KEYBINDING* binding, BINDING_MODE mode) const;
+    int32_t GetNumCommandKeys(BINDING_SET set, BINDING_MODE mode, const char* command);
+    void AdjustCommandKeyIndices(BINDING_SET set, BINDING_MODE mode, const char* command, int32_t index);
 
     int32_t m_numCommands;
     int32_t m_numHiddenCommands;

@@ -6,10 +6,108 @@
 #include "util/StringTo.hpp"
 
 #include <common/XML.hpp>
+#include <common/Unicode.hpp>
+#include <utility>
 
 
 static CStatus s_nullStatus;
 
+static bool ValidateKeyString(const char* key) {
+    static std::pair<const char*, size_t> s_prefixes[3] = {
+        { "SHIFT-", 6 },
+        { "CTRL-", 5 },
+        { "ALT-", 4 }
+    };
+    static std::pair<const char*, size_t> s_numberedKeys[6] = {
+        { "F", 1 },
+        { "NUMPAD", 6 },
+        { "BUTTON", 6 },
+        { "JOYSTICK", 8 },
+        { "JOYAXIS", 7 },
+        { "JOYBUTTON", 9 },
+    };
+
+    static const char* s_namedKeys[31] = {
+        "SPACE",
+        "NUMPADPLUS",
+        "NUMPADMINUS",
+        "NUMPADMULTIPLY",
+        "NUMPADDIVIDE",
+        "NUMPADDECIMAL",
+        "ESCAPE",
+        "ENTER",
+        "BACKSPACE",
+        "TAB",
+        "LEFT",
+        "UP",
+        "RIGHT",
+        "DOWN",
+        "INSERT",
+        "DELETE",
+        "HOME",
+        "END",
+        "PAGEUP",
+        "PAGEDOWN",
+        "NUMLOCK",
+        "CAPSLOCK",
+        "PRINTSCREEN",
+        "NUMPADEQUALS",
+        "MOUSEWHEELDOWN",
+        "MOUSEWHEELUP",
+        "JOYHAT",
+        "JOYHATUP",
+        "JOYHATRIGHT",
+        "JOYHATDOWN",
+        "JOYHATLEFT"
+    };
+
+    for (uint32_t i = 0; i < 3; ++i) {
+        if (SStrCmp(s_prefixes[i].first, key, s_prefixes[i].second)) {
+            break;
+        }
+
+        key += s_prefixes[i].second;
+    }
+
+    int32_t chars = 0;
+    sgetu8(reinterpret_cast<const uint8_t*>(key), &chars);
+    if (!key[chars]) {
+        return true;
+    }
+
+    uint32_t index;
+    for (index = 0; index < 6; ++index) {
+        if (!SStrCmp(s_numberedKeys[index].first, key, s_numberedKeys[index].second)) {
+            auto ch = key[s_numberedKeys[index].second];
+            if (ch >= '0' && ch <= '9') {
+                break;
+            }
+        }
+    }
+
+    if (index >= 6) {
+        for (uint32_t i = 0; i < 31; ++i) {
+            if (!SStrCmp(key, s_namedKeys[i], STORM_MAX_STR)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    const char* tail = &key[s_numberedKeys[index].second];
+    while (*tail >= '0' && *tail <= '9') {
+        ++tail;
+    }
+
+    if (*tail &&
+        (SStrCmp(s_numberedKeys[index].first, "JOYAXIS", STORM_MAX_STR)
+        || SStrCmp(tail, "POS", STORM_MAX_STR)
+        && SStrCmp(tail, "NEG", STORM_MAX_STR))) {
+        return false;
+    }
+
+    return true;
+}
 
 void MODIFIEDCLICK::SetBinding(BINDING_SET a1, const char* binding) {
 }
@@ -209,7 +307,9 @@ bool CGUIBindings::Bind(BINDING_SET set, BINDING_MODE mode, const char* keystrin
         key = s_character;
     }
 
-    // TODO: if (!sub_55DAB0)
+    if (!ValidateKeyString(key)) {
+        return false;
+    }
 
     auto binding = this->m_bindings.Ptr(key);
     if (!binding) {
@@ -222,7 +322,82 @@ bool CGUIBindings::Bind(BINDING_SET set, BINDING_MODE mode, const char* keystrin
         binding->flags |= 1u;
     }
 
-    // TODO
+    auto bindingCommand = this->GetBindingCommand(binding, mode);
+    if (!bindingCommand || !command || SStrCmp(bindingCommand, command, STORM_MAX_STR)) {
+        if (bindingCommand) {
+            auto index = this->GetBindingIndex(binding, mode);
+            this->AdjustCommandKeyIndices(set, mode, bindingCommand, index);
+        }
+        auto index = this->GetNumCommandKeys(set, mode, command);
+        binding->data[mode].command.Copy(command);
+        binding->data[mode].index = index;
+    }
 
     return true;
+}
+
+const char* CGUIBindings::GetBindingCommand(KEYBINDING* binding, BINDING_MODE mode) const {
+    if (mode != BINDING_MODE_4) {
+        return binding->data[mode].command.GetString();
+    }
+
+    for (int32_t m = BINDING_MODE_3; m >= BINDING_MODE_0; --m) {
+        // TODO
+        auto result = binding->data[m].command.GetString();
+        if (result)
+            return result;
+    }
+
+    return nullptr;
+}
+
+int32_t CGUIBindings::GetBindingIndex(KEYBINDING* binding, BINDING_MODE mode) const {
+    if (mode != BINDING_MODE_4) {
+        return binding->data[mode].index;
+    }
+
+    for (int32_t m = BINDING_MODE_3; m >= BINDING_MODE_0; --m) {
+        // TODO
+        if (binding->data[m].command.GetString())
+            return binding->data[m].index;
+    }
+
+    return -1;
+}
+
+int32_t CGUIBindings::GetNumCommandKeys(BINDING_SET set, BINDING_MODE mode, const char* command) {
+    // TODO: Check set argument
+    auto binding = this->m_bindings.Head();
+
+    int32_t result = 0;
+
+    while (binding) {
+        auto bindingCommand = this->GetBindingCommand(binding, mode);
+        if (bindingCommand && !SStrCmpI(bindingCommand, command, STORM_MAX_STR)) {
+            ++result;
+        }
+
+        binding = this->m_bindings.Next(binding);
+    }
+
+    return result;
+}
+
+void CGUIBindings::AdjustCommandKeyIndices(BINDING_SET set, BINDING_MODE mode, const char* command, int32_t index) {
+    // TODO: Check set argument
+    auto binding = this->m_bindings.Head();
+
+    int32_t result = 0;
+
+    while (binding) {
+        auto bindingCommand = this->GetBindingCommand(binding, mode);
+        if (bindingCommand && !SStrCmpI(bindingCommand, command, STORM_MAX_STR)) {
+            auto bindingIndex = this->GetBindingIndex(binding, mode);
+            if (bindingIndex > index) {
+                --binding->data[mode].index;
+            }
+        }
+
+        binding = this->m_bindings.Next(binding);
+    }
 }
