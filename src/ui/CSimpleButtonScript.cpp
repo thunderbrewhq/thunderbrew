@@ -128,7 +128,18 @@ int32_t CSimpleButton_SetFontString(lua_State* L) {
 }
 
 int32_t CSimpleButton_GetFontString(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleButton::GetObjectType();
+    auto button = static_cast<CSimpleButton*>(FrameScript_GetObjectThis(L, type));
+    auto fontString = button->m_text;
+    if (fontString) {
+        if (!fontString->lua_registered) {
+            fontString->RegisterScriptObject(nullptr);
+        }
+        lua_rawgeti(L, LUA_REGISTRYINDEX, fontString->lua_objectRef);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 int32_t CSimpleButton_SetText(lua_State* L) {

@@ -24,7 +24,7 @@ class CGTooltip : public CSimpleFrame {
     virtual int32_t GetScriptMetaTable();
     virtual ScriptIx* GetScriptByName(const char* name, ScriptData& data);
 
-    // Members
+    // Member variables
     ScriptIx m_onTooltipSetDefaultAnchor;
     ScriptIx m_onTooltipCleared;
     ScriptIx m_onTooltipAddMoney;

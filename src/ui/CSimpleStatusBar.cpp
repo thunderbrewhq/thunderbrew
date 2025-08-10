@@ -37,3 +37,23 @@ bool CSimpleStatusBar::IsA(int32_t type) {
 int32_t CSimpleStatusBar::GetScriptMetaTable() {
     return CSimpleStatusBar::s_metatable;
 }
+
+FrameScript_Object::ScriptIx* CSimpleStatusBar::GetScriptByName(const char* name, ScriptData& data) {
+    auto parentScript = CSimpleFrame::GetScriptByName(name, data);
+
+    if (parentScript) {
+        return parentScript;
+    }
+
+    if (!SStrCmpI(name, "OnValueChanged", STORM_MAX_STR)) {
+        data.wrapper = "return function(self,value) %s end";
+        return &this->m_onValueChanged;
+    }
+
+    if (!SStrCmpI(name, "OnMinMaxChanged", STORM_MAX_STR)) {
+        data.wrapper = "return function(self,min,max) %s end";
+        return &this->m_onMinMaxChanged;
+    }
+
+    return nullptr;
+}

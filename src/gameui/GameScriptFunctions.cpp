@@ -8,6 +8,7 @@
 #include "gameui/CGTabardModelFrame.hpp"
 #include "gameui/CGQuestPOIFrame.hpp"
 #include "console/Console.hpp"
+#include "gx/CGVideoOptions.hpp"
 #include "ui/FrameXML.hpp"
 #include "ui/FrameScript.hpp"
 #include "util/Lua.hpp"
@@ -1690,6 +1691,7 @@ void LoadScriptFunctions() {
     GlyphInfoRegisterScriptFunctions();
     AchievementInfoRegisterScriptFunctions();
     CurrencyTypesRegisterScriptFunctions();
+    CGVideoOptions::RegisterScriptFunctions();
     EquipmentManagerRegisterScriptFunctions();
     GMTicketInfoRegisterScriptFunctions();
     BattlenetUIRegisterScriptFunctions();

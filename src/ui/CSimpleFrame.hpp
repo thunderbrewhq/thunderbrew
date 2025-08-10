@@ -7,6 +7,7 @@
 #include "ui/Types.hpp"
 #include <cstdint>
 #include <storm/List.hpp>
+#include <storm/Hash.hpp>
 
 class CBackdropGenerator;
 class CCharEvent;
@@ -15,6 +16,11 @@ class CMouseEvent;
 class CSimpleTitleRegion;
 class CSimpleTop;
 struct lua_State;
+
+class FRAMEATTR : public TSHashObject<FRAMEATTR, HASHKEY_STRI> {
+    public:
+    int32_t luaRef;
+};
 
 class CSimpleFrame : public CScriptRegion {
     public:
@@ -79,6 +85,7 @@ class CSimpleFrame : public CScriptRegion {
         TSLink<CSimpleFrame> m_framesLink;
         TSLink<CSimpleFrame> m_destroyedLink;
         TSLink<CSimpleFrame> m_strataLink;
+        TSHashTable<FRAMEATTR, HASHKEY_STRI> m_attributes;
 
         // Virtual member functions
         virtual ~CSimpleFrame();

@@ -20,6 +20,11 @@ class CSimpleStatusBar : public CSimpleFrame {
     // Virtual member functions
     virtual bool IsA(int32_t type);
     virtual int32_t GetScriptMetaTable();
+    virtual ScriptIx* GetScriptByName(const char* name, ScriptData& data);
+
+    // Member variables
+    ScriptIx m_onValueChanged;
+    ScriptIx m_onMinMaxChanged;
 };
 
 #endif

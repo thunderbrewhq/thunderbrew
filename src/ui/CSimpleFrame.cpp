@@ -700,7 +700,70 @@ int32_t CSimpleFrame::HideThis() {
 }
 
 void CSimpleFrame::LoadXML_Attributes(XMLNode* node, CStatus* status) {
-    // TODO
+    auto L = FrameScript_GetContext();
+
+    auto child = node->m_child;
+    while (child) {
+        auto childName = child->m_name.GetString();
+        if (SStrCmpI(childName, "Attribute", STORM_MAX_STR)) {
+            const char* frameName = this->GetName();
+            if (!frameName) {
+                frameName = "<unnamed>";
+            }
+            status->Add(STATUS_WARNING, "Frame %s: Unknown attributes element %s", frameName, childName);
+            child = child->m_next;
+            continue;
+        }
+
+        auto name = child->GetAttributeByName("name");
+        if (!name) {
+            const char* frameName = this->GetName();
+            if (!frameName) {
+                frameName = "<unnamed>";
+            }
+            status->Add(STATUS_WARNING, "Frame %s: unnamed attribute element", frameName);
+            child = child->m_next;
+            continue;
+        }
+
+        auto type = child->GetAttributeByName("type");
+        if (!type) {
+            type = "string";
+        }
+
+        auto value = child->GetAttributeByName("value");
+        if (!value || !SStrCmpI(value, "nil", STORM_MAX_STR)) {
+            const char* frameName = this->GetName();
+            if (!frameName) {
+                frameName = "<unnamed>";
+            }
+            status->Add(STATUS_WARNING, "Frame %s: attribute element named %s missing value", frameName, name);
+            child = child->m_next;
+            continue;
+        }
+
+        if (!SStrCmpI(type, "nil", STORM_MAX_STR)) {
+            lua_pushnil(L);
+        } else if (!SStrCmpI(type, "boolean", STORM_MAX_STR)) {
+            lua_pushboolean(L, StringToBOOL(value));
+        } else if (!SStrCmpI(type, "number", STORM_MAX_STR)) {
+            lua_pushnumber(L, SStrToFloat(value));
+        } else {
+            lua_pushstring(L, value);
+        }
+
+        auto attribute = this->m_attributes.Ptr(name);
+        if (attribute) {
+            luaL_unref(L, LUA_REGISTRYINDEX, attribute->luaRef);
+        } else {
+            attribute = this->m_attributes.New(name, 0, 0);
+        }
+
+        // TODO: LUA Tainted Logic
+        attribute->luaRef = luaL_ref(L, LUA_REGISTRYINDEX);
+
+        child = child->m_next;
+    }
 }
 
 void CSimpleFrame::LoadXML_Backdrop(XMLNode* node, CStatus* status) {
