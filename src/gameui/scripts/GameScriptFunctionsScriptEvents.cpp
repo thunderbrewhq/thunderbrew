@@ -52,7 +52,6 @@ static int32_t Script_UnitIsUnit(lua_State* L) {
 
 static int32_t Script_UnitIsPlayer(lua_State* L) {
     // TODO
-    __debugbreak();
     lua_pushnil(L);
     return 1;
 }

@@ -12,6 +12,7 @@
 #include "ui/CSimpleScrollFrame.hpp"
 #include "ui/CSimpleSlider.hpp"
 #include "ui/CSimpleTexture.hpp"
+#include "ui/CSimpleMessageFrame.hpp"
 #include "ui/CSimpleMessageScrollFrame.hpp"
 #include "ui/CSimpleStatusBar.hpp"
 #include "ui/FrameScript.hpp"
@@ -79,8 +80,7 @@ void RegisterSimpleFrameScriptMethods() {
     CSimpleEditBox::CreateScriptMetaTable();
     CSimpleHTML::CreateScriptMetaTable();
 
-    // TODO
-    // CSimpleMessageFrame::CreateScriptMetaTable();
+    CSimpleMessageFrame::CreateScriptMetaTable();
     CSimpleMessageScrollFrame::CreateScriptMetaTable();
 
     CSimpleModel::CreateScriptMetaTable();
