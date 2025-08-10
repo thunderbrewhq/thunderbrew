@@ -153,6 +153,7 @@ class CSimpleFrame : public CScriptRegion {
         void RunOnShowScript();
         void RunOnSizeChangedScript(float width, float height);
         void RunOnUpdateScript(float elapsedSec);
+        void RunOnAttributeChangedScript(const char* name, int32_t luaRef);
         void SetBackdrop(CBackdropGenerator* backdrop);
         void SetBeingScrolled(int32_t a2, int32_t a3);
         void SetFrameAlpha(uint8_t alpha);
@@ -166,6 +167,8 @@ class CSimpleFrame : public CScriptRegion {
         int32_t TestHitRect(const C2Vector& pt);
         void UnregisterForEvents(int32_t a2);
         bool GetAttribute(const char* name, int32_t& luaRef);
+        void SetAttribute(const char* name, int32_t luaRef);
+        bool AttributeChangesAllowed() const;
 };
 
 #endif

@@ -450,6 +450,19 @@ void CSimpleFrame::RunOnUpdateScript(float elapsedSec) {
     }
 }
 
+void CSimpleFrame::RunOnAttributeChangedScript(const char* name, int32_t luaRef) {
+    if (this->m_onAttributeChange.luaRef) {
+        auto L = FrameScript_GetContext();
+        // TODO: LUA Tainted
+        auto loweredName = static_cast<char*>(alloca(SStrLen(name) + 1));
+        SStrCopy(loweredName, name, STORM_MAX_STR);
+        SStrLower(loweredName);
+        lua_pushstring(L, loweredName);
+        lua_rawgeti(L, LUA_REGISTRYINDEX, luaRef);
+        this->RunScript(this->m_onAttributeChange, 2, nullptr);
+    }
+}
+
 void CSimpleFrame::PreLoadXML(XMLNode* node, CStatus* status) {
     const char* name = node->GetAttributeByName("name");
 
@@ -749,6 +762,7 @@ void CSimpleFrame::LoadXML_Attributes(XMLNode* node, CStatus* status) {
 
         // TODO: LUA Tainted Logic
         attribute->luaRef = luaL_ref(L, LUA_REGISTRYINDEX);
+        s_testMap[name] = attribute->luaRef;
 
         child = child->m_next;
     }
@@ -1646,5 +1660,19 @@ bool CSimpleFrame::GetAttribute(const char* name, int32_t& luaRef) {
         return false;
     }
     luaRef = attribute->luaRef;
+    return true;
+}
+
+void CSimpleFrame::SetAttribute(const char* name, int32_t luaRef) {
+    auto attribute = this->m_attributes.Ptr(name);
+    if (!attribute) {
+        attribute = this->m_attributes.New(name, 0, 0);
+    }
+    attribute->luaRef = luaRef;
+    this->RunOnAttributeChangedScript(name, luaRef);
+}
+
+bool CSimpleFrame::AttributeChangesAllowed() const {
+    // TODO
     return true;
 }
