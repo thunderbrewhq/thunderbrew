@@ -13,7 +13,9 @@ static int32_t Script_GetActionTexture(lua_State* L) {
 }
 
 static int32_t Script_GetActionCount(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 0.0);
+    return 1;
 }
 
 static int32_t Script_GetActionCooldown(lua_State* L) {
@@ -29,7 +31,9 @@ static int32_t Script_GetActionText(lua_State* L) {
 }
 
 static int32_t Script_HasAction(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnil(L);
+    return 1;
 }
 
 static int32_t Script_UseAction(lua_State* L) {
@@ -81,11 +85,14 @@ static int32_t Script_IsActionInRange(lua_State* L) {
 }
 
 static int32_t Script_GetBonusBarOffset(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 0.0);
+    return 1;
 }
 
 static int32_t Script_GetMultiCastBarOffset(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    lua_pushnumber(L, 6.0);
+    return 1;
 }
 
 static int32_t Script_ChangeActionBarPage(lua_State* L) {

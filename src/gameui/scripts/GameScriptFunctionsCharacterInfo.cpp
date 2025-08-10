@@ -1,11 +1,43 @@
 #include "gameui/GameScriptFunctions.hpp"
 #include "ui/FrameScript.hpp"
+#include "db/Db.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
 
 
 static int32_t Script_GetInventorySlotInfo(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    const char* buttonName = nullptr;
+
+    if (lua_isstring(L, 1)) {
+        buttonName = lua_tolstring(L, 1, nullptr);
+    }
+
+    if (!buttonName || g_paperDollItemFrameDB.GetNumRecords() < 1) {
+        return luaL_error(L, "Invalid inventory slot in GetInventorySlotInfo");
+    }
+
+    PaperDollItemFrameRec* record = nullptr;
+    bool found = false;
+    for (int32_t i = 0; i < g_paperDollItemFrameDB.GetNumRecords(); ++i) {
+        record = g_paperDollItemFrameDB.GetRecordByIndex(i);
+        if (!SStrCmpI(record->m_itemButtonName, buttonName, STORM_MAX_STR)) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        return luaL_error(L, "Invalid inventory slot in GetInventorySlotInfo");
+    }
+
+    lua_pushnumber(L, record->m_slotNumber);
+    lua_pushstring(L, record->m_slotIcon);
+    if (record->m_slotNumber == 18) {
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 3;
 }
 
 static int32_t Script_GetInventoryItemsForSlot(lua_State* L) {

@@ -177,39 +177,57 @@ static int32_t Script_UnitPVPName(lua_State* L) {
 }
 
 static int32_t Script_UnitXP(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 50.0);
+    return 1;
 }
 
 static int32_t Script_UnitXPMax(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 100.0);
+    return 1;
 }
 
 static int32_t Script_UnitHealth(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 50.0);
+    return 1;
 }
 
 static int32_t Script_UnitHealthMax(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 100.0);
+    return 1;
 }
 
 static int32_t Script_UnitMana(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 50.0);
+    return 1;
 }
 
 static int32_t Script_UnitManaMax(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 100.0);
+    return 1;
 }
 
 static int32_t Script_UnitPower(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 50.0);
+    return 1;
 }
 
 static int32_t Script_UnitPowerMax(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 100.0);
+    return 1;
 }
 
 static int32_t Script_UnitPowerType(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnumber(L, 0.0);
+    return 1;
 }
 
 static int32_t Script_UnitOnTaxi(lua_State* L) {
@@ -221,15 +239,21 @@ static int32_t Script_UnitIsFeignDeath(lua_State* L) {
 }
 
 static int32_t Script_UnitIsDead(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushboolean(L, 0);
+    return 1;
 }
 
 static int32_t Script_UnitIsGhost(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushboolean(L, 0);
+    return 1;
 }
 
 static int32_t Script_UnitIsDeadOrGhost(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushboolean(L, 0);
+    return 1;
 }
 
 static int32_t Script_UnitIsConnected(lua_State* L) {
