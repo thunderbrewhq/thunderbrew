@@ -762,7 +762,6 @@ void CSimpleFrame::LoadXML_Attributes(XMLNode* node, CStatus* status) {
 
         // TODO: LUA Tainted Logic
         attribute->luaRef = luaL_ref(L, LUA_REGISTRYINDEX);
-        s_testMap[name] = attribute->luaRef;
 
         child = child->m_next;
     }
