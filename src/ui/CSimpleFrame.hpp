@@ -19,7 +19,7 @@ struct lua_State;
 
 class FRAMEATTR : public TSHashObject<FRAMEATTR, HASHKEY_STRI> {
     public:
-    int32_t luaRef;
+    int32_t luaRef = -1;
 };
 
 class CSimpleFrame : public CScriptRegion {
@@ -165,6 +165,7 @@ class CSimpleFrame : public CScriptRegion {
         void Show();
         int32_t TestHitRect(const C2Vector& pt);
         void UnregisterForEvents(int32_t a2);
+        bool GetAttribute(const char* name, int32_t& luaRef);
 };
 
 #endif

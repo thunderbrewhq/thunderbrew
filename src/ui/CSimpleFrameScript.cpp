@@ -231,7 +231,67 @@ int32_t CSimpleFrame_CanChangeAttributes(lua_State* L) {
 }
 
 int32_t CSimpleFrame_GetAttribute(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFrame::GetObjectType();
+    auto frame = static_cast<CSimpleFrame*>(FrameScript_GetObjectThis(L, type));
+
+    if (lua_gettop(L) == 4 && lua_isstring(L, 3)) {
+        size_t prefixLength;
+        size_t nameLength;
+        size_t suffixLength;
+        auto prefix = lua_tolstring(L, 2, &prefixLength);
+        auto name = lua_tolstring(L, 3, &nameLength);
+        auto suffix = lua_tolstring(L, 4, &suffixLength);
+
+        int32_t luaRef = -1;
+        char fullName[256];
+
+        size_t offset = 0;
+        offset += SStrNCopy(&fullName[offset], prefix, prefixLength, sizeof(fullName) - offset);
+        offset += SStrNCopy(&fullName[offset], name, nameLength, sizeof(fullName) - offset);
+        offset += SStrNCopy(&fullName[offset], suffix, suffixLength, sizeof(fullName) - offset);
+
+        if (frame->GetAttribute(fullName, luaRef)) {
+            lua_rawgeti(L, LUA_REGISTRYINDEX, luaRef);
+            return 1;
+        }
+
+        offset = 0;
+        offset += SStrNCopy(&fullName[offset], prefix, prefixLength, sizeof(fullName) - offset - 1);
+        offset += SStrNCopy(&fullName[offset], name, nameLength, sizeof(fullName) - offset - 1);
+        fullName[offset++] = '*';
+        fullName[offset++] = '\0';
+
+        if (frame->GetAttribute(fullName, luaRef)) {
+            lua_rawgeti(L, LUA_REGISTRYINDEX, luaRef);
+            return 1;
+        }
+
+        offset = 0;
+        fullName[offset++] = '*';
+        offset += SStrNCopy(&fullName[offset], name, nameLength, sizeof(fullName) - offset - 1);
+        fullName[offset++] = '*';
+        fullName[offset++] = '\0';
+
+        if (frame->GetAttribute(fullName, luaRef) || frame->GetAttribute(name, luaRef)) {
+            lua_rawgeti(L, LUA_REGISTRYINDEX, luaRef);
+            return 1;
+        }
+
+        lua_pushnil(L);
+    } else {
+        if (!lua_isstring(L, 2)) {
+            return luaL_error(L, "Usage: %s:GetAttribute(\"name\")", frame->GetDisplayName());
+        }
+
+        auto name = lua_tolstring(L, 2, nullptr);
+        int32_t luaRef = -1;
+        if (frame->GetAttribute(name, luaRef)) {
+            lua_rawgeti(L, LUA_REGISTRYINDEX, luaRef);
+        } else {
+            lua_pushnil(L);
+        }
+    }
+    return 1;
 }
 
 int32_t CSimpleFrame_SetAttribute(lua_State* L) {

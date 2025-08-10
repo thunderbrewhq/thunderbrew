@@ -706,22 +706,14 @@ void CSimpleFrame::LoadXML_Attributes(XMLNode* node, CStatus* status) {
     while (child) {
         auto childName = child->m_name.GetString();
         if (SStrCmpI(childName, "Attribute", STORM_MAX_STR)) {
-            const char* frameName = this->GetName();
-            if (!frameName) {
-                frameName = "<unnamed>";
-            }
-            status->Add(STATUS_WARNING, "Frame %s: Unknown attributes element %s", frameName, childName);
+            status->Add(STATUS_WARNING, "Frame %s: Unknown attributes element %s", this->GetDisplayName(), childName);
             child = child->m_next;
             continue;
         }
 
         auto name = child->GetAttributeByName("name");
         if (!name) {
-            const char* frameName = this->GetName();
-            if (!frameName) {
-                frameName = "<unnamed>";
-            }
-            status->Add(STATUS_WARNING, "Frame %s: unnamed attribute element", frameName);
+            status->Add(STATUS_WARNING, "Frame %s: unnamed attribute element", this->GetDisplayName());
             child = child->m_next;
             continue;
         }
@@ -733,11 +725,7 @@ void CSimpleFrame::LoadXML_Attributes(XMLNode* node, CStatus* status) {
 
         auto value = child->GetAttributeByName("value");
         if (!value || !SStrCmpI(value, "nil", STORM_MAX_STR)) {
-            const char* frameName = this->GetName();
-            if (!frameName) {
-                frameName = "<unnamed>";
-            }
-            status->Add(STATUS_WARNING, "Frame %s: attribute element named %s missing value", frameName, name);
+            status->Add(STATUS_WARNING, "Frame %s: attribute element named %s missing value", this->GetDisplayName(), name);
             child = child->m_next;
             continue;
         }
@@ -1650,4 +1638,13 @@ void CSimpleFrame::UnregisterRegion(CSimpleRegion* region) {
     STORM_ASSERT(region);
 
     this->m_regions.UnlinkNode(region);
+}
+
+bool CSimpleFrame::GetAttribute(const char* name, int32_t& luaRef) {
+    auto attribute = this->m_attributes.Ptr(name);
+    if (!attribute || attribute->luaRef == -1) {
+        return false;
+    }
+    luaRef = attribute->luaRef;
+    return true;
 }
