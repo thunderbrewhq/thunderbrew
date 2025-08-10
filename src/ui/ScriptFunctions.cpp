@@ -13,6 +13,7 @@
 #include "ui/CSimpleSlider.hpp"
 #include "ui/CSimpleTexture.hpp"
 #include "ui/CSimpleMessageScrollFrame.hpp"
+#include "ui/CSimpleStatusBar.hpp"
 #include "ui/FrameScript.hpp"
 
 void CharacterCreateRegisterScriptFunctions() {
@@ -88,7 +89,7 @@ void RegisterSimpleFrameScriptMethods() {
     CSimpleSlider::CreateScriptMetaTable();
 
     // TODO
-    // CSimpleStatusBar::CreateScriptMetaTable();
+    CSimpleStatusBar::CreateScriptMetaTable();
     // CSimpleColorSelect::CreateScriptMetaTable();
     CSimpleMovieFrame::CreateScriptMetaTable();
 }

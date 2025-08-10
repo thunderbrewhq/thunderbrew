@@ -10,6 +10,7 @@
 #include "ui/CSimpleScrollFrame.hpp"
 #include "ui/CSimpleMessageScrollFrame.hpp"
 #include "ui/CSimpleSlider.hpp"
+#include "ui/CSimpleStatusBar.hpp"
 #include "util/CStatus.hpp"
 #include "util/SFile.hpp"
 #include <cstdlib>
@@ -101,7 +102,8 @@ CSimpleFrame* Create_SimpleHTML(CSimpleFrame* parent) {
 CSimpleFrame* Create_SimpleStatusBar(CSimpleFrame* parent) {
     // TODO
 
-    return nullptr;
+    auto m = SMemAlloc(sizeof(CSimpleStatusBar), __FILE__, __LINE__, 0x0);
+    return new (m) CSimpleStatusBar(parent);
 }
 
 CSimpleFrame* Create_SimpleColorSelect(CSimpleFrame* parent) {
