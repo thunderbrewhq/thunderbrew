@@ -1,4 +1,5 @@
 #include "util/CStatus.hpp"
+#include "os/Debug.hpp"
 #include <cstdarg>
 #include <cstdio>
 
@@ -19,9 +20,15 @@ void CStatus::Add(STATUS_TYPE severity, const char* format, ...) {
     // Remove temporary console debug logging
     va_list args;
     va_start(args, format);
-    vprintf(format, args);
-    printf("\n");
+
+    char output[490];
+    auto length = vsnprintf(output, sizeof(output), format, args);
+    if (length >= sizeof(output)) {
+        output[sizeof(output) - 1] = '\0';
+    }
+
     va_end(args);
+    OsOutputDebugString("CStatus: %s\n", output);
 }
 
 void CStatus::Prepend(STATUS_TYPE severity, const char* format, ...) {
@@ -29,9 +36,15 @@ void CStatus::Prepend(STATUS_TYPE severity, const char* format, ...) {
     // Remove temporary console debug logging
     va_list args;
     va_start(args, format);
-    vprintf(format, args);
-    printf("\n");
+
+    char output[490];
+    auto length = vsnprintf(output, sizeof(output), format, args);
+    if (length >= sizeof(output)) {
+        output[sizeof(output) - 1] = '\0';
+    }
+
     va_end(args);
+    OsOutputDebugString("CStatus: %s\n", output);
 }
 
 CStatus& GetGlobalStatusObj() {
