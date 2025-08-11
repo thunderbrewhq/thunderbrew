@@ -180,11 +180,58 @@ int32_t CSimpleFrame_HasScript(lua_State* L) {
 }
 
 int32_t CSimpleFrame_GetScript(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CSimpleFrame::GetObjectType();
+    CSimpleFrame* frame = static_cast<CSimpleFrame*>(FrameScript_GetObjectThis(L, type));
+
+    if (!lua_isstring(L, 2)) {
+        return luaL_error(L, "Usage: %s:GetScript(\"type\")", frame->GetDisplayName());
+    }
+
+    auto scriptName = lua_tolstring(L, 2, nullptr);
+
+    FrameScript_Object::ScriptData scriptData;
+    auto script = frame->GetScriptByName(scriptName, scriptData);
+    if (!script) {
+        return luaL_error(L, "%s doesn't have a \"%s\" script", frame->GetDisplayName(), scriptName);
+    }
+
+    // TODO: if (script->unk && lua_taintexpected && !lua_taintedclosure )
+
+    if (script->luaRef <= 0) {
+        lua_pushnil(L);
+    } else {
+        lua_rawgeti(L, LUA_REGISTRYINDEX, script->luaRef);
+    }
+    return 1;
 }
 
 int32_t CSimpleFrame_SetScript(lua_State* L) {
+    // WARNING: This implementation breaks the client
     WHOA_UNIMPLEMENTED(0);
+
+    int32_t type = CSimpleFrame::GetObjectType();
+    CSimpleFrame* frame = static_cast<CSimpleFrame*>(FrameScript_GetObjectThis(L, type));
+
+    if (!lua_isstring(L, 2) || (lua_type(L, 3) != LUA_TFUNCTION && lua_type(L, 3) != LUA_TNIL)) {
+        return luaL_error(L, "Usage: %s:SetScript(\"type\", function)", frame->GetDisplayName());
+    }
+
+    auto scriptName = lua_tolstring(L, 2, nullptr);
+
+    FrameScript_Object::ScriptData scriptData;
+    auto script = frame->GetScriptByName(scriptName, scriptData);
+    if (!script) {
+        return luaL_error(L, "%s doesn't have a \"%s\" script", frame->GetDisplayName(), scriptName);
+    }
+
+    if (script->luaRef) {
+        luaL_unref(L, LUA_REGISTRYINDEX, script->luaRef);
+    }
+
+    auto ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    script->luaRef = ref <= 0 ? 0 : ref;
+    // TODO: script->unk = lua_tainted;
+    return 0;
 }
 
 int32_t CSimpleFrame_HookScript(lua_State* L) {

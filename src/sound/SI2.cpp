@@ -30,6 +30,8 @@ void SI2::RegisterScriptFunctions() {
 }
 
 int32_t SI2::Init(int32_t flag) {
+    SI2::RegisterCVars();
+
     Log_Init();
     SI2_LOG("=> Version %s (%s) %s", "1.0.0", "00000", "Feb 25 2024");
     SI2_LOG(" ");

@@ -8,11 +8,13 @@
 #include "gameui/CGTabardModelFrame.hpp"
 #include "gameui/CGQuestPOIFrame.hpp"
 #include "console/Console.hpp"
+#include "console/CVar.hpp"
 #include "gx/CGVideoOptions.hpp"
 #include "ui/FrameXML.hpp"
 #include "ui/FrameScript.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
+#include "util/StringTo.hpp"
 
 // External from "ui/ScriptFunctions.hpp"
 void RegisterSimpleFrameScriptMethods();
@@ -163,31 +165,142 @@ static int32_t Script_SetCVar(lua_State* L) {
 }
 
 static int32_t Script_GetCVar(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1)) {
+        return luaL_error(L, "Usage: GetCVar(\"cvar\")");
+    }
+
+    // TODO: Use LookupRegistered
+    auto cvar = CVar::Lookup(lua_tolstring(L, 1, nullptr));
+    if (!cvar || (cvar->m_flags & 0x40)) {
+        lua_pushnil(L);
+    } else {
+        lua_pushstring(L, cvar->GetString());
+    }
+    return 1;
 }
 
 static int32_t Script_GetCVarBool(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1)) {
+        return luaL_error(L, "Usage: GetCVarBool(\"cvar\")");
+    }
+
+    // TODO: Use LookupRegistered
+    auto cvar = CVar::Lookup(lua_tolstring(L, 1, nullptr));
+    if (cvar && (cvar->m_flags & 0x40) == 0 && StringToBOOL(cvar->GetString())) {
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 static int32_t Script_GetCVarDefault(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1)) {
+        return luaL_error(L, "Usage: GetCVarDefault(\"cvar\")");
+    }
+
+    auto name = lua_tolstring(L, 1, nullptr);
+    // TODO: Use LookupRegistered
+    auto cvar = CVar::Lookup(name);
+    if (!cvar || (cvar->m_flags & 0x40)) {
+        return luaL_error(L, "Couldn't find CVar named '%s'", name);
+    } else {
+        lua_pushstring(L, cvar->m_defaultValue.GetString());
+    }
+    return 1;
 }
 
 static int32_t Script_GetCVarMin(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1)) {
+        return luaL_error(L, "Usage: GetCVarMin(\"cvar\")");
+    }
+
+    auto name = lua_tolstring(L, 1, nullptr);
+    // TODO: Use LookupRegistered
+    auto cvar = CVar::Lookup(name);
+    if (!cvar || (cvar->m_flags & 0x40)) {
+        return luaL_error(L, "Couldn't find CVar named '%s'", name);
+    }
+
+    auto key = cvar->m_key.m_str;
+    if (!SStrCmpI(key, "extShadowQuality", STORM_MAX_STR)) {
+        lua_pushnumber(L, 0.0);
+    } else if (!SStrCmpI(key, "farclip", STORM_MAX_STR)) {
+        lua_pushnumber(L, 177.0);
+    } else {
+        lua_pushnil(L);
+    }
+
+    return 1;
 }
 
 static int32_t Script_GetCVarMax(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1)) {
+        return luaL_error(L, "Usage: GetCVarMax(\"cvar\")");
+    }
+
+    auto name = lua_tolstring(L, 1, nullptr);
+    // TODO: Use LookupRegistered
+    auto cvar = CVar::Lookup(name);
+    if (!cvar || (cvar->m_flags & 0x40)) {
+        return luaL_error(L, "Couldn't find CVar named '%s'", name);
+    }
+
+    auto key = cvar->m_key.m_str;
+    if (!SStrCmpI(key, "extShadowQuality", STORM_MAX_STR)) {
+        // TODO
+        lua_pushnumber(L, 1.0);
+    } else if (!SStrCmpI(key, "farclip", STORM_MAX_STR)) {
+        lua_pushnumber(L, 1277.0);
+    } else {
+        lua_pushnil(L);
+    }
+
+    return 1;
 }
 
 static int32_t Script_GetCVarAbsoluteMin(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1)) {
+        return luaL_error(L, "Usage: GetCVarAbsoluteMin(\"cvar\")");
+    }
+
+    auto name = lua_tolstring(L, 1, nullptr);
+    // TODO: Use LookupRegistered
+    auto cvar = CVar::Lookup(name);
+    if (!cvar || (cvar->m_flags & 0x40)) {
+        return luaL_error(L, "Couldn't find CVar named '%s'", name);
+    }
+
+    auto key = cvar->m_key.m_str;
+    if (!SStrCmpI(key, "extShadowQuality", STORM_MAX_STR)) {
+        lua_pushnumber(L, 0.0);
+    } else {
+        lua_pushnil(L);
+    }
+
+    return 1;
 }
 
 static int32_t Script_GetCVarAbsoluteMax(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    if (!lua_isstring(L, 1)) {
+        return luaL_error(L, "Usage: GetCVarAbsoluteMax(\"cvar\")");
+    }
+
+    auto name = lua_tolstring(L, 1, nullptr);
+    // TODO: Use LookupRegistered
+    auto cvar = CVar::Lookup(name);
+    if (!cvar || (cvar->m_flags & 0x40)) {
+        return luaL_error(L, "Couldn't find CVar named '%s'", name);
+    }
+
+    auto key = cvar->m_key.m_str;
+    if (!SStrCmpI(key, "extShadowQuality", STORM_MAX_STR)) {
+        lua_pushnumber(L, 5.0);
+    } else {
+        lua_pushnil(L);
+    }
+
+    return 1;
 }
 
 static int32_t Script_GetWaterDetail(lua_State* L) {

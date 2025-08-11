@@ -12,7 +12,11 @@ static int32_t Script_SetOrientation(lua_State* L) {
 }
 
 static int32_t Script_GetMinMaxValues(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleStatusBar::GetObjectType();
+    auto statusBar = static_cast<CSimpleStatusBar*>(FrameScript_GetObjectThis(L, type));
+    lua_pushnumber(L, statusBar->m_minValue);
+    lua_pushnumber(L, statusBar->m_maxValue);
+    return 2;
 }
 
 static int32_t Script_SetMinMaxValues(lua_State* L) {
@@ -20,7 +24,10 @@ static int32_t Script_SetMinMaxValues(lua_State* L) {
 }
 
 static int32_t Script_GetValue(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleStatusBar::GetObjectType();
+    auto statusBar = static_cast<CSimpleStatusBar*>(FrameScript_GetObjectThis(L, type));
+    lua_pushnumber(L, statusBar->m_value);
+    return 1;
 }
 
 static int32_t Script_SetValue(lua_State* L) {

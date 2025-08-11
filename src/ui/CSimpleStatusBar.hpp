@@ -23,6 +23,9 @@ class CSimpleStatusBar : public CSimpleFrame {
     virtual ScriptIx* GetScriptByName(const char* name, ScriptData& data);
 
     // Member variables
+    float m_minValue = 0.0f;
+    float m_maxValue = 0.0f;
+    float m_value = 0.0f;
     ScriptIx m_onValueChanged;
     ScriptIx m_onMinMaxChanged;
 };

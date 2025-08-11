@@ -43,6 +43,7 @@ target_link_libraries(client
         gx
         model
         net
+        sound
         ui
         util
         world
