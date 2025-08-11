@@ -17,4 +17,6 @@ int32_t StringToDrawLayer(const char*, int32_t&);
 
 int32_t StringToJustify(const char*, uint32_t&);
 
+bool StringToOrientation(const char* string, uint32_t& orientation);
+
 #endif

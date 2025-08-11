@@ -159,3 +159,14 @@ int32_t StringToJustify(const char* string, uint32_t& justify) {
 
     return 0;
 }
+
+bool StringToOrientation(const char* string, uint32_t& orientation) {
+    if (!SStrCmpI(string, "HORIZONTAL", STORM_MAX_STR)) {
+        orientation = 0;
+        return true;
+    } else if (!SStrCmpI(string, "VERTICAL", STORM_MAX_STR)) {
+        orientation = 1;
+        return true;
+    }
+    return false;
+}

@@ -108,11 +108,25 @@ static int32_t Script_SetScrollOffset(lua_State* L) {
 }
 
 static int32_t Script_AtTop(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleMessageScrollFrame::GetObjectType();
+    auto frame = static_cast<CSimpleMessageScrollFrame*>(FrameScript_GetObjectThis(L, type));
+    if (frame->m_atTop) {
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 static int32_t Script_AtBottom(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleMessageScrollFrame::GetObjectType();
+    auto frame = static_cast<CSimpleMessageScrollFrame*>(FrameScript_GetObjectThis(L, type));
+    if (frame->m_atBottom) {
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 static int32_t Script_UpdateColorByID(lua_State* L) {

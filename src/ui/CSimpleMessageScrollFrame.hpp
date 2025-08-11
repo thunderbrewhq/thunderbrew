@@ -20,6 +20,10 @@ class CSimpleMessageScrollFrame : public CSimpleHyperlinkedFrame {
     // Virtual member functions
     virtual bool IsA(int32_t type);
     virtual int32_t GetScriptMetaTable();
+
+    // Member variables
+    int32_t m_atTop = 0;
+    int32_t m_atBottom = 1;
 };
 
 #endif

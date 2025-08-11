@@ -16,6 +16,7 @@ class CSimpleStatusBar : public CSimpleFrame {
 
     // Member functions
     CSimpleStatusBar(CSimpleFrame* parent);
+    void SetOrientation(uint32_t orientation);
 
     // Virtual member functions
     virtual bool IsA(int32_t type);
@@ -23,9 +24,12 @@ class CSimpleStatusBar : public CSimpleFrame {
     virtual ScriptIx* GetScriptByName(const char* name, ScriptData& data);
 
     // Member variables
+    uint32_t m_flags = 0;
     float m_minValue = 0.0f;
     float m_maxValue = 0.0f;
     float m_value = 0.0f;
+    CSimpleTexture* m_barTexture = nullptr;
+    uint32_t m_orientation = 0;
     ScriptIx m_onValueChanged;
     ScriptIx m_onMinMaxChanged;
 };

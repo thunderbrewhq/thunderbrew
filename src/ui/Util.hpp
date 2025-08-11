@@ -13,4 +13,6 @@ int32_t StringToFramePoint(const char* string, FRAMEPOINT& point);
 
 int32_t StringToFrameStrata(const char* string, FRAME_STRATA& strata);
 
+const char* OrientationToString(uint32_t orientation);
+
 #endif

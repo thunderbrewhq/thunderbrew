@@ -27,6 +27,11 @@ CSimpleStatusBar::CSimpleStatusBar(CSimpleFrame* parent)
     : CSimpleFrame(parent) {
 }
 
+void CSimpleStatusBar::SetOrientation(uint32_t orientation) {
+    this->m_flags |= 1;
+    this->m_orientation = orientation;
+}
+
 bool CSimpleStatusBar::IsA(int32_t type) {
     return type == CSimpleStatusBar::s_objectType
         || type == CSimpleFrame::s_objectType

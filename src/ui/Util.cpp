@@ -86,3 +86,14 @@ int32_t StringToFrameStrata(const char* string, FRAME_STRATA& strata) {
 
     return 0;
 }
+
+const char* OrientationToString(uint32_t orientation) {
+    switch (orientation) {
+    case 0:
+        return "HORIZONTAL";
+    case 1:
+        return "VERTICAL";
+    default:
+        return "UNKNOWN";
+    }
+}
