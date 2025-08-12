@@ -20,14 +20,17 @@ class CSimpleStatusBar : public CSimpleFrame {
     void SetMinMaxValues(float minValue, float maxValue);
     void SetBarTexture(const char* texFile, int32_t layer);
     void SetBarTexture(CSimpleTexture* texture, int32_t layer);
+    void SetRotatesTexture(bool rotates);
     void RunOnMinMaxChanged();
     void RunOnValueChanged();
 
     // Virtual member functions
     virtual void SetValue(float value);
+    virtual void SetStatusBarColor(CImVector& color);
     virtual bool IsA(int32_t type);
     virtual int32_t GetScriptMetaTable();
     virtual ScriptIx* GetScriptByName(const char* name, ScriptData& data);
+    virtual void LoadXML(XMLNode* node, CStatus* status);
 
     // Member variables
     uint32_t m_flags = 0;

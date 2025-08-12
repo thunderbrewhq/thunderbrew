@@ -1,7 +1,10 @@
 #include "ui/CSimpleStatusBar.hpp"
 #include "ui/CSimpleStatusBarScript.hpp"
 #include "ui/CSimpleTexture.hpp"
+#include "ui/LoadXML.hpp"
 #include "util/Lua.hpp"
+#include "util/StringTo.hpp"
+#include <common/XML.hpp>
 
 int32_t CSimpleStatusBar::s_metatable = 0;
 int32_t CSimpleStatusBar::s_objectType = 0;
@@ -87,6 +90,24 @@ void CSimpleStatusBar::SetBarTexture(CSimpleTexture* texture, int32_t layer) {
     this->m_barTexture = texture;
 }
 
+void CSimpleStatusBar::SetRotatesTexture(bool rotates) {
+    if (rotates) {
+        C2Vector v[4] = {
+            { 0.0f, 1.0f },
+            { 1.0f, 1.0f },
+            { 0.0f, 0.0f },
+            { 1.0f, 0.0f }
+        };
+
+        this->m_barTexture->SetTexCoord(v);
+        this->m_flags = this->m_flags ^ (this->m_flags ^ 8) & 8 | 1;
+    } else {
+        CRect r(0.0f, 0.0f, 1.0f, 1.0f);
+        this->m_barTexture->SetTexCoord(r);
+        this->m_flags = this->m_flags ^ (this->m_flags ^ 0) & 8 | 1;
+    }
+}
+
 void CSimpleStatusBar::RunOnMinMaxChanged() {
     if (this->m_onMinMaxChanged.luaRef) {
         auto L = FrameScript_GetContext();
@@ -115,6 +136,12 @@ void CSimpleStatusBar::SetValue(float value) {
     if ((this->m_flags & 4) == 0 || this->m_value != value) {
         this->m_value = value;
         this->RunOnValueChanged();
+    }
+}
+
+void CSimpleStatusBar::SetStatusBarColor(CImVector& color) {
+    if (this->m_barTexture) {
+        this->m_barTexture->SetVertexColor(color);
     }
 }
 
@@ -147,4 +174,61 @@ FrameScript_Object::ScriptIx* CSimpleStatusBar::GetScriptByName(const char* name
     }
 
     return nullptr;
+}
+
+void CSimpleStatusBar::LoadXML(XMLNode* node, CStatus* status) {
+    CSimpleFrame::LoadXML(node, status);
+
+    int32_t layer = 2;
+
+    auto drawLayer = node->GetAttributeByName("drawLayer");
+    if (drawLayer && *drawLayer) {
+        StringToDrawLayer(drawLayer, layer);
+    }
+
+    for (auto child = node->m_child; child; child = child->m_next) {
+        if (!SStrCmpI(child->GetName(), "BarTexture", STORM_MAX_STR)) {
+            auto texture = LoadXML_Texture(child, this, status);
+            this->SetBarTexture(texture, layer);
+        } else if (!SStrCmpI(child->GetName(), "BarColor", STORM_MAX_STR)) {
+            CImVector color;
+            if (LoadXML_Color(child, color)) {
+                this->SetStatusBarColor(color);
+            }
+        }
+    }
+
+    auto sminValue = node->GetAttributeByName("minValue");
+    auto smaxValue = node->GetAttributeByName("maxValue");
+    if (sminValue && *sminValue && smaxValue && *smaxValue) {
+        auto minValue = SStrToFloat(sminValue);
+        auto maxValue = SStrToFloat(smaxValue);
+        if (minValue < -1.0e12 || minValue > 1.0e12 || maxValue < -1.0e12 || maxValue > 1.0e12) {
+            status->Add(STATUS_ERROR, "Frame %s: Min or Max out of range", this->GetDisplayName());
+        } else if (maxValue - minValue <= 1.0e12) {
+            status->Add(STATUS_ERROR, "Frame %s: Min and Max too far apart", this->GetDisplayName());
+        } else {
+            this->SetMinMaxValues(minValue, maxValue);
+        }
+
+        auto sdefValue = node->GetAttributeByName("defaultValue");
+        if (sdefValue && *sdefValue) {
+            this->SetValue(SStrToFloat(sdefValue));
+        }
+    }
+
+    auto sorientation = node->GetAttributeByName("orientation");
+    if (sorientation && *sorientation) {
+        uint32_t orientation;
+        if (StringToOrientation(sorientation, orientation)) {
+            this->SetOrientation(orientation);
+        } else {
+            status->Add(STATUS_WARNING, "Frame %s: Unknown orientation %s in element %s", this->GetDisplayName(), sorientation, node->GetName());
+        }
+    }
+
+    auto rotatesTexture = node->GetAttributeByName("rotatesTexture");
+    if (rotatesTexture && *rotatesTexture) {
+        this->SetRotatesTexture(StringToBOOL(rotatesTexture));
+    }
 }

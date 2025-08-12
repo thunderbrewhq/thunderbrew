@@ -134,19 +134,51 @@ static int32_t Script_SetStatusBarTexture(lua_State* L) {
 }
 
 static int32_t Script_GetStatusBarColor(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleStatusBar::GetObjectType();
+    auto statusBar = static_cast<CSimpleStatusBar*>(FrameScript_GetObjectThis(L, type));
+    auto texture = statusBar->m_barTexture;
+
+    CImVector color;
+
+    if (texture) {
+        texture->GetVertexColor(color);
+    } else {
+        color.Set(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
+    lua_pushnumber(L, color.r * 0.00392156);
+    lua_pushnumber(L, color.g * 0.00392156);
+    lua_pushnumber(L, color.b * 0.00392156);
+    lua_pushnumber(L, color.a * 0.00392156);
+    return 4;
 }
 
 static int32_t Script_SetStatusBarColor(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleStatusBar::GetObjectType();
+    auto statusBar = static_cast<CSimpleStatusBar*>(FrameScript_GetObjectThis(L, type));
+
+    CImVector color;
+    FrameScript_GetColor(L, 2, color);
+    statusBar->SetStatusBarColor(color);
+    return 0;
 }
 
 static int32_t Script_GetRotatesTexture(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleStatusBar::GetObjectType();
+    auto statusBar = static_cast<CSimpleStatusBar*>(FrameScript_GetObjectThis(L, type));
+    if (statusBar->m_flags & 8) {
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 static int32_t Script_SetRotatesTexture(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleStatusBar::GetObjectType();
+    auto statusBar = static_cast<CSimpleStatusBar*>(FrameScript_GetObjectThis(L, type));
+    statusBar->SetRotatesTexture(StringToBOOL(L, 2, 0));
+    return 0;
 }
 
 
