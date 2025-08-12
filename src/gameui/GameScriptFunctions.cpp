@@ -20,6 +20,7 @@
 void RegisterSimpleFrameScriptMethods();
 int32_t Script_GetScreenWidth(lua_State* L);
 int32_t Script_GetScreenHeight(lua_State* L);
+int32_t Script_GetCursorPosition(lua_State* L);
 
 
 static int32_t Script_FrameXML_Debug(lua_State* L) {
@@ -741,10 +742,6 @@ static int32_t Script_CancelSummon(lua_State* L) {
     WHOA_UNIMPLEMENTED(0);
 }
 
-static int32_t Script_GetCursorPosition(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
-}
-
 static int32_t Script_GetNetStats(lua_State* L) {
     // v1 = ClientServices__Connection();
     // NetClient__GetNetStats(v1, &v5, &v4, (int*)&v3);
@@ -1153,11 +1150,17 @@ static int32_t Script_IsAddOnLoadOnDemand(lua_State* L) {
 }
 
 static int32_t Script_IsAddOnLoaded(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnil(L);
+    lua_pushnil(L);
+    return 2;
 }
 
 static int32_t Script_LoadAddOn(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnil(L);
+    lua_pushstring(L, "UNKNOWN_ERROR");
+    return 2;
 }
 
 static int32_t Script_PartialPlayTime(lua_State* L) {

@@ -106,7 +106,9 @@ int32_t strlenutf8(lua_State* L) {
 }
 
 int32_t issecure(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnil(L);
+    return 1;
 }
 
 int32_t issecurevariable(lua_State* L) {

@@ -105,7 +105,8 @@ static int32_t Script_GetBattlefieldStatData(lua_State* L) {
 }
 
 static int32_t Script_RequestBattlefieldPositions(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO: sub_54CF60
+    return 0;
 }
 
 static int32_t Script_GetNumBattlefieldPositions(lua_State* L) {

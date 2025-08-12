@@ -161,7 +161,14 @@ static int32_t Script_ClearInspectPlayer(lua_State* L) {
 }
 
 static int32_t Script_GetWeaponEnchantInfo(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnil(L);
+    lua_pushnil(L);
+    lua_pushnil(L);
+    lua_pushnil(L);
+    lua_pushnil(L);
+    lua_pushnil(L);
+    return 6;
 }
 
 static int32_t Script_HasWandEquipped(lua_State* L) {

@@ -29,6 +29,7 @@ class CScriptRegion : public CScriptObject, public CLayoutFrame {
         virtual bool IsA(const char* typeName);
         virtual const char* GetObjectTypeName();
         virtual bool IsDragging();
+        virtual bool IsMouseOver(float a1, float a2, float a3, float a4);
         virtual void PreOnAnimUpdate() {};
         virtual void OnLayerUpdate(float elapsedSec);
         virtual void NotifyAnimBegin(CSimpleAnimGroup* animGroup);

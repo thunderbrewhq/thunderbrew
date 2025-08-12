@@ -64,6 +64,10 @@ bool CScriptRegion::IsDragging() {
     return false;
 }
 
+bool CScriptRegion::IsMouseOver(float a1, float a2, float a3, float a4) {
+    return false;
+}
+
 void CScriptRegion::LoadXML(XMLNode* node, CStatus* status) {
     CLayoutFrame::LoadXML(node, status);
 

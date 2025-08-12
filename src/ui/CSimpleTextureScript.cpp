@@ -96,11 +96,25 @@ int32_t CSimpleTexture_Hide(lua_State* L) {
 }
 
 int32_t CSimpleTexture_IsVisible(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleTexture::GetObjectType();
+    auto texture = static_cast<CSimpleTexture*>(FrameScript_GetObjectThis(L, type));
+    if (texture->m_visible) {
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 int32_t CSimpleTexture_IsShown(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleTexture::GetObjectType();
+    auto texture = static_cast<CSimpleTexture*>(FrameScript_GetObjectThis(L, type));
+    if (texture->m_shown) {
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 int32_t CSimpleTexture_GetTexture(lua_State* L) {
@@ -211,11 +225,15 @@ int32_t CSimpleTexture_SetRotation(lua_State* L) {
 }
 
 int32_t CSimpleTexture_SetDesaturated(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnil(L);
+    return 1;
 }
 
 int32_t CSimpleTexture_IsDesaturated(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnil(L);
+    return 1;
 }
 
 int32_t CSimpleTexture_SetNonBlocking(lua_State* L) {

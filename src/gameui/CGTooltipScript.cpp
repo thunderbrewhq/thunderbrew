@@ -1,4 +1,5 @@
 #include "gameui/CGTooltipScript.hpp"
+#include "gameui/CGTooltip.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
 
@@ -23,11 +24,40 @@ static int32_t Script_GetPadding(lua_State* L) {
 }
 
 static int32_t Script_IsOwned(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+
+    if (lua_type(L, 2) != LUA_TTABLE) {
+        return luaL_error(L, "Usage: %s:IsOwned(frame)", tooltip->GetDisplayName());
+    }
+
+    lua_rawgeti(L, 2, 0);
+    auto frame = static_cast<CScriptObject*>(lua_touserdata(L, -1));
+    lua_settop(L, -2);
+
+    if (!frame) {
+        return luaL_error(L, "%s:IsOwned(): Couldn't find 'this' in frame object", tooltip->GetDisplayName());
+    }
+
+    if (!frame->IsA(CSimpleFrame::GetObjectType())) {
+        return luaL_error(L, "%s:IsOwned(): Wrong object type, expected frame", tooltip->GetDisplayName());
+    }
+
+    if (tooltip->m_parent == frame) {
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 static int32_t Script_GetOwner(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+
+    // TODO
+    lua_pushnil(L);
+    return 1;
 }
 
 static int32_t Script_SetOwner(lua_State* L) {

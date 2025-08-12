@@ -257,7 +257,9 @@ static int32_t Script_UnitIsDeadOrGhost(lua_State* L) {
 }
 
 static int32_t Script_UnitIsConnected(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnil(L);
+    return 1;
 }
 
 static int32_t Script_UnitAffectingCombat(lua_State* L) {

@@ -518,7 +518,23 @@ int32_t CScriptRegion_IsDragging(lua_State* L) {
 }
 
 int32_t CScriptRegion_IsMouseOver(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    int32_t type = CScriptRegion::GetObjectType();
+    auto region = static_cast<CScriptRegion*>(FrameScript_GetObjectThis(L, type));
+
+    float rect[4];
+    for (int32_t i = 0; i < 4; ++i) {
+        if (lua_isnumber(L, i + 2)) {
+            rect[i] = lua_tonumber(L, i + 2);
+            rect[i] /= CoordinateGetAspectCompensation() * 1024.0f;
+            rect[i] = NDCToDDCWidth(rect[i]);
+        } else {
+            rect[i] = 0.0f;
+        }
+    }
+
+    auto result = region->IsMouseOver(rect[0], rect[1], rect[2], rect[3]);
+    lua_pushboolean(L, result);
+    return 1;
 }
 
 FrameScript_Method ScriptRegionMethods[NUM_SCRIPT_REGION_SCRIPT_METHODS] = {
