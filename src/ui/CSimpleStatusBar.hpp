@@ -17,8 +17,14 @@ class CSimpleStatusBar : public CSimpleFrame {
     // Member functions
     CSimpleStatusBar(CSimpleFrame* parent);
     void SetOrientation(uint32_t orientation);
+    void SetMinMaxValues(float minValue, float maxValue);
+    void SetBarTexture(const char* texFile, int32_t layer);
+    void SetBarTexture(CSimpleTexture* texture, int32_t layer);
+    void RunOnMinMaxChanged();
+    void RunOnValueChanged();
 
     // Virtual member functions
+    virtual void SetValue(float value);
     virtual bool IsA(int32_t type);
     virtual int32_t GetScriptMetaTable();
     virtual ScriptIx* GetScriptByName(const char* name, ScriptData& data);
