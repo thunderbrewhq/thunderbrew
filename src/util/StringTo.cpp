@@ -1,6 +1,7 @@
 #include "util/StringTo.hpp"
 #include "util/Lua.hpp"
 #include <storm/String.hpp>
+#include <utility>
 
 uint64_t StringToClickAction(const char* actionStr) {
     if (!actionStr || !*actionStr) {
@@ -168,5 +169,33 @@ bool StringToOrientation(const char* string, uint32_t& orientation) {
         orientation = 1;
         return true;
     }
+    return false;
+}
+
+bool StringToAnchorPoint(const char* string, int32_t& point) {
+    static std::pair<int32_t, const char*> table[12] = {
+        { 0, "ANCHOR_LEFT" },
+        { 1, "ANCHOR_RIGHT" },
+        { 2, "ANCHOR_BOTTOMLEFT" },
+        { 3, "ANCHOR_BOTTOM" },
+        { 4, "ANCHOR_BOTTOMRIGHT" },
+        { 5, "ANCHOR_TOPLEFT" },
+        { 6, "ANCHOR_TOP" },
+        { 7, "ANCHOR_TOPRIGHT" },
+        { 8, "ANCHOR_CURSOR" },
+        { 9, "ANCHOR_NONE" },
+        { 10, "ANCHOR_PRESERVE" },
+        { 11, "ANCHOR_CURSOR_RIGHT" },
+    };
+
+    point = 0;
+
+    for (size_t i = 0; i < 12; ++i) {
+        if (!SStrCmpI(string, table[i].second, STORM_MAX_STR)) {
+            point = table[i].first;
+            return true;
+        }
+    }
+
     return false;
 }

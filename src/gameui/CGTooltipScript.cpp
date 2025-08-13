@@ -1,26 +1,81 @@
 #include "gameui/CGTooltipScript.hpp"
 #include "gameui/CGTooltip.hpp"
+#include "ui/CSimpleFontString.hpp"
+#include "gx/Coordinate.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
+#include "util/StringTo.hpp"
 
 static int32_t Script_AddFontStrings(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+
+    CSimpleFontString* arguments[2] = {};
+
+    for (int32_t i = 2; i < 4; ++i) {
+        if (lua_type(L, i) != LUA_TTABLE) {
+            return luaL_error(L, "Usage: %s:AddFontStrings(leftstring, rightstring)", tooltip->GetDisplayName());
+        }
+
+        lua_rawgeti(L, i, 0);
+        auto fontString = static_cast<CSimpleFontString*>(lua_touserdata(L, -1));
+        lua_settop(L, -2);
+
+        if (!fontString) {
+            return luaL_error(L, "%s:AddFontStrings(): Couldn't find 'this' in fontstring", tooltip->GetDisplayName());
+        }
+
+        if (!fontString->IsA(CSimpleFontString::GetObjectType())) {
+            return luaL_error(L, "%s:AddFontStrings(): Wrong object type, expected fontstring", tooltip->GetDisplayName());
+        }
+
+        arguments[i - 2] = fontString;
+    }
+
+    tooltip->AddFontStrings(arguments[0], arguments[1]);
+    return 0;
 }
 
 static int32_t Script_SetMinimumWidth(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+
+    if (!lua_isnumber(L, 2)) {
+        return luaL_error(L, "Usage: %s:SetMinimumWidth(width [,force])", tooltip->GetDisplayName());
+    }
+
+    tooltip->m_minWidth = lua_tonumber(L, 2);
+    tooltip->m_minWidthForced = StringToBOOL(L, 3, 0);
+    return 0;
 }
 
 static int32_t Script_GetMinimumWidth(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+    lua_pushnumber(L, tooltip->m_minWidth);
+    if (tooltip->m_minWidthForced) {
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 2;
 }
 
 static int32_t Script_SetPadding(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+
+    float value = lua_tonumber(L, 2);
+    value /= CoordinateGetAspectCompensation() * 1024.0f;
+    tooltip->m_padding = NDCToDDCWidth(value);
+    return 0;
 }
 
 static int32_t Script_GetPadding(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+    lua_pushnumber(L, tooltip->m_padding);
+    return 1;
 }
 
 static int32_t Script_IsOwned(lua_State* L) {
@@ -32,7 +87,7 @@ static int32_t Script_IsOwned(lua_State* L) {
     }
 
     lua_rawgeti(L, 2, 0);
-    auto frame = static_cast<CScriptObject*>(lua_touserdata(L, -1));
+    auto frame = static_cast<CSimpleFrame*>(lua_touserdata(L, -1));
     lua_settop(L, -2);
 
     if (!frame) {
@@ -43,7 +98,7 @@ static int32_t Script_IsOwned(lua_State* L) {
         return luaL_error(L, "%s:IsOwned(): Wrong object type, expected frame", tooltip->GetDisplayName());
     }
 
-    if (tooltip->m_parent == frame) {
+    if (tooltip->m_owner == frame) {
         lua_pushnumber(L, 1.0);
     } else {
         lua_pushnil(L);
@@ -55,13 +110,64 @@ static int32_t Script_GetOwner(lua_State* L) {
     auto type = CGTooltip::GetObjectType();
     auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
 
-    // TODO
-    lua_pushnil(L);
+    if (tooltip->m_owner) {
+        if (!tooltip->m_owner->lua_registered) {
+            tooltip->m_owner->RegisterScriptObject(nullptr);
+        }
+        lua_rawgeti(L, LUA_REGISTRYINDEX, tooltip->m_owner->lua_objectRef);
+    } else {
+        lua_pushnil(L);
+    }
+
     return 1;
 }
 
 static int32_t Script_SetOwner(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+
+    tooltip->Hide();
+
+    if (lua_type(L, 2) != LUA_TTABLE) {
+        return luaL_error(L, "Usage: %s:SetOwner(frame)", tooltip->GetDisplayName());
+    }
+
+    lua_rawgeti(L, 2, 0);
+    auto frame = static_cast<CSimpleFrame*>(lua_touserdata(L, -1));
+    lua_settop(L, -2);
+
+    if (!frame) {
+        return luaL_error(L, "%s:SetOwner(): Couldn't find 'this' in frame object", tooltip->GetDisplayName());
+    }
+
+    if (!frame->IsA(CSimpleFrame::GetObjectType())) {
+        return luaL_error(L, "%s:SetOwner(): Wrong object type, expected frame", tooltip->GetDisplayName());
+    }
+
+    if (frame == tooltip) {
+        return luaL_error(L, "%s:SetOwner(): Can't set owner to self", tooltip->GetDisplayName());
+    }
+
+    int32_t anchorPoint = 0;
+    if (lua_isstring(L, 3)) {
+        StringToAnchorPoint(lua_tolstring(L, 3, nullptr), anchorPoint);
+    }
+
+    float xoffset = 0.0f;
+    if (lua_isnumber(L, 4)) {
+        float value = lua_tonumber(L, 4);
+        value /= CoordinateGetAspectCompensation() * 1024.0f;
+        xoffset = NDCToDDCWidth(value);
+    }
+
+    float yoffset = 0.0f;
+    if (lua_isnumber(L, 5)) {
+        float value = lua_tonumber(L, 5);
+        value /= CoordinateGetAspectCompensation() * 1024.0f;
+        yoffset = NDCToDDCWidth(value);
+    }
+
+    tooltip->SetOwner(frame, static_cast<TOOLTIP_ANCHORPOINT>(anchorPoint), xoffset, yoffset);
 }
 
 static int32_t Script_GetAnchorType(lua_State* L) {

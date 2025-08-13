@@ -19,4 +19,6 @@ int32_t StringToJustify(const char*, uint32_t&);
 
 bool StringToOrientation(const char* string, uint32_t& orientation);
 
+bool StringToAnchorPoint(const char* string, int32_t& point);
+
 #endif

@@ -34,6 +34,32 @@ CGTooltip::CGTooltip(CSimpleFrame* parent)
     : CSimpleFrame(parent) {
 }
 
+void CGTooltip::ClearTooltip() {
+}
+
+void CGTooltip::ResetPosition(int32_t a1) {
+}
+
+void CGTooltip::SetOwner(CSimpleFrame* owner, TOOLTIP_ANCHORPOINT anchorpoint, float xoffset, float yoffset) {
+    this->ClearTooltip();
+    this->SetFrameAlpha(255);
+    // TODO: this->unk77 = 0;
+
+    if (this->m_owner != owner
+        || this->m_anchorPoint != anchorpoint
+        || this->m_offsetX != xoffset
+        || this->m_offsetY != yoffset) {
+        this->m_offsetX = xoffset;
+        this->m_offsetY = yoffset;
+        this->m_owner = owner;
+        this->m_anchorPoint = owner ? anchorpoint : ANCHOR_NONE;
+        this->ResetPosition(1);
+    }
+}
+
+void CGTooltip::AddFontStrings(CSimpleFontString* leftstring, CSimpleFontString* rightstring) {
+}
+
 bool CGTooltip::IsA(int32_t type) {
     return type == CGTooltip::s_objectType
         || type == CSimpleFrame::s_objectType

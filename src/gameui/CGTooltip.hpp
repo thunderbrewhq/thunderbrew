@@ -4,6 +4,23 @@
 #include "ui/CSimpleFrame.hpp"
 #include "ui/CSimpleTop.hpp"
 
+class CSimpleFontString;
+
+enum TOOLTIP_ANCHORPOINT {
+    ANCHOR_LEFT = 0,
+    ANCHOR_RIGHT,
+    ANCHOR_BOTTOMLEFT,
+    ANCHOR_BOTTOM,
+    ANCHOR_BOTTOMRIGHT,
+    ANCHOR_TOPLEFT,
+    ANCHOR_TOP,
+    ANCHOR_TOPRIGHT,
+    ANCHOR_CURSOR,
+    ANCHOR_NONE,
+    ANCHOR_PRESERVE,
+    ANCHOR_CURSOR_RIGHT,
+};
+
 class CGTooltip : public CSimpleFrame {
     public:
     // Static variables
@@ -18,6 +35,10 @@ class CGTooltip : public CSimpleFrame {
 
     // Member functions
     CGTooltip(CSimpleFrame* parent);
+    void ClearTooltip();
+    void ResetPosition(int32_t a1);
+    void SetOwner(CSimpleFrame* owner, TOOLTIP_ANCHORPOINT anchorpoint, float xoffset, float yoffset);
+    void AddFontStrings(CSimpleFontString* leftstring, CSimpleFontString* rightstring);
 
     // Virtual member functions
     virtual bool IsA(int32_t type);
@@ -25,6 +46,13 @@ class CGTooltip : public CSimpleFrame {
     virtual ScriptIx* GetScriptByName(const char* name, ScriptData& data);
 
     // Member variables
+    CSimpleFrame* m_owner = nullptr;
+    TOOLTIP_ANCHORPOINT m_anchorPoint = ANCHOR_NONE;
+    float m_padding = 0.0f;
+    float m_minWidth = 0.0f;
+    uint32_t m_minWidthForced = 0;
+    float m_offsetX = 0.0f;
+    float m_offsetY = 0.0f;
     ScriptIx m_onTooltipSetDefaultAnchor;
     ScriptIx m_onTooltipCleared;
     ScriptIx m_onTooltipAddMoney;
