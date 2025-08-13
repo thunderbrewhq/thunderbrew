@@ -1,5 +1,6 @@
 #include "gameui/CGTooltip.hpp"
 #include "gameui/CGTooltipScript.hpp"
+#include "ui/CSimpleFontString.hpp"
 #include "util/Lua.hpp"
 #include <bc/Memory.hpp>
 
@@ -76,7 +77,21 @@ void CGTooltip::AddLine(
     const CImVector& leftColor,
     const CImVector& rightColor,
     int32_t wrapped) {
+    if ((!leftText || !*leftText) && (!rightText || !*rightText)) {
+        return;
+    }
 
+    if (!this->m_linesMax) {
+        return;
+    }
+
+    if (this->m_lines == this->m_linesMax - 1) {
+        char name[256];
+        SStrPrintf(name, sizeof(name), "%sTextLeft%d", this->GetDisplayName(), this->m_linesMax + 1);
+        // TODO: CDataAllocator
+        auto leftFontString = NEW(CSimpleFontString, this, 2, 1);
+        leftFontString->SetName(name);
+    }
 }
 
 bool CGTooltip::IsA(int32_t type) {

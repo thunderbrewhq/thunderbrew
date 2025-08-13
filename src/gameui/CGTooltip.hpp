@@ -56,6 +56,11 @@ class CGTooltip : public CSimpleFrame {
     // Member variables
     CSimpleFrame* m_owner = nullptr;
     TOOLTIP_ANCHORPOINT m_anchorPoint = ANCHOR_NONE;
+    uint32_t m_lines = 0;
+    uint32_t m_linesMax = 0;
+    TSFixedArray<CSimpleFontString*> m_leftStrings;
+    TSFixedArray<CSimpleFontString*> m_rightStrings;
+    TSFixedArray<int32_t> m_wrapLine;
     float m_padding = 0.0f;
     float m_minWidth = 0.0f;
     uint32_t m_minWidthForced = 0;
