@@ -5,6 +5,7 @@
 
 int32_t CGTooltip::s_metatable;
 int32_t CGTooltip::s_objectType;
+CImVector CGTooltip::s_defaultColor{ 0, 210, 255, 255 };
 
 CSimpleFrame* CGTooltip::Create(CSimpleFrame* parent) {
     // TODO:  Data = CDataAllocator__GetData(0, ".?AVCGTooltip@@", -2);
@@ -40,6 +41,15 @@ void CGTooltip::ClearTooltip() {
 void CGTooltip::ResetPosition(int32_t a1) {
 }
 
+void CGTooltip::SetAnchorType(TOOLTIP_ANCHORPOINT anchorpoint, float xoffset, float yoffset) {
+    this->m_offsetX = xoffset;
+    this->m_offsetY = yoffset;
+    if (this->m_owner) {
+        this->m_anchorPoint = anchorpoint;
+    }
+    this->ResetPosition(1);
+}
+
 void CGTooltip::SetOwner(CSimpleFrame* owner, TOOLTIP_ANCHORPOINT anchorpoint, float xoffset, float yoffset) {
     this->ClearTooltip();
     this->SetFrameAlpha(255);
@@ -58,6 +68,15 @@ void CGTooltip::SetOwner(CSimpleFrame* owner, TOOLTIP_ANCHORPOINT anchorpoint, f
 }
 
 void CGTooltip::AddFontStrings(CSimpleFontString* leftstring, CSimpleFontString* rightstring) {
+}
+
+void CGTooltip::AddLine(
+    const char* leftText,
+    const char* rightText,
+    const CImVector& leftColor,
+    const CImVector& rightColor,
+    int32_t wrapped) {
+
 }
 
 bool CGTooltip::IsA(int32_t type) {

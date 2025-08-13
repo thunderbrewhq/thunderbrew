@@ -97,3 +97,32 @@ const char* OrientationToString(uint32_t orientation) {
         return "UNKNOWN";
     }
 }
+
+const char* AnchorPointToString(int32_t point) {
+    switch (point) {
+    case 0:
+        return "ANCHOR_LEFT";
+    case 1:
+        return "ANCHOR_RIGHT";
+    case 2:
+        return "ANCHOR_BOTTOMLEFT";
+    case 3:
+        return "ANCHOR_BOTTOM";
+    case 4:
+        return "ANCHOR_BOTTOMRIGHT";
+    case 5:
+        return "ANCHOR_TOPLEFT";
+    case 6:
+        return "ANCHOR_TOP";
+    case 7:
+        return "ANCHOR_TOPRIGHT";
+    case 8:
+        return "ANCHOR_CURSOR";
+    case 10:
+        return "ANCHOR_PRESERVE";
+    case 11:
+        return "ANCHOR_CURSOR_RIGHT";
+    default:
+        return "ANCHOR_NONE";
+    }
+}

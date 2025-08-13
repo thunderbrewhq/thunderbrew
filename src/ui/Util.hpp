@@ -15,4 +15,6 @@ int32_t StringToFrameStrata(const char* string, FRAME_STRATA& strata);
 
 const char* OrientationToString(uint32_t orientation);
 
+const char* AnchorPointToString(int32_t point);
+
 #endif

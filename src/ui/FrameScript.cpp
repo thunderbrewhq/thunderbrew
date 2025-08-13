@@ -447,6 +447,19 @@ void FrameScript_Flush() {
     }
 }
 
+void FrameScript_GetColorNoAlpha(lua_State* L, int32_t idx, CImVector& color) {
+    float r = lua_tonumber(L, idx + 0);
+    r = std::max(0.0f, std::min(r, 1.0f));
+
+    float g = lua_tonumber(L, idx + 1);
+    g = std::max(0.0f, std::min(g, 1.0f));
+
+    float b = lua_tonumber(L, idx + 2);
+    b = std::max(0.0f, std::min(b, 1.0f));
+
+    color.Set(1.0f, r, g, b);
+}
+
 void FrameScript_GetColor(lua_State* L, int32_t idx, CImVector& color) {
     float r = lua_tonumber(L, idx + 0);
     r = std::max(0.0f, std::min(r, 1.0f));

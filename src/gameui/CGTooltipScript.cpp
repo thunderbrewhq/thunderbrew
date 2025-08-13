@@ -1,6 +1,8 @@
 #include "gameui/CGTooltipScript.hpp"
 #include "gameui/CGTooltip.hpp"
+#include "ui/FrameScript.hpp"
 #include "ui/CSimpleFontString.hpp"
+#include "ui/Util.hpp"
 #include "gx/Coordinate.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
@@ -171,23 +173,86 @@ static int32_t Script_SetOwner(lua_State* L) {
 }
 
 static int32_t Script_GetAnchorType(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+    lua_pushstring(L, AnchorPointToString(tooltip->m_anchorPoint));
+    return 1;
 }
 
 static int32_t Script_SetAnchorType(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+
+    int32_t anchorPoint = 0;
+    if (lua_isstring(L, 2)) {
+        StringToAnchorPoint(lua_tolstring(L, 3, nullptr), anchorPoint);
+    } else {
+        return luaL_error(L, "Usage: %s:SetAnchorType( anchorType [,Xoffset] [,Yoffset] )", tooltip->GetDisplayName());
+    }
+
+    float xoffset = 0.0f;
+    if (lua_isnumber(L, 3)) {
+        float value = lua_tonumber(L, 3);
+        value /= CoordinateGetAspectCompensation() * 1024.0f;
+        xoffset = NDCToDDCWidth(value);
+    }
+
+    float yoffset = 0.0f;
+    if (lua_isnumber(L, 4)) {
+        float value = lua_tonumber(L, 4);
+        value /= CoordinateGetAspectCompensation() * 1024.0f;
+        yoffset = NDCToDDCWidth(value);
+    }
+
+    tooltip->SetAnchorType(static_cast<TOOLTIP_ANCHORPOINT>(anchorPoint), xoffset, yoffset);
+    return 0;
 }
 
 static int32_t Script_ClearLines(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+    tooltip->ClearTooltip();
+    return 0;
 }
 
 static int32_t Script_AddLine(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+
+    const char* line = lua_isstring(L, 2) ? lua_tolstring(L, 2, nullptr) : nullptr;
+
+    CImVector color = CGTooltip::s_defaultColor;
+    if (lua_isnumber(L, 3)) {
+        FrameScript_GetColorNoAlpha(L, 3, color);
+    }
+
+    bool wrapped = StringToBOOL(L, 6, 0);
+
+    tooltip->AddLine(line, nullptr, color, color, wrapped);
+    return 0;
 }
 
 static int32_t Script_AddDoubleLine(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+
+    const char* leftLine = lua_isstring(L, 2) ? lua_tolstring(L, 2, nullptr) : nullptr;
+    const char* rightLine = lua_isstring(L, 3) ? lua_tolstring(L, 3, nullptr) : nullptr;
+
+    CImVector leftColor = CGTooltip::s_defaultColor;
+    if (lua_isnumber(L, 4)) {
+        FrameScript_GetColorNoAlpha(L, 4, leftColor);
+    }
+
+    CImVector rightColor = CGTooltip::s_defaultColor;
+    if (lua_isnumber(L, 7)) {
+        FrameScript_GetColorNoAlpha(L, 7, rightColor);
+    }
+
+    bool wrapped = StringToBOOL(L, 10, 0);
+
+    tooltip->AddLine(leftLine, rightLine, leftColor, rightColor, wrapped);
+    return 0;
 }
 
 static int32_t Script_AddTexture(lua_State* L) {
@@ -195,7 +260,25 @@ static int32_t Script_AddTexture(lua_State* L) {
 }
 
 static int32_t Script_SetText(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+
+    const char* line = lua_isstring(L, 2) ? lua_tolstring(L, 2, nullptr) : nullptr;
+    if (!line) {
+        return luaL_error(L, "Usage: %s:SetText(\"text\" [, color])", tooltip->GetDisplayName());
+    }
+
+    CImVector color = CGTooltip::s_defaultColor;
+    if (lua_isnumber(L, 3)) {
+        FrameScript_GetColor(L, 3, color);
+    }
+
+    bool wrapped = StringToBOOL(L, 7, 0);
+
+    tooltip->ClearTooltip();
+    tooltip->AddLine(line, nullptr, color, color, wrapped);
+    tooltip->Show();
+    return 0;
 }
 
 static int32_t Script_AppendText(lua_State* L) {

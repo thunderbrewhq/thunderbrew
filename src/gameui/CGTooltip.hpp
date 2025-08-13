@@ -26,6 +26,7 @@ class CGTooltip : public CSimpleFrame {
     // Static variables
     static int32_t s_metatable;
     static int32_t s_objectType;
+    static CImVector s_defaultColor;
 
     // Static functions
     static CSimpleFrame* Create(CSimpleFrame* parent);
@@ -37,8 +38,15 @@ class CGTooltip : public CSimpleFrame {
     CGTooltip(CSimpleFrame* parent);
     void ClearTooltip();
     void ResetPosition(int32_t a1);
+    void SetAnchorType(TOOLTIP_ANCHORPOINT anchorpoint, float xoffset, float yoffset);
     void SetOwner(CSimpleFrame* owner, TOOLTIP_ANCHORPOINT anchorpoint, float xoffset, float yoffset);
     void AddFontStrings(CSimpleFontString* leftstring, CSimpleFontString* rightstring);
+    void AddLine(
+        const char* leftText,
+        const char* rightText,
+        const CImVector& leftColor,
+        const CImVector& rightColor,
+        int32_t wrapped);
 
     // Virtual member functions
     virtual bool IsA(int32_t type);
