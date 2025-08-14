@@ -1,8 +1,12 @@
 #include "gameui/CGTooltip.hpp"
 #include "gameui/CGTooltipScript.hpp"
+#include "gx/Coordinate.hpp"
 #include "ui/CSimpleFontString.hpp"
+#include "ui/CSimpleStatusBar.hpp"
+#include "ui/CSimpleTexture.hpp"
 #include "util/Lua.hpp"
 #include <bc/Memory.hpp>
+#include <common/XML.hpp>
 
 int32_t CGTooltip::s_metatable;
 int32_t CGTooltip::s_objectType;
@@ -69,6 +73,13 @@ void CGTooltip::SetOwner(CSimpleFrame* owner, TOOLTIP_ANCHORPOINT anchorpoint, f
 }
 
 void CGTooltip::AddFontStrings(CSimpleFontString* leftstring, CSimpleFontString* rightstring) {
+    this->m_linesMax++;
+    this->m_leftStrings.SetCount(this->m_linesMax);
+    this->m_rightStrings.SetCount(this->m_linesMax);
+    this->m_wrapLine.SetCount(this->m_linesMax);
+    this->m_leftStrings[this->m_linesMax - 1] = leftstring;
+    this->m_rightStrings[this->m_linesMax - 1] = rightstring;
+    this->m_wrapLine[this->m_linesMax - 1] = 0;
 }
 
 void CGTooltip::AddLine(
@@ -86,12 +97,51 @@ void CGTooltip::AddLine(
     }
 
     if (this->m_lines == this->m_linesMax - 1) {
+        auto lastLeftString = this->m_leftStrings[this->m_linesMax - 1];
+        auto lastRightString = this->m_rightStrings[this->m_linesMax - 1];
+
         char name[256];
         SStrPrintf(name, sizeof(name), "%sTextLeft%d", this->GetDisplayName(), this->m_linesMax + 1);
         // TODO: CDataAllocator
         auto leftFontString = NEW(CSimpleFontString, this, 2, 1);
         leftFontString->SetName(name);
+        leftFontString->SetFontObject(lastLeftString->GetFontObject());
+
+        float yoffset = -2.0f / (CoordinateGetAspectCompensation() * 1024.0f);
+        yoffset = NDCToDDCWidth(yoffset);
+        leftFontString->SetPoint(FRAMEPOINT_TOPLEFT, lastLeftString, FRAMEPOINT_BOTTOMLEFT, 0.0f, yoffset, 0);
+        leftFontString->Hide();
+
+        SStrPrintf(name, sizeof(name), "%sTextRight%d", this->GetDisplayName(), this->m_linesMax + 1);
+        // TODO: CDataAllocator
+        auto rightFontString = NEW(CSimpleFontString, this, 2, 1);
+        rightFontString->SetName(name);
+        rightFontString->SetFontObject(lastRightString->GetFontObject());
+
+        float xoffset = 40.0f / (CoordinateGetAspectCompensation() * 1024.0f);
+        xoffset = NDCToDDCWidth(xoffset);
+        rightFontString->SetPoint(FRAMEPOINT_RIGHT, leftFontString, FRAMEPOINT_LEFT, xoffset, 0.0f, 0);
+        rightFontString->Hide();
+
+        this->AddFontStrings(leftFontString, rightFontString);
     }
+
+    if (leftText && *leftText) {
+        auto leftString = this->m_leftStrings[this->m_lines];
+        leftString->SetVertexColor(leftColor);
+        leftString->SetText(leftText, 1);
+        leftString->Show();
+    }
+
+    if (rightText && *rightText) {
+        auto rightString = this->m_rightStrings[this->m_lines];
+        rightString->SetVertexColor(rightColor);
+        rightString->SetText(rightText, 1);
+        rightString->Show();
+        wrapped = 0;
+    }
+
+    this->m_wrapLine[this->m_lines++] = wrapped;
 }
 
 bool CGTooltip::IsA(int32_t type) {
@@ -152,4 +202,46 @@ FrameScript_Object::ScriptIx* CGTooltip::GetScriptByName(const char* name, Scrip
     }
 
     return nullptr;
+}
+
+void CGTooltip::PostLoadXML(XMLNode* node, CStatus* status) {
+    CSimpleFrame::PostLoadXML(node, status);
+    for (int32_t pass = 0; pass < 2; ++pass) {
+        if (pass == 1) {
+            this->m_leftStrings.SetCount(this->m_linesMax);
+            this->m_rightStrings.SetCount(this->m_linesMax);
+            this->m_wrapLine.SetCount(this->m_linesMax);
+        }
+
+        for (this->m_linesMax = 0; true; ++this->m_linesMax) {
+            char name[256];
+            SStrPrintf(name, sizeof(name), "%sTextLeft%d", this->GetDisplayName(), this->m_linesMax + 1);
+            auto leftObject = CScriptObject::GetScriptObjectByName(name, CGTooltip::GetObjectType());
+
+            SStrPrintf(name, sizeof(name), "%sTextRight%d", this->GetDisplayName(), this->m_linesMax + 1);
+            auto rightObject = CScriptObject::GetScriptObjectByName(name, CGTooltip::GetObjectType());
+
+            if (!leftObject || !rightObject) {
+                break;
+            }
+
+            if (pass == 1) {
+                this->m_leftStrings[this->m_linesMax] = static_cast<CSimpleFontString*>(leftObject);
+                this->m_rightStrings[this->m_linesMax] = static_cast<CSimpleFontString*>(rightObject);
+                this->m_wrapLine[this->m_linesMax] = 0;
+            }
+        }
+    }
+
+    for (int32_t i = 0; i < 10; ++i) {
+        char name[256];
+        SStrPrintf(name, sizeof(name), "%sTexture%d", this->GetDisplayName(), i);
+        auto object = CScriptObject::GetScriptObjectByName(name, CSimpleTexture::GetObjectType());
+        this->m_textures[i] = static_cast<CSimpleTexture*>(object);
+    }
+
+    char name[256];
+    SStrPrintf(name, sizeof(name), "%sStatusBar", this->GetDisplayName());
+    auto object = CScriptObject::GetScriptObjectByName(name, CSimpleStatusBar::GetObjectType());
+    this->m_statusBar = static_cast<CSimpleStatusBar*>(object);
 }

@@ -4,6 +4,7 @@
 #include "ui/CSimpleFrame.hpp"
 #include "ui/CSimpleTop.hpp"
 
+class CSimpleStatusBar;
 class CSimpleFontString;
 
 enum TOOLTIP_ANCHORPOINT {
@@ -52,6 +53,7 @@ class CGTooltip : public CSimpleFrame {
     virtual bool IsA(int32_t type);
     virtual int32_t GetScriptMetaTable();
     virtual ScriptIx* GetScriptByName(const char* name, ScriptData& data);
+    virtual void PostLoadXML(XMLNode* node, CStatus* status);
 
     // Member variables
     CSimpleFrame* m_owner = nullptr;
@@ -61,6 +63,8 @@ class CGTooltip : public CSimpleFrame {
     TSFixedArray<CSimpleFontString*> m_leftStrings;
     TSFixedArray<CSimpleFontString*> m_rightStrings;
     TSFixedArray<int32_t> m_wrapLine;
+    CSimpleStatusBar* m_statusBar = nullptr;
+    CSimpleTexture* m_textures[10] = {};
     float m_padding = 0.0f;
     float m_minWidth = 0.0f;
     uint32_t m_minWidthForced = 0;
