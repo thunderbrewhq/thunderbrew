@@ -844,11 +844,17 @@ static int32_t Script_NotWhileDeadError(lua_State* L) {
 }
 
 static int32_t Script_GetRestState(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnil(L);
+    lua_pushnil(L);
+    lua_pushnil(L);
+    return 3;
 }
 
 static int32_t Script_GetXPExhaustion(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO
+    lua_pushnil(L);
+    return 1;
 }
 
 static int32_t Script_GetTimeToWellRested(lua_State* L) {

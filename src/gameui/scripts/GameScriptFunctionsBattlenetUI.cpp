@@ -234,7 +234,9 @@ static int32_t Script_BNIsFriend(lua_State* L) {
 }
 
 static int32_t Script_BNGetMaxPlayersInConversation(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO: LoginConnection
+    lua_pushnumber(L, 12.0);
+    return 1;
 }
 
 void BattlenetUIRegisterScriptFunctions() {

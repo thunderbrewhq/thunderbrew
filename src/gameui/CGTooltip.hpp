@@ -24,6 +24,8 @@ enum TOOLTIP_ANCHORPOINT {
 
 class CGTooltip : public CSimpleFrame {
     public:
+    const float TOOLTIP_FADE_TIME = 2.0f;
+
     // Static variables
     static int32_t s_metatable;
     static int32_t s_objectType;
@@ -48,6 +50,7 @@ class CGTooltip : public CSimpleFrame {
         const CImVector& leftColor,
         const CImVector& rightColor,
         int32_t wrapped);
+    void FadeOut();
 
     // Virtual member functions
     virtual bool IsA(int32_t type);
@@ -65,6 +68,8 @@ class CGTooltip : public CSimpleFrame {
     TSFixedArray<int32_t> m_wrapLine;
     CSimpleStatusBar* m_statusBar = nullptr;
     CSimpleTexture* m_textures[10] = {};
+    uint32_t m_fading = 0;
+    float m_fadeTime = 0.0f;
     float m_padding = 0.0f;
     float m_minWidth = 0.0f;
     uint32_t m_minWidthForced = 0;

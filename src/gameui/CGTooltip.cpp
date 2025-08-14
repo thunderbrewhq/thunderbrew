@@ -41,6 +41,28 @@ CGTooltip::CGTooltip(CSimpleFrame* parent)
 }
 
 void CGTooltip::ClearTooltip() {
+    // TODO
+    for (uint32_t line = 0; line < this->m_lines; ++line) {
+        auto leftString = this->m_leftStrings[line];
+        leftString->SetWidth(0.0f);
+        leftString->SetText("", 1);
+        leftString->Hide();
+
+        auto rightString = this->m_rightStrings[line];
+        rightString->SetWidth(0.0f);
+        rightString->SetText("", 1);
+        rightString->Hide();
+
+        this->m_wrapLine[line] = 0;
+    }
+
+    if (!this->m_minWidthForced) {
+        this->m_minWidth = 0.0f;
+    }
+
+    if (this->m_lines && this->m_onTooltipCleared.luaRef) {
+        this->RunScript(this->m_onTooltipCleared, 0, nullptr);
+    }
 }
 
 void CGTooltip::ResetPosition(int32_t a1) {
@@ -142,6 +164,16 @@ void CGTooltip::AddLine(
     }
 
     this->m_wrapLine[this->m_lines++] = wrapped;
+}
+
+void CGTooltip::FadeOut() {
+    if (this->m_anchorPoint == ANCHOR_LEFT || this->m_anchorPoint == ANCHOR_CURSOR_RIGHT) {
+        this->HideThis();
+        this->m_fading = 0;
+    } else {
+        this->m_fading = 1;
+        this->m_fadeTime = TOOLTIP_FADE_TIME;
+    }
 }
 
 bool CGTooltip::IsA(int32_t type) {

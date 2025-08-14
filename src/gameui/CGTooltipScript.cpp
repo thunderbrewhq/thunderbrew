@@ -286,7 +286,10 @@ static int32_t Script_AppendText(lua_State* L) {
 }
 
 static int32_t Script_FadeOut(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+    tooltip->FadeOut();
+    return 0;
 }
 
 static int32_t Script_SetHyperlink(lua_State* L) {
@@ -406,7 +409,10 @@ static int32_t Script_SetAuctionItem(lua_State* L) {
 }
 
 static int32_t Script_NumLines(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CGTooltip::GetObjectType();
+    auto tooltip = static_cast<CGTooltip*>(FrameScript_GetObjectThis(L, type));
+    lua_pushnumber(L, tooltip->m_lines);
+    return 1;
 }
 
 static int32_t Script_SetQuestRewardSpell(lua_State* L) {

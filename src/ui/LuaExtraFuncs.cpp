@@ -3,6 +3,7 @@
 #include "ui/FrameScriptInternal.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
+#include "os/Debug.hpp"
 #include <cstdint>
 
 
@@ -120,7 +121,26 @@ int32_t forceinsecure(lua_State* L) {
 }
 
 int32_t securecall(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    // TODO: tainted
+    if (lua_isstring(L, 1)) {
+        lua_pushstring(L, lua_tolstring(L, 1, nullptr));
+        lua_rawget(L, LUA_GLOBALSINDEX);
+        lua_remove(L, 1);
+        lua_insert(L, 1);
+    }
+    if (!lua_gettop(L)) {
+        lua_pushnil(L);
+    }
+
+    lua_rawgeti(L, LUA_REGISTRYINDEX, FrameScript::s_errorHandlerRef);
+    lua_insert(L, 1);
+    if (lua_pcall(L, lua_gettop(L) - 2, -1, 1)) {
+        lua_settop(L, -3);
+    } else {
+        lua_remove(L, 1);
+    }
+    // TODO: tainted
+    return lua_gettop(L);
 }
 
 int32_t hooksecurefunc(lua_State* L) {
@@ -132,7 +152,7 @@ int32_t debugload(lua_State* L) {
 }
 
 int32_t debuginfo(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    return 0;
 }
 
 int32_t debugprint(lua_State* L) {
