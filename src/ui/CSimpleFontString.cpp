@@ -947,3 +947,12 @@ void CSimpleFontString::UpdateString() {
 
     this->OnRegionChanged();
 }
+
+bool CSimpleFontString::SetAlphaGradient(int32_t startChar, int32_t length) {
+    this->m_alphaGradientStart = startChar;
+    this->m_alphaGradientLength = length;
+    if (this->m_string) {
+        // TODO: return TextBlockSetGradient()
+    }
+    return false;
+}

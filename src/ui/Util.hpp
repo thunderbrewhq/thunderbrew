@@ -19,4 +19,6 @@ const char* AnchorPointToString(int32_t point);
 
 const char* DrawLayerToString(int32_t layer);
 
+const char* FontFlagsToString(uint32_t flags);
+
 #endif

@@ -143,3 +143,28 @@ const char* DrawLayerToString(int32_t layer) {
         return "UNKNOWN";
     }
 }
+
+const char* FontFlagsToString(uint32_t flags) {
+    struct FlagEntry {
+        uint32_t flag;
+        const char* string;
+    };
+
+    static FlagEntry table[3] = {
+        { 1, "OUTLINE" },
+        { 4, "THICKOUTLINE" },
+        { 2, "MONOCHROME" },
+    };
+
+    static char result[64] = {};
+    result[0] = '\0';
+    for (size_t i = 0; i < 3; ++i) {
+        if (flags & table[i].flag) {
+            if (result[0]) {
+                SStrPack(result, ", ", sizeof(result));
+            }
+            SStrPack(result, table[i].string, sizeof(result));
+        }
+    }
+    return result;
+}

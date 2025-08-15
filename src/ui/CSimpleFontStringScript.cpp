@@ -5,6 +5,7 @@
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
 #include "util/StringTo.hpp"
+#include "gx/Coordinate.hpp"
 #include <cstdint>
 
 int32_t CSimpleFontString_IsObjectType(lua_State* L) {
@@ -72,15 +73,47 @@ int32_t CSimpleFontString_SetVertexColor(lua_State* L) {
 }
 
 int32_t CSimpleFontString_GetAlpha(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    CImVector color;
+    string->GetVertexColor(color);
+    lua_pushnumber(L, color.a / 255.0);
+    return 1;
 }
 
 int32_t CSimpleFontString_SetAlpha(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    if (!lua_isnumber(L, 2)) {
+        return luaL_error(L, "Usage: %s:SetAlpha(alpha)", string->GetDisplayName());
+    }
+
+    CImVector color;
+    string->GetVertexColor(color);
+
+    color.a = lua_tonumber(L, 2) * 255.0;
+    string->SetVertexColor(color);
+    return 0;
 }
 
 int32_t CSimpleFontString_SetAlphaGradient(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+        return luaL_error(L, "Usage: %s:SetAlphaGradient(start, length)", string->GetDisplayName());
+    }
+
+    auto start = lua_tonumber(L, 2);
+    auto length = lua_tonumber(L, 3);
+    if (string->SetAlphaGradient(start, length)) {
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 int32_t CSimpleFontString_Show(lua_State* L) {
@@ -124,7 +157,17 @@ int32_t CSimpleFontString_IsShown(lua_State* L) {
 }
 
 int32_t CSimpleFontString_GetFontObject(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+    if (string->m_fontObject) {
+        if (!string->m_fontObject->lua_registered) {
+            string->m_fontObject->RegisterScriptObject(nullptr);
+        }
+        lua_rawgeti(L, LUA_REGISTRYINDEX, string->m_fontObject->lua_objectRef);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 int32_t CSimpleFontString_SetFontObject(lua_State* L) {
@@ -162,7 +205,20 @@ int32_t CSimpleFontString_SetFontObject(lua_State* L) {
 }
 
 int32_t CSimpleFontString_GetFont(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    lua_pushstring(L, string->GetFontName());
+
+    auto height = string->GetFontHeight(false);
+    height *= CoordinateGetAspectCompensation() * 1024.0f;
+    height = DDCToNDCWidth(height);
+    lua_pushnumber(L, height);
+
+    auto flags = FontFlagsToString(string->GetFontFlags());
+    lua_pushstring(L, flags);
+
+    return 3;
 }
 
 int32_t CSimpleFontString_SetFont(lua_State* L) {

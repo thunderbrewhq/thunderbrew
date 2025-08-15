@@ -87,6 +87,7 @@ class CSimpleFontString : public CSimpleRegion, public CSimpleFontable {
         void SetTextLength(uint32_t a2);
         int32_t Sub482AC0();
         void UpdateString();
+        bool SetAlphaGradient(int32_t startChar, int32_t length);
 };
 
 #endif
