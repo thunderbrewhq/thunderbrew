@@ -67,7 +67,7 @@ int32_t CSimpleFontString_SetVertexColor(lua_State* L) {
         newColor.a = color.a;
     }
 
-    string->SetVertexColor(color);
+    string->SetVertexColor(newColor);
     // TODO: Some flag should be set
     return 0;
 }
@@ -296,39 +296,124 @@ int32_t CSimpleFontString_SetFormattedText(lua_State* L) {
 }
 
 int32_t CSimpleFontString_GetTextColor(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    CImVector color;
+    string->GetVertexColor(color);
+    lua_pushnumber(L, color.r / 255.0);
+    lua_pushnumber(L, color.g / 255.0);
+    lua_pushnumber(L, color.b / 255.0);
+    lua_pushnumber(L, color.a / 255.0);
+    return 4;
 }
 
 int32_t CSimpleFontString_SetTextColor(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    CImVector color;
+    FrameScript_GetColor(L, 2, color);
+    string->SetVertexColor(color);
+
+    // TODO: Some flag should be set
+    return 0;
 }
 
 int32_t CSimpleFontString_GetShadowColor(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    CImVector color = string->m_shadowColor;
+    lua_pushnumber(L, color.r / 255.0);
+    lua_pushnumber(L, color.g / 255.0);
+    lua_pushnumber(L, color.b / 255.0);
+    lua_pushnumber(L, color.a / 255.0);
+    return 4;
 }
 
 int32_t CSimpleFontString_SetShadowColor(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    CImVector color;
+    FrameScript_GetColor(L, 2, color);
+    string->SetShadowColor(color);
+    // TODO: Some flag should be set
+    return 0;
 }
 
 int32_t CSimpleFontString_GetShadowOffset(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    auto offset = string->m_shadowOffset;
+    offset *= CoordinateGetAspectCompensation() * 1024.0f;
+    lua_pushnumber(L, DDCToNDCWidth(offset.x));
+    lua_pushnumber(L, DDCToNDCWidth(offset.y));
+    return 2;
 }
 
 int32_t CSimpleFontString_SetShadowOffset(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+        return luaL_error(L, "Usage: %s:SetShadowOffset(x, y)", string->GetDisplayName());
+    }
+
+    C2Vector offset;
+    offset.x = lua_tonumber(L, 2);
+    offset.y = lua_tonumber(L, 3);
+    offset /= CoordinateGetAspectCompensation() * 1024.0f;
+    offset.x = NDCToDDCWidth(offset.x);
+    offset.y = NDCToDDCWidth(offset.y);
+
+    string->SetShadowOffset(offset);
+    // TODO: Some flag should be set
+    return 0;
 }
 
 int32_t CSimpleFontString_GetSpacing(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+    float value = string->m_spacing;
+    value *= CoordinateGetAspectCompensation() * 1024.0f;
+    lua_pushnumber(L, DDCToNDCWidth(value));
+    return 1;
 }
 
 int32_t CSimpleFontString_SetSpacing(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    if (!lua_isnumber(L, 2)) {
+        return luaL_error(L, "Usage: %s:SetSpacing(spacing)", string->GetDisplayName());
+    }
+
+    float value = lua_tonumber(L, 2);
+    value /= CoordinateGetAspectCompensation() * 1024.0f;
+    string->SetSpacing(NDCToDDCWidth(value));
+    // TODO: Some flag should be set
+    return 0;
 }
 
 int32_t CSimpleFontString_SetTextHeight(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    if (!lua_isstring(L, 2)) {
+        return luaL_error(L, "Usage: %s:SetTextHeight(pixelHeight)", string->GetDisplayName());
+    }
+
+    auto height = lua_tonumber(L, 3);
+    if (height <= 0.00000011920929) {
+        return luaL_error(L, "%s:SetTextHeight(): invalid texHeight: %f, height must be > 0", string->GetDisplayName(), height);
+    }
+    height /= CoordinateGetAspectCompensation() * 1024.0f;
+    height = NDCToDDCWidth(height);
+    string->SetTextHeight(height);
+    return 0;
 }
 
 int32_t CSimpleFontString_GetStringWidth(lua_State* L) {

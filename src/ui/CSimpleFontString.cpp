@@ -15,6 +15,7 @@
 #include "util/StringTo.hpp"
 #include <common/XML.hpp>
 #include <storm/String.hpp>
+#include <tempest/Math.hpp>
 
 int32_t CSimpleFontString::s_count;
 int32_t CSimpleFontString::s_metatable;
@@ -955,4 +956,31 @@ bool CSimpleFontString::SetAlphaGradient(int32_t startChar, int32_t length) {
         // TODO: return TextBlockSetGradient()
     }
     return false;
+}
+
+void CSimpleFontString::SetShadowColor(const CImVector& color) {
+    if (this->m_shadowColor != color) {
+        this->m_shadowColor = color;
+        this->UpdateString();
+    }
+}
+
+void CSimpleFontString::SetShadowOffset(const C2Vector& offset) {
+}
+
+void CSimpleFontString::SetTextHeight(float height) {
+    if (CMath::fequal(height, this->m_fontHeight)) {
+        return;
+    }
+
+    this->m_styleFlags &= ~0x200u;
+    this->m_fontHeight = height;
+    this->m_cachedWidth = 0.0;
+    this->m_cachedHeight = 0.0;
+    if (this->m_string) {
+        HandleClose(this->m_string);
+        this->m_string = nullptr;
+    }
+    // TODO: Unset some flag
+    this->Resize(0);
 }
