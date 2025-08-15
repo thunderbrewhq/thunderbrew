@@ -17,4 +17,6 @@ const char* OrientationToString(uint32_t orientation);
 
 const char* AnchorPointToString(int32_t point);
 
+const char* DrawLayerToString(int32_t layer);
+
 #endif

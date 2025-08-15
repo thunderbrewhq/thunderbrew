@@ -19,6 +19,7 @@
 int32_t CSimpleFontString::s_count;
 int32_t CSimpleFontString::s_metatable;
 int32_t CSimpleFontString::s_objectType;
+const char* CSimpleFontString::s_objectTypeName = "FontString";
 
 void CSimpleFontString::CreateScriptMetaTable() {
     lua_State* L = FrameScript_GetContext();
@@ -125,6 +126,16 @@ bool CSimpleFontString::IsA(int32_t type) {
     return type == CSimpleFontString::s_objectType
         || type == CScriptRegion::s_objectType
         || type == CScriptObject::s_objectType;
+}
+
+bool CSimpleFontString::IsA(const char* typeName) {
+    return !SStrCmpI(typeName, CSimpleFontString::s_objectTypeName, STORM_MAX_STR)
+        || !SStrCmpI(typeName, CScriptRegion::s_objectTypeName, STORM_MAX_STR)
+        || !SStrCmpI(typeName, CScriptObject::s_objectTypeName, STORM_MAX_STR);
+}
+
+const char* CSimpleFontString::GetObjectTypeName() {
+    return CSimpleFontString::s_objectTypeName;
 }
 
 void CSimpleFontString::FontObjectUpdated(CSimpleFontStringAttributes& attributes) {

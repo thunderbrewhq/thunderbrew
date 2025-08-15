@@ -1,4 +1,5 @@
 #include "ui/CSimpleFontScript.hpp"
+#include "ui/CSimpleFontString.hpp"
 #include "util/Unimplemented.hpp"
 #include <cstdint>
 

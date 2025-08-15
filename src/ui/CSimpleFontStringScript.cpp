@@ -1,28 +1,74 @@
 #include "ui/CSimpleFontStringScript.hpp"
 #include "ui/CSimpleFont.hpp"
 #include "ui/CSimpleFontString.hpp"
+#include "ui/Util.hpp"
 #include "util/Lua.hpp"
 #include "util/Unimplemented.hpp"
+#include "util/StringTo.hpp"
 #include <cstdint>
 
 int32_t CSimpleFontString_IsObjectType(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    if (!lua_isstring(L, 2)) {
+        return luaL_error(L, "Usage: %s:IsObjectType(\"TYPE\")", string->GetDisplayName());
+    }
+
+    if (string->IsA(lua_tolstring(L, 2, nullptr))) {
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 int32_t CSimpleFontString_GetObjectType(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+    lua_pushstring(L, string->GetObjectTypeName());
+    return 1;
 }
 
 int32_t CSimpleFontString_GetDrawLayer(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+    auto layer = DrawLayerToString(string->m_drawlayer);
+    lua_pushstring(L, layer);
+    return 1;
 }
 
 int32_t CSimpleFontString_SetDrawLayer(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    const char* strlayer = lua_isstring(L, 2) ? lua_tostring(L, 2) : nullptr;
+
+    int32_t layer = 0;
+    if (!strlayer || !StringToDrawLayer(strlayer, layer)) {
+        return luaL_error(L, "Usage: %s:SetDrawLayer(\"layer\")", string->GetDisplayName());
+    }
+
+    string->SetFrame(string->m_parent, layer, string->m_shown);
+    return 0;
 }
 
 int32_t CSimpleFontString_SetVertexColor(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    CImVector color;
+    string->GetVertexColor(color);
+
+    CImVector newColor;
+    FrameScript_GetColor(L, 2, newColor);
+    if (!lua_isnumber(L, 5)) {
+        newColor.a = color.a;
+    }
+
+    string->SetVertexColor(color);
+    // TODO: Some flag should be set
+    return 0;
 }
 
 int32_t CSimpleFontString_GetAlpha(lua_State* L) {

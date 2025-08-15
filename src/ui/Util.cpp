@@ -126,3 +126,20 @@ const char* AnchorPointToString(int32_t point) {
         return "ANCHOR_NONE";
     }
 }
+
+const char* DrawLayerToString(int32_t layer) {
+    switch (layer) {
+    case 0:
+        return "BACKGROUND";
+    case 1:
+        return "BORDER";
+    case 2:
+        return "ARTWORK";
+    case 3:
+        return "OVERLAY";
+    case 4:
+        return "HIGHLIGHT";
+    default:
+        return "UNKNOWN";
+    }
+}

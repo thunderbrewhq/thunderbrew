@@ -25,6 +25,7 @@
 
 int32_t CSimpleFrame::s_metatable;
 int32_t CSimpleFrame::s_objectType;
+const char* CSimpleFrame::s_objectTypeName = "Frame";
 
 int32_t CSimpleFrame::GetObjectType() {
     if (!CSimpleFrame::s_objectType) {
@@ -652,6 +653,16 @@ bool CSimpleFrame::IsA(int32_t type) {
     return type == CSimpleFrame::s_objectType
         || type == CScriptRegion::s_objectType
         || type == CScriptObject::s_objectType;
+}
+
+bool CSimpleFrame::IsA(const char* typeName) {
+    return !SStrCmpI(typeName, CSimpleFrame::s_objectTypeName, STORM_MAX_STR)
+        || !SStrCmpI(typeName, CScriptRegion::s_objectTypeName, STORM_MAX_STR)
+        || !SStrCmpI(typeName, CScriptObject::s_objectTypeName, STORM_MAX_STR);
+}
+
+const char* CSimpleFrame::GetObjectTypeName() {
+    return CSimpleFrame::s_objectTypeName;
 }
 
 void CSimpleFrame::EnableEvent(CSimpleEventType eventType, int32_t priority) {

@@ -14,6 +14,7 @@ class CSimpleFontString : public CSimpleRegion, public CSimpleFontable {
         static int32_t s_count;
         static int32_t s_metatable;
         static int32_t s_objectType;
+        static const char* s_objectTypeName;
 
         // Static functions
         static void CreateScriptMetaTable();
@@ -43,6 +44,8 @@ class CSimpleFontString : public CSimpleRegion, public CSimpleFontable {
         // Virtual member functions
         virtual ~CSimpleFontString();
         virtual bool IsA(int32_t type);
+        virtual bool IsA(const char* typeName);
+        virtual const char* GetObjectTypeName();
         virtual int32_t GetScriptMetaTable();
         virtual void LoadXML(XMLNode* node, CStatus* status);
         virtual void OnColorChanged(bool a2);

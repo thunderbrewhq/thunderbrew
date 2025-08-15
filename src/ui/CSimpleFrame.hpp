@@ -27,6 +27,7 @@ class CSimpleFrame : public CScriptRegion {
         // Static members
         static int32_t s_metatable;
         static int32_t s_objectType;
+        static const char* s_objectTypeName;
 
         // Static functions
         static void CreateScriptMetaTable();
@@ -91,6 +92,8 @@ class CSimpleFrame : public CScriptRegion {
         virtual ~CSimpleFrame();
         virtual ScriptIx* GetScriptByName(const char* name, ScriptData& data);
         virtual bool IsA(int32_t type);
+        virtual bool IsA(const char* typeName);
+        virtual const char* GetObjectTypeName();
         virtual int32_t GetScriptMetaTable();
         virtual void LoadXML(XMLNode* node, CStatus* status);
         virtual void PreOnAnimUpdate();
