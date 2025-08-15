@@ -21,4 +21,6 @@ bool StringToOrientation(const char* string, uint32_t& orientation);
 
 bool StringToAnchorPoint(const char* string, int32_t& point);
 
+uint32_t StringToFontFlags(const char* string);
+
 #endif

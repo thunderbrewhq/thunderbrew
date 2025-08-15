@@ -199,3 +199,20 @@ bool StringToAnchorPoint(const char* string, int32_t& point) {
 
     return false;
 }
+
+uint32_t StringToFontFlags(const char* string) {
+    static std::pair<uint32_t, const char*> table[3] = {
+        { 1, "OUTLINE" },
+        { 4, "THICKOUTLINE" },
+        { 2, "MONOCHROME" }
+    };
+
+    uint32_t result = 0;
+    for (size_t i = 0; i < 3; ++i) {
+        if (!SStrCmpI(string, table[i].second, STORM_MAX_STR)) {
+            result |= table[i].first;
+        }
+    }
+
+    return result;
+}

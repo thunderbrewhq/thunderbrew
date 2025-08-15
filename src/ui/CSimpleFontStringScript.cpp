@@ -6,7 +6,7 @@
 #include "util/Unimplemented.hpp"
 #include "util/StringTo.hpp"
 #include "gx/Coordinate.hpp"
-#include <cstdint>
+
 
 int32_t CSimpleFontString_IsObjectType(lua_State* L) {
     auto type = CSimpleFontString::GetObjectType();
@@ -222,15 +222,49 @@ int32_t CSimpleFontString_GetFont(lua_State* L) {
 }
 
 int32_t CSimpleFontString_SetFont(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+
+    if (!lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
+        return luaL_error(L, "Usage: %s:SetFont(\"font\", fontHeight [, flags])", string->GetDisplayName());
+    }
+
+    auto fontName = lua_tostring(L, 2);
+    auto fontHeight = lua_tonumber(L, 3);
+    fontHeight /= CoordinateGetAspectCompensation() * 1024.0;
+    fontHeight = NDCToDDCWidth(fontHeight);
+    if (fontHeight <= 0.00000011920929) {
+        return luaL_error(L, "ERROR: %s:SetFont(): invalid fontHeight: %f, height must be > 0", string->GetDisplayName(), fontHeight);
+    }
+
+    if (!*fontName) {
+        return 0;
+    }
+
+    uint32_t fontFlags = 0;
+    if (lua_isstring(L, 4)) {
+        fontFlags = StringToFontFlags(lua_tostring(L, 4));
+    }
+
+    if (string->SetFont(fontName, fontHeight, fontFlags, false)) {
+        // TODO: Set some object flag
+        lua_pushnumber(L, 1.0);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
 }
 
 int32_t CSimpleFontString_GetText(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    auto type = CSimpleFontString::GetObjectType();
+    auto string = static_cast<CSimpleFontString*>(FrameScript_GetObjectThis(L, type));
+    lua_pushstring(L, string->m_text);
+    return 1;
 }
 
 int32_t CSimpleFontString_GetFieldSize(lua_State* L) {
-    WHOA_UNIMPLEMENTED(0);
+    lua_pushnumber(L, 8191.0);
+    return 1;
 }
 
 int32_t CSimpleFontString_SetText(lua_State* L) {
