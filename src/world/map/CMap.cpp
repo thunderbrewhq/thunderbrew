@@ -53,7 +53,7 @@ void CMap::Initialize() {
 
     // TODO
 
-    // CMap::MapMemInitialize();
+    CMap::MapMemInitialize();
 }
 
 void CMap::MapMemInitialize() {
