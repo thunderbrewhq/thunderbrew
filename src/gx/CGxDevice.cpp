@@ -223,7 +223,7 @@ int32_t CGxDevice::AdapterInfer(uint16_t& deviceID) {
 int32_t FindDisplayDevice(PDISPLAY_DEVICE device, uint32_t flag) {
     DWORD i = 0;
     device->cb = sizeof(DISPLAY_DEVICE);
-    while (EnumDisplayDevices(nullptr, i, device, 0)) {
+    while (EnumDisplayDevices(nullptr, i++, device, 0)) {
         if ((device->StateFlags & flag) == flag) {
             return 1;
         }
