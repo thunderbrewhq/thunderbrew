@@ -84,7 +84,7 @@ uint32_t CalcLevelSize(uint32_t level, uint32_t width, uint32_t height, uint32_t
     uint32_t v4 = std::max(width >> level, 1u);
     uint32_t v5 = std::max(height >> level, 1u);
 
-    if (fourCC == 0 || fourCC == 1 || fourCC == 7) {
+    if (fourCC == PIXEL_DXT1 || fourCC == PIXEL_DXT3 || fourCC == PIXEL_DXT5) {
         if (v4 == 6 * v5) {
             if (v5 <= 4) {
                 v5 = 4;
@@ -104,7 +104,7 @@ uint32_t CalcLevelSize(uint32_t level, uint32_t width, uint32_t height, uint32_t
 
     uint32_t size;
 
-    if (fourCC == 9) {
+    if (fourCC == PIXEL_ARGB2565) {
         uint32_t v6 = v5 * v4;
         uint32_t v7 = v5 * v4 >> 2;
 
@@ -159,23 +159,34 @@ void FillInSolidTexture(const CImVector& color, CTexture* texture) {
 
 uint32_t GetBitDepth(uint32_t fourCC) {
     switch (fourCC) {
-        case 0:
+        case PIXEL_DXT1:
             return 4;
 
-        case 1:
-        case 6:
-        case 7:
+        case PIXEL_DXT3:
+        case PIXEL_A8:
+        case PIXEL_DXT5:
             return 8;
 
-        case 2:
+        case PIXEL_ARGB8888:
             return 32;
 
-        case 3:
-        case 4:
-        case 5:
+        case PIXEL_ARGB1555:
+        case PIXEL_ARGB4444:
+        case PIXEL_RGB565:
             return 16;
 
         default:
+            #ifndef NDEBUG
+            SErrDisplayError(
+                0x85100000,
+                __FILE__,
+                __LINE__,
+                "!\"GetBitDepth(): unhandled format\"",
+                0,
+                1u,
+                1
+            );
+            #endif
             return 0;
     }
 }
