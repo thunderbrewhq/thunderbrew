@@ -40,7 +40,7 @@ void AsyncTextureWait(CTexture* texture) {
 uint32_t CalcLevelCount(uint32_t width, uint32_t height) {
     uint32_t v2 = width;
     uint32_t v3 = height;
-    uint32_t v4 = 1;
+    uint32_t levels = 1;
     uint32_t v5;
     uint32_t v6;
 
@@ -51,7 +51,7 @@ uint32_t CalcLevelCount(uint32_t width, uint32_t height) {
     while (v2 > 1 || v3 > 1) {
         v5 = v2 >> 1;
 
-        ++v4;
+        ++levels;
 
         v6 = v2 >> 1 < 1;
         v2 = 1;
@@ -67,7 +67,7 @@ uint32_t CalcLevelCount(uint32_t width, uint32_t height) {
         }
     }
 
-    return v4;
+    return levels;
 }
 
 uint32_t CalcLevelOffset(uint32_t level, uint32_t width, uint32_t height, uint32_t fourCC) {
